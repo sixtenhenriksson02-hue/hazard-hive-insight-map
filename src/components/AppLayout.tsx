@@ -1,17 +1,17 @@
-import { Shield, Bell, Menu, X } from "lucide-react";
+import { Shield, Bell, Menu, X, LogOut, Eye } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  userRole: "admin" | "worker";
 }
 
-export default function AppLayout({ children, userRole }: AppLayoutProps) {
+export default function AppLayout({ children }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { role, viewAs, setViewAs, displayName, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-primary text-primary-foreground">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-3">
@@ -22,34 +22,54 @@ export default function AppLayout({ children, userRole }: AppLayoutProps) {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-6 text-sm">
+          <div className="hidden md:flex items-center gap-4 text-sm">
+            {role === "admin" && (
+              <button
+                onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                {viewAs === "admin" ? "Visa som arbetare" : "Visa som admin"}
+              </button>
+            )}
             <span className="text-primary-foreground/70">
-              Roll: <span className="font-semibold text-accent">{userRole === "admin" ? "Admin" : "Arbetare"}</span>
+              {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? "Admin" : "Arbetare"}</span>
             </span>
             <button className="relative">
               <Bell className="h-5 w-5 text-primary-foreground/80 hover:text-accent transition-colors" />
               <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent" />
             </button>
+            <button onClick={signOut} className="text-primary-foreground/70 hover:text-accent transition-colors">
+              <LogOut className="h-5 w-5" />
+            </button>
           </div>
 
-          <button
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
+          <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-primary-foreground/10 p-4">
+          <div className="md:hidden border-t border-primary-foreground/10 p-4 space-y-3">
             <p className="text-sm text-primary-foreground/70">
-              Roll: <span className="font-semibold text-accent">{userRole === "admin" ? "Admin" : "Arbetare"}</span>
+              {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? "Admin" : "Arbetare"}</span>
             </p>
+            {role === "admin" && (
+              <button
+                onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                {viewAs === "admin" ? "Visa som arbetare" : "Visa som admin"}
+              </button>
+            )}
+            <button onClick={signOut} className="flex items-center gap-2 text-sm text-primary-foreground/70">
+              <LogOut className="h-4 w-4" /> Logga ut
+            </button>
           </div>
         )}
       </header>
 
-      {/* Main content */}
       <main className="container py-6 md:py-8">{children}</main>
     </div>
   );
