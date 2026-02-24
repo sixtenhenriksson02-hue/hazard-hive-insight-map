@@ -1,6 +1,6 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
-import { RISK_LABELS, STATUS_LABELS, RiskLevel } from "@/types/risk";
-import { MapPin, Calendar, User, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { MapPin, Calendar, User, ChevronRight, AlertTriangle, FileText } from "lucide-react";
 
 interface ReportsListProps {
   reports: RiskReport[];
@@ -23,10 +23,12 @@ const statusDotClass: Record<string, string> = {
 };
 
 export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect }: ReportsListProps) {
+  const { t } = useLanguage();
+
   if (reports.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p>Inga rapporter att visa.</p>
+        <p>{t("dashboard.noReports")}</p>
       </div>
     );
   }
@@ -44,14 +46,22 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${riskBadgeClass[report.risk_level]}`}>
-                  {RISK_LABELS[report.risk_level as RiskLevel]}
+                  {t(`risk.${report.risk_level}`)}
                 </span>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status]}`} />
-                  {STATUS_LABELS[report.status as keyof typeof STATUS_LABELS]}
+                  {report.status === "open" ? t("status.open") : report.status === "in-progress" ? t("status.inProgress") : t("status.resolved")}
                 </span>
                 <span className="text-xs text-muted-foreground">•</span>
-                <span className="text-xs text-muted-foreground">{report.category}</span>
+                {report.report_type === "injury" ? (
+                  <span className="flex items-center gap-1 text-xs text-destructive font-medium">
+                    <AlertTriangle className="h-3 w-3" />{t("form.injury")}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <FileText className="h-3 w-3" />{t("form.observation")}
+                  </span>
+                )}
               </div>
 
               <h3 className="font-semibold text-card-foreground group-hover:text-accent transition-colors truncate">
@@ -59,11 +69,13 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
               </h3>
 
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {isAdmin ? report.description : report.description.slice(0, 80) + (report.description.length > 80 ? "..." : "")}
+                {report.description || report.category}
               </p>
 
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{report.location}</span>
+              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
+                {report.building && (
+                  <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{report.building}{report.specific_location ? ` – ${report.specific_location}` : ""}</span>
+                )}
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(report.created_at).toLocaleDateString("sv-SE")}</span>
                 {isAdmin && report.reporter_name && (
                   <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{report.reporter_name}</span>
@@ -83,9 +95,9 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                     onUpdateStatus(report.id, e.target.value as ReportStatus);
                   }}
                 >
-                  <option value="open">Öppen</option>
-                  <option value="in-progress">Pågår</option>
-                  <option value="resolved">Åtgärdad</option>
+                  <option value="open">{t("status.open")}</option>
+                  <option value="in-progress">{t("status.inProgress")}</option>
+                  <option value="resolved">{t("status.resolved")}</option>
                 </select>
               )}
             </div>

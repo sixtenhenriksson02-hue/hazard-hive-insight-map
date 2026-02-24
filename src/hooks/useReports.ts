@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 export type ReportStatus = "open" | "in-progress" | "resolved";
+export type ReportType = "observation" | "injury";
 export type SortOption = "newest" | "severity" | "oldest-open";
 
 export interface RiskReport {
@@ -21,6 +22,16 @@ export interface RiskReport {
   created_at: string;
   updated_at: string;
   resolved_at?: string | null;
+  project_id?: string | null;
+  report_type: ReportType;
+  building?: string | null;
+  specific_location?: string | null;
+  body_part?: string | null;
+  injury_type?: string | null;
+  medical_care_required?: boolean;
+  absence_required?: boolean;
+  absence_days?: number;
+  severity_rating?: number;
 }
 
 export interface ReportComment {
@@ -34,28 +45,39 @@ export interface ReportComment {
 
 const RISK_ORDER: Record<RiskLevel, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
-function assessRisk(description: string, category: string): RiskLevel {
+function assessRisk(description: string, category: string, severityRating: number = 1): RiskLevel {
+  // Use severity rating as primary factor
+  if (severityRating >= 5) return "critical";
+  if (severityRating >= 4) return "high";
+  if (severityRating >= 3) return "medium";
+
   const text = `${description} ${category}`.toLowerCase();
-  if (text.includes("brand") || text.includes("explosion") || text.includes("skyddsutrustning") || text.includes("kemikalie"))
+  if (text.includes("brand") || text.includes("explosion") || text.includes("kemikalie"))
     return "critical";
-  if (text.includes("hal") || text.includes("fall") || text.includes("tung") || text.includes("utgången"))
+  if (text.includes("hal") || text.includes("fall") || text.includes("tung"))
     return "high";
-  if (text.includes("belysning") || text.includes("kabel") || text.includes("snubbel") || text.includes("buller"))
+  if (text.includes("belysning") || text.includes("kabel") || text.includes("snubbel"))
     return "medium";
   return "low";
 }
 
 export function useReports() {
-  const { user } = useAuth();
+  const { user, projectId } = useAuth();
   const { toast } = useToast();
   const [reports, setReports] = useState<RiskReport[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchReports = useCallback(async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("risk_reports")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (projectId) {
+      query = query.eq("project_id", projectId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching reports:", error);
@@ -63,7 +85,7 @@ export function useReports() {
     }
     setReports((data as RiskReport[]) ?? []);
     setLoading(false);
-  }, []);
+  }, [projectId]);
 
   useEffect(() => {
     fetchReports();
@@ -78,7 +100,22 @@ export function useReports() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchReports]);
 
-  const addReport = async (report: { title: string; description: string; location: string; category: string; imageFile?: File }) => {
+  const addReport = async (report: {
+    title: string;
+    description: string;
+    location: string;
+    category: string;
+    imageFile?: File;
+    report_type: ReportType;
+    building?: string;
+    specific_location?: string;
+    body_part?: string;
+    injury_type?: string;
+    medical_care_required?: boolean;
+    absence_required?: boolean;
+    absence_days?: number;
+    severity_rating?: number;
+  }) => {
     if (!user) return;
 
     let image_url: string | null = null;
@@ -92,7 +129,7 @@ export function useReports() {
       }
     }
 
-    const risk_level = assessRisk(report.description, report.category);
+    const risk_level = assessRisk(report.description, report.category, report.severity_rating ?? 1);
 
     const { error } = await supabase.from("risk_reports").insert({
       title: report.title,
@@ -100,9 +137,19 @@ export function useReports() {
       location: report.location,
       category: report.category,
       risk_level,
-      status: "open",
+      status: "open" as const,
       reported_by: user.id,
       image_url,
+      project_id: projectId,
+      report_type: report.report_type,
+      building: report.building,
+      specific_location: report.specific_location,
+      body_part: report.body_part,
+      injury_type: report.injury_type,
+      medical_care_required: report.medical_care_required ?? false,
+      absence_required: report.absence_required ?? false,
+      absence_days: report.absence_days ?? 0,
+      severity_rating: report.severity_rating ?? 1,
     });
 
     if (error) {
@@ -121,7 +168,8 @@ export function useReports() {
       const existing = reports.find((r) => r.id === id);
       finalUpdates.risk_level = assessRisk(
         updates.description ?? existing?.description ?? "",
-        updates.category ?? existing?.category ?? ""
+        updates.category ?? existing?.category ?? "",
+        existing?.severity_rating ?? 1
       );
     }
 

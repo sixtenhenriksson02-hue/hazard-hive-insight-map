@@ -19,19 +19,51 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          project_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           display_name?: string
           id?: string
+          project_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           display_name?: string
           id?: string
+          project_id?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -69,48 +101,86 @@ export type Database = {
       }
       risk_reports: {
         Row: {
+          absence_days: number | null
+          absence_required: boolean | null
+          body_part: string | null
+          building: string | null
           category: string
           created_at: string
           description: string
           id: string
           image_url: string | null
+          injury_type: string | null
           location: string
+          medical_care_required: boolean | null
+          project_id: string | null
+          report_type: string
           reported_by: string | null
           resolved_at: string | null
           risk_level: string
+          severity_rating: number | null
+          specific_location: string | null
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          absence_days?: number | null
+          absence_required?: boolean | null
+          body_part?: string | null
+          building?: string | null
           category: string
           created_at?: string
           description: string
           id?: string
           image_url?: string | null
+          injury_type?: string | null
           location: string
+          medical_care_required?: boolean | null
+          project_id?: string | null
+          report_type?: string
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
+          severity_rating?: number | null
+          specific_location?: string | null
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          absence_days?: number | null
+          absence_required?: boolean | null
+          body_part?: string | null
+          building?: string | null
           category?: string
           created_at?: string
           description?: string
           id?: string
           image_url?: string | null
+          injury_type?: string | null
           location?: string
+          medical_care_required?: boolean | null
+          project_id?: string | null
+          report_type?: string
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
+          severity_rating?: number | null
+          specific_location?: string | null
           status?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "risk_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

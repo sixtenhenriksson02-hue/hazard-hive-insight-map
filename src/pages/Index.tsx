@@ -5,34 +5,35 @@ import ReportForm from "@/components/ReportForm";
 import ReportsList from "@/components/ReportsList";
 import ReportDetail from "@/components/ReportDetail";
 import RiskMatrix from "@/components/RiskMatrix";
+import AdminStats from "@/components/AdminStats";
+import ProjectManager from "@/components/ProjectManager";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, List, Grid3X3, ArrowDownUp } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { Plus, List, Grid3X3, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { reports, loading, addReport, updateReport, sortReports } = useReports();
   const { viewAs } = useAuth();
+  const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
 
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reports" | "matrix">("reports");
+  const [showProjects, setShowProjects] = useState(false);
+  const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats">("reports");
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
 
   const visibleReports = useMemo(() => {
     let filtered = reports;
-
-    // Workers don't see resolved reports
     if (!isAdmin) {
       filtered = filtered.filter((r) => r.status !== "resolved");
     }
-
     if (statusFilter !== "all") {
       filtered = filtered.filter((r) => r.status === statusFilter);
     }
-
     return sortReports(filtered, sortBy);
   }, [reports, isAdmin, statusFilter, sortBy, sortReports]);
 
@@ -40,14 +41,13 @@ const Index = () => {
     updateReport(id, { status });
   };
 
-  // For stats, admins see all, workers see non-resolved
   const statsReports = isAdmin ? reports : reports.filter((r) => r.status !== "resolved");
 
   return (
-    <AppLayout>
+    <AppLayout onManageProjects={() => setShowProjects(true)}>
       <div className="mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">Välkommen tillbaka 👋</h2>
-        <p className="text-muted-foreground mt-1">Rapportera, spåra och åtgärda risker på arbetsplatsen.</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
+        <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
       </div>
 
       <StatsCards reports={statsReports} />
@@ -55,11 +55,16 @@ const Index = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8 mb-4">
         <div className="flex gap-2">
           <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("reports")}>
-            <List className="h-4 w-4 mr-1.5" />Rapporter
+            <List className="h-4 w-4 mr-1.5" />{t("dashboard.reports")}
           </Button>
           <Button variant={activeTab === "matrix" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("matrix")}>
-            <Grid3X3 className="h-4 w-4 mr-1.5" />Riskmatris
+            <Grid3X3 className="h-4 w-4 mr-1.5" />{t("dashboard.matrix")}
           </Button>
+          {isAdmin && (
+            <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("stats")}>
+              <BarChart3 className="h-4 w-4 mr-1.5" />{t("dashboard.stats")}
+            </Button>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -69,13 +74,13 @@ const Index = () => {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
             >
-              <option value="newest">Nyast först</option>
-              <option value="severity">Allvarligast</option>
-              <option value="oldest-open">Längst kvar</option>
+              <option value="newest">{t("sort.newest")}</option>
+              <option value="severity">{t("sort.severity")}</option>
+              <option value="oldest-open">{t("sort.oldestOpen")}</option>
             </select>
           )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Plus className="h-4 w-4 mr-1.5" />Ny rapport
+            <Plus className="h-4 w-4 mr-1.5" />{t("dashboard.newReport")}
           </Button>
         </div>
       </div>
@@ -95,12 +100,12 @@ const Index = () => {
                         : "bg-card text-muted-foreground border-border hover:border-accent"
                     }`}
                   >
-                    {s === "all" ? "Alla" : s === "open" ? "Öppna" : s === "in-progress" ? "Pågår" : "Åtgärdade"}
+                    {s === "all" ? t("status.all") : s === "open" ? t("status.openPlural") : s === "in-progress" ? t("status.inProgress") : t("status.resolvedPlural")}
                   </button>
                 ))}
               </div>
               {loading ? (
-                <div className="text-center py-12 text-muted-foreground">Laddar rapporter...</div>
+                <div className="text-center py-12 text-muted-foreground">{t("dashboard.loadingReports")}</div>
               ) : (
                 <ReportsList
                   reports={visibleReports}
@@ -112,6 +117,7 @@ const Index = () => {
             </>
           )}
           {activeTab === "matrix" && <RiskMatrix />}
+          {activeTab === "stats" && isAdmin && <AdminStats reports={reports} />}
         </div>
 
         {showForm && (
@@ -127,6 +133,8 @@ const Index = () => {
         onClose={() => setSelectedReport(null)}
         onUpdate={updateReport}
       />
+
+      <ProjectManager open={showProjects} onClose={() => setShowProjects(false)} />
     </AppLayout>
   );
 };
