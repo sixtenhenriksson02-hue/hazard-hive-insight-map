@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
+import { useProjects } from "@/hooks/useProjects";
 import { CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
 
@@ -25,21 +26,23 @@ interface ReportFormProps {
     absence_required?: boolean;
     absence_days?: number;
     severity_rating?: number;
+    project_id?: string;
   }) => void;
 }
 
 export default function ReportForm({ onSubmit }: ReportFormProps) {
   const { toast } = useToast();
   const { lang, t } = useLanguage();
-  const { projectName } = useAuth();
+  const { role, activeProjectId, userProjects } = useAuth();
+  const { projects } = useProjects();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAdmin = role === "admin";
 
   const [reportType, setReportType] = useState<ReportType>("observation");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
   const [category, setCategory] = useState(CATEGORIES_I18N[lang][0]);
-  const [severityRating, setSeverityRating] = useState(1);
   const [bodyPart, setBodyPart] = useState("");
   const [injuryType, setInjuryType] = useState("");
   const [medicalCare, setMedicalCare] = useState(false);
@@ -47,10 +50,16 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [absenceDays, setAbsenceDays] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(activeProjectId ?? "");
+  const [submitting, setSubmitting] = useState(false);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
   const injuryTypes = INJURY_TYPES_I18N[lang];
+
+  // Available projects for the form
+  const availableProjects = isAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
+  const currentProjectName = availableProjects.find(p => p.id === (selectedProjectId || activeProjectId))?.name ?? "";
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,34 +71,38 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !specificLocation) {
       toast({ title: t("form.fillAllFields"), variant: "destructive" });
       return;
     }
-    onSubmit({
+    setSubmitting(true);
+    const pid = selectedProjectId || activeProjectId || "";
+    const building = availableProjects.find(p => p.id === pid)?.name ?? "";
+    
+    await onSubmit({
       title,
       description,
-      location: `${projectName ?? ""} - ${specificLocation}`,
+      location: `${building} - ${specificLocation}`,
       category,
       imageFile: imageFile ?? undefined,
       report_type: reportType,
-      building: projectName ?? "",
+      building,
       specific_location: specificLocation,
       body_part: reportType === "injury" ? bodyPart : undefined,
       injury_type: reportType === "injury" ? injuryType : undefined,
       medical_care_required: reportType === "injury" ? medicalCare : false,
       absence_required: reportType === "injury" ? absenceRequired : false,
       absence_days: reportType === "injury" ? absenceDays : 0,
-      severity_rating: severityRating,
+      project_id: pid,
     });
+    setSubmitting(false);
     // Reset
     setTitle("");
     setDescription("");
     setSpecificLocation("");
     setCategory(categories[0]);
-    setSeverityRating(1);
     setBodyPart("");
     setInjuryType("");
     setMedicalCare(false);
@@ -128,13 +141,27 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
-        {/* Building (auto-filled) + Location */}
+        {/* Project selector */}
+        {availableProjects.length > 1 && (
+          <div>
+            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.project")}</label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={selectedProjectId || activeProjectId || ""}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              {availableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Building (auto from project) + Location */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
               <Building2 className="h-3.5 w-3.5" />{t("form.building")}
             </label>
-            <Input value={projectName ?? "-"} disabled className="bg-muted" />
+            <Input value={currentProjectName || "-"} disabled className="bg-muted" />
           </div>
           <div>
             <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
@@ -152,33 +179,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           </select>
         </div>
 
-        {/* Severity rating */}
-        <div>
-          <label className="text-sm font-medium text-card-foreground mb-1 block">
-            {t("form.severity")} <span className="text-xs text-muted-foreground ml-1">({t("form.severityLabels")})</span>
-          </label>
-          <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setSeverityRating(n)}
-                className={`flex-1 py-2 text-sm font-bold rounded-md border transition-colors ${
-                  severityRating >= n
-                    ? n <= 2 ? "bg-risk-low/20 text-risk-low border-risk-low/30"
-                      : n <= 3 ? "bg-risk-medium/20 text-risk-medium border-risk-medium/30"
-                      : n <= 4 ? "bg-risk-high/20 text-risk-high border-risk-high/30"
-                      : "bg-risk-critical/20 text-risk-critical border-risk-critical/30"
-                    : "bg-card text-muted-foreground border-border"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Description (shorter for simplicity) */}
+        {/* Description */}
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
           <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -242,8 +243,15 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           )}
         </div>
 
-        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          <Send className="h-4 w-4 mr-2" />{t("form.submitReport")}
+        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+              {t("form.assessing")}
+            </span>
+          ) : (
+            <><Send className="h-4 w-4 mr-2" />{t("form.submitReport")}</>
+          )}
         </Button>
       </div>
     </form>

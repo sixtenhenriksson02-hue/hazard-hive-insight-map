@@ -32,6 +32,7 @@ export interface RiskReport {
   absence_required?: boolean;
   absence_days?: number;
   severity_rating?: number;
+  ai_explanation?: string | null;
 }
 
 export interface ReportComment {
@@ -45,36 +46,47 @@ export interface ReportComment {
 
 const RISK_ORDER: Record<RiskLevel, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
-function assessRisk(description: string, category: string, severityRating: number = 1): RiskLevel {
-  // Use severity rating as primary factor
-  if (severityRating >= 5) return "critical";
-  if (severityRating >= 4) return "high";
-  if (severityRating >= 3) return "medium";
-
-  const text = `${description} ${category}`.toLowerCase();
-  if (text.includes("brand") || text.includes("explosion") || text.includes("kemikalie"))
-    return "critical";
-  if (text.includes("hal") || text.includes("fall") || text.includes("tung"))
-    return "high";
-  if (text.includes("belysning") || text.includes("kabel") || text.includes("snubbel"))
-    return "medium";
-  return "low";
+async function assessRiskWithAI(report: {
+  title: string;
+  description: string;
+  category: string;
+  report_type: ReportType;
+  building?: string;
+  specific_location?: string;
+  body_part?: string;
+  injury_type?: string;
+  medical_care_required?: boolean;
+  absence_required?: boolean;
+  absence_days?: number;
+}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke("assess-risk", {
+      body: report,
+    });
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    console.error("AI assessment failed, using fallback:", e);
+    return { risk_level: "medium", explanation: "Automatisk bedömning misslyckades.", severity_rating: 3 };
+  }
 }
 
 export function useReports() {
-  const { user, projectId } = useAuth();
+  const { user, activeProjectId, role, viewAs } = useAuth();
   const { toast } = useToast();
   const [reports, setReports] = useState<RiskReport[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchReports = useCallback(async () => {
+  const isAdmin = role === "admin" && viewAs === "admin";
+
+  const fetchReports = useCallback(async (projectIdFilter?: string | null) => {
     let query = supabase
       .from("risk_reports")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (projectId) {
-      query = query.eq("project_id", projectId);
+    if (projectIdFilter) {
+      query = query.eq("project_id", projectIdFilter);
     }
 
     const { data, error } = await query;
@@ -85,20 +97,20 @@ export function useReports() {
     }
     setReports((data as RiskReport[]) ?? []);
     setLoading(false);
-  }, [projectId]);
+  }, []);
 
   useEffect(() => {
-    fetchReports();
+    fetchReports(activeProjectId);
 
     const channel = supabase
       .channel("risk_reports_changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "risk_reports" }, () => {
-        fetchReports();
+        fetchReports(activeProjectId);
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchReports]);
+  }, [fetchReports, activeProjectId]);
 
   const addReport = async (report: {
     title: string;
@@ -115,6 +127,7 @@ export function useReports() {
     absence_required?: boolean;
     absence_days?: number;
     severity_rating?: number;
+    project_id?: string;
   }) => {
     if (!user) return;
 
@@ -129,18 +142,33 @@ export function useReports() {
       }
     }
 
-    const risk_level = assessRisk(report.description, report.category, report.severity_rating ?? 1);
+    // AI assessment
+    const assessment = await assessRiskWithAI({
+      title: report.title,
+      description: report.description,
+      category: report.category,
+      report_type: report.report_type,
+      building: report.building,
+      specific_location: report.specific_location,
+      body_part: report.body_part,
+      injury_type: report.injury_type,
+      medical_care_required: report.medical_care_required,
+      absence_required: report.absence_required,
+      absence_days: report.absence_days,
+    });
+
+    const targetProjectId = report.project_id || activeProjectId;
 
     const { error } = await supabase.from("risk_reports").insert({
       title: report.title,
       description: report.description,
       location: report.location,
       category: report.category,
-      risk_level,
+      risk_level: assessment.risk_level,
       status: "open" as const,
       reported_by: user.id,
       image_url,
-      project_id: projectId,
+      project_id: targetProjectId,
       report_type: report.report_type,
       building: report.building,
       specific_location: report.specific_location,
@@ -149,34 +177,51 @@ export function useReports() {
       medical_care_required: report.medical_care_required ?? false,
       absence_required: report.absence_required ?? false,
       absence_days: report.absence_days ?? 0,
-      severity_rating: report.severity_rating ?? 1,
+      severity_rating: assessment.severity_rating,
+      ai_explanation: assessment.explanation,
     });
 
     if (error) {
       toast({ title: "Kunde inte skapa rapport", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Rapport skapad!", description: "Risken har bedömts automatiskt." });
+      toast({ title: "Rapport skapad!", description: assessment.explanation });
     }
   };
 
-  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status">>) => {
+  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation">>) => {
     const finalUpdates: any = { ...updates };
     if (updates.status === "resolved") {
       finalUpdates.resolved_at = new Date().toISOString();
-    }
-    if (updates.description || updates.category) {
-      const existing = reports.find((r) => r.id === id);
-      finalUpdates.risk_level = assessRisk(
-        updates.description ?? existing?.description ?? "",
-        updates.category ?? existing?.category ?? "",
-        existing?.severity_rating ?? 1
-      );
     }
 
     const { error } = await supabase.from("risk_reports").update(finalUpdates).eq("id", id);
     if (error) {
       toast({ title: "Kunde inte uppdatera", description: error.message, variant: "destructive" });
     }
+  };
+
+  const reassessReport = async (id: string) => {
+    const report = reports.find(r => r.id === id);
+    if (!report) return;
+
+    const assessment = await assessRiskWithAI({
+      title: report.title,
+      description: report.description,
+      category: report.category,
+      report_type: report.report_type,
+      building: report.building ?? undefined,
+      specific_location: report.specific_location ?? undefined,
+      body_part: report.body_part ?? undefined,
+      injury_type: report.injury_type ?? undefined,
+      medical_care_required: report.medical_care_required,
+      absence_required: report.absence_required,
+      absence_days: report.absence_days,
+    });
+
+    await updateReport(id, {
+      risk_level: assessment.risk_level as RiskLevel,
+      ai_explanation: assessment.explanation,
+    });
   };
 
   const sortReports = (list: RiskReport[], sort: SortOption): RiskReport[] => {
@@ -194,7 +239,7 @@ export function useReports() {
     }
   };
 
-  return { reports, loading, addReport, updateReport, sortReports };
+  return { reports, loading, addReport, updateReport, reassessReport, sortReports };
 }
 
 export function useComments(reportId: string | null) {

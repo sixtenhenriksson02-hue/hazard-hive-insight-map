@@ -1,6 +1,6 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
-import { MapPin, Calendar, User, ChevronRight, AlertTriangle, FileText } from "lucide-react";
+import { MapPin, Calendar, User, ChevronRight, AlertTriangle, FileText, Bot } from "lucide-react";
 
 interface ReportsListProps {
   reports: RiskReport[];
@@ -67,6 +67,14 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
               <h3 className="font-semibold text-card-foreground group-hover:text-accent transition-colors truncate">
                 {report.title}
               </h3>
+
+              {/* AI explanation preview */}
+              {report.ai_explanation && (
+                <p className="text-xs text-accent/80 mt-1 line-clamp-1 flex items-center gap-1">
+                  <Bot className="h-3 w-3 shrink-0" />
+                  {report.ai_explanation}
+                </p>
+              )}
 
               <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                 {report.description || report.category}
