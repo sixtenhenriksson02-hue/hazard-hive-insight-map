@@ -1,7 +1,8 @@
-import { Shield, Bell, Menu, X, LogOut, Eye, Globe, FolderPlus } from "lucide-react";
+import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useProjects } from "@/hooks/useProjects";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -10,8 +11,13 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, onManageProjects }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { role, viewAs, setViewAs, displayName, projectName, signOut } = useAuth();
+  const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
+  const { projects } = useProjects();
+  const isAdmin = role === "admin";
+
+  // Admin sees all projects; workers see their enrolled projects
+  const availableProjects = isAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,6 +32,23 @@ export default function AppLayout({ children, onManageProjects }: AppLayoutProps
           </div>
 
           <div className="hidden md:flex items-center gap-3 text-sm">
+            {/* Project selector */}
+            {availableProjects.length > 0 && (
+              <div className="relative">
+                <select
+                  value={activeProjectId ?? ""}
+                  onChange={(e) => setActiveProjectId(e.target.value || null)}
+                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-full border border-primary-foreground/20 bg-transparent text-primary-foreground hover:border-accent transition-colors cursor-pointer"
+                >
+                  {isAdmin && <option value="">{t("project.allProjects")}</option>}
+                  {availableProjects.map((p) => (
+                    <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
+
             <button
               onClick={() => setLang(lang === "sv" ? "en" : "sv")}
               className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
@@ -33,7 +56,7 @@ export default function AppLayout({ children, onManageProjects }: AppLayoutProps
               <Globe className="h-3.5 w-3.5" />
               {lang === "sv" ? "EN" : "SV"}
             </button>
-            {role === "admin" && (
+            {isAdmin && (
               <>
                 <button
                   onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")}
@@ -71,16 +94,28 @@ export default function AppLayout({ children, onManageProjects }: AppLayoutProps
             <p className="text-sm text-primary-foreground/70">
               {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? t("auth.admin") : t("auth.worker")}</span>
             </p>
+            {availableProjects.length > 0 && (
+              <select
+                value={activeProjectId ?? ""}
+                onChange={(e) => setActiveProjectId(e.target.value || null)}
+                className="w-full text-xs px-3 py-2 rounded-md border border-primary-foreground/20 bg-transparent text-primary-foreground"
+              >
+                {isAdmin && <option value="">{t("project.allProjects")}</option>}
+                {availableProjects.map((p) => (
+                  <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
+                ))}
+              </select>
+            )}
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
                 <Globe className="h-3.5 w-3.5" />{lang === "sv" ? "English" : "Svenska"}
               </button>
-              {role === "admin" && (
+              {isAdmin && (
                 <button onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
                   <Eye className="h-3.5 w-3.5" />{viewAs === "admin" ? t("header.viewAsWorker") : t("header.viewAsAdmin")}
                 </button>
               )}
-              {role === "admin" && onManageProjects && (
+              {isAdmin && onManageProjects && (
                 <button onClick={onManageProjects} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
                   <FolderPlus className="h-3.5 w-3.5" />{t("project.manage")}
                 </button>

@@ -103,6 +103,7 @@ export type Database = {
         Row: {
           absence_days: number | null
           absence_required: boolean | null
+          ai_explanation: string | null
           body_part: string | null
           building: string | null
           category: string
@@ -127,6 +128,7 @@ export type Database = {
         Insert: {
           absence_days?: number | null
           absence_required?: boolean | null
+          ai_explanation?: string | null
           body_part?: string | null
           building?: string | null
           category: string
@@ -151,6 +153,7 @@ export type Database = {
         Update: {
           absence_days?: number | null
           absence_required?: boolean | null
+          ai_explanation?: string | null
           body_part?: string | null
           building?: string | null
           category?: string
@@ -175,6 +178,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "risk_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_projects: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_projects_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

@@ -94,10 +94,12 @@ const translations: Record<string, Record<Language, string>> = {
   "form.descriptionPlaceholder": { sv: "Beskriv kort vad som inträffade...", en: "Briefly describe what happened..." },
   "form.severity": { sv: "Allvarlighetsgrad", en: "Severity" },
   "form.severityLabels": { sv: "1=Lindrig, 5=Mycket allvarlig", en: "1=Minor, 5=Very serious" },
+  "form.project": { sv: "Projekt", en: "Project" },
+  "form.assessing": { sv: "AI bedömer risk...", en: "AI assessing risk..." },
   "form.image": { sv: "Bifoga bild (valfritt)", en: "Attach image (optional)" },
   "form.uploadImage": { sv: "Ladda upp bild", en: "Upload image" },
   "form.changeImage": { sv: "Byt bild", en: "Change image" },
-  "form.aiNote": { sv: "Risknivån bedöms utifrån din beskrivning och allvarlighetsgrad.", en: "Risk level is assessed from your description and severity." },
+  "form.aiNote": { sv: "Risknivån bedöms automatiskt av AI baserat på din rapport.", en: "Risk level is automatically assessed by AI based on your report." },
   "form.submitReport": { sv: "Skicka rapport", en: "Submit report" },
   "form.fillAllFields": { sv: "Fyll i alla obligatoriska fält", en: "Fill in all required fields" },
   "form.reportCreated": { sv: "Rapport skapad!", en: "Report created!" },
@@ -120,6 +122,10 @@ const translations: Record<string, Record<Language, string>> = {
   "detail.building": { sv: "Byggnad", en: "Building" },
   "detail.location": { sv: "Plats", en: "Location" },
   "detail.injuryDetails": { sv: "Skadedetaljer", en: "Injury details" },
+  "detail.aiAssessment": { sv: "AI-bedömning", en: "AI Assessment" },
+  "detail.reassess": { sv: "Ombedöm", en: "Reassess" },
+  "detail.overrideRisk": { sv: "Ändra risknivå", en: "Override risk level" },
+  "detail.adminOverride": { sv: "Ändrad av admin", en: "Changed by admin" },
 
   // Projects
   "project.manage": { sv: "Hantera projekt", en: "Manage Projects" },
@@ -129,6 +135,13 @@ const translations: Record<string, Record<Language, string>> = {
   "project.noProjects": { sv: "Inga projekt skapade ännu.", en: "No projects created yet." },
   "project.created": { sv: "Projekt skapat!", en: "Project created!" },
   "project.select": { sv: "Välj projekt", en: "Select project" },
+  "project.allProjects": { sv: "Alla projekt", en: "All projects" },
+  "project.myProjects": { sv: "Mina projekt", en: "My Projects" },
+  "project.addProject": { sv: "Lägg till projekt", en: "Add project" },
+  "project.setActive": { sv: "Välj", en: "Select" },
+  "project.selectToAdd": { sv: "Välj projekt att lägga till:", en: "Select project to add:" },
+  "project.noEnrolled": { sv: "Du är inte med i något projekt ännu.", en: "You're not enrolled in any project yet." },
+  "project.allEnrolled": { sv: "Du är redan med i alla projekt.", en: "You're already enrolled in all projects." },
 
   // Risk matrix
   "matrix.title": { sv: "Riskmatris", en: "Risk Matrix" },

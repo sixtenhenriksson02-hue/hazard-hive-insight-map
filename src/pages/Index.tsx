@@ -7,20 +7,22 @@ import ReportDetail from "@/components/ReportDetail";
 import RiskMatrix from "@/components/RiskMatrix";
 import AdminStats from "@/components/AdminStats";
 import ProjectManager from "@/components/ProjectManager";
+import WorkerProjectManager from "@/components/WorkerProjectManager";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, List, Grid3X3, BarChart3 } from "lucide-react";
+import { Plus, List, Grid3X3, BarChart3, FolderPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { reports, loading, addReport, updateReport, sortReports } = useReports();
-  const { viewAs } = useAuth();
+  const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
+  const { viewAs, role } = useAuth();
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
 
   const [showForm, setShowForm] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
+  const [showWorkerProjects, setShowWorkerProjects] = useState(false);
   const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats">("reports");
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -79,6 +81,11 @@ const Index = () => {
               <option value="oldest-open">{t("sort.oldestOpen")}</option>
             </select>
           )}
+          {role === "worker" && (
+            <Button variant="outline" size="sm" onClick={() => setShowWorkerProjects(true)}>
+              <FolderPlus className="h-4 w-4 mr-1.5" />{t("project.myProjects")}
+            </Button>
+          )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="h-4 w-4 mr-1.5" />{t("dashboard.newReport")}
           </Button>
@@ -132,9 +139,11 @@ const Index = () => {
         open={!!selectedReport}
         onClose={() => setSelectedReport(null)}
         onUpdate={updateReport}
+        onReassess={reassessReport}
       />
 
       <ProjectManager open={showProjects} onClose={() => setShowProjects(false)} />
+      <WorkerProjectManager open={showWorkerProjects} onClose={() => setShowWorkerProjects(false)} />
     </AppLayout>
   );
 };

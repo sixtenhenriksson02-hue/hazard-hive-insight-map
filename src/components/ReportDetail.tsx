@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RiskReport, useComments } from "@/hooks/useReports";
+import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -7,13 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
   open: boolean;
   onClose: () => void;
   onUpdate: (id: string, updates: any) => void;
+  onReassess?: (id: string) => Promise<void>;
 }
 
 const riskBadgeClass: Record<string, string> = {
@@ -23,7 +24,9 @@ const riskBadgeClass: Record<string, string> = {
   critical: "bg-risk-critical/15 text-risk-critical",
 };
 
-export default function ReportDetail({ report, open, onClose, onUpdate }: ReportDetailProps) {
+const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
+
+export default function ReportDetail({ report, open, onClose, onUpdate, onReassess }: ReportDetailProps) {
   const { viewAs, user } = useAuth();
   const { lang, t } = useLanguage();
   const isAdmin = viewAs === "admin";
@@ -31,6 +34,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate }: Report
   const [newComment, setNewComment] = useState("");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", location: "", category: "" });
+  const [reassessing, setReassessing] = useState(false);
 
   if (!report) return null;
 
@@ -52,10 +56,34 @@ export default function ReportDetail({ report, open, onClose, onUpdate }: Report
     setEditing(false);
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!newComment.trim()) return;
-    addComment(newComment.trim());
+    await addComment(newComment.trim());
+
+    // Check if comment mentions fixing/resolving - trigger reassessment
+    const fixKeywords = ["åtgärd", "fixad", "fixed", "resolved", "löst", "reparerad", "korrigerad", "repaired", "corrected"];
+    const lowerComment = newComment.toLowerCase();
+    if (fixKeywords.some(k => lowerComment.includes(k)) && onReassess && report.status !== "resolved") {
+      setReassessing(true);
+      await onReassess(report.id);
+      setReassessing(false);
+    }
+
     setNewComment("");
+  };
+
+  const handleOverrideRisk = (newLevel: RiskLevel) => {
+    onUpdate(report.id, {
+      risk_level: newLevel,
+      ai_explanation: `${report.ai_explanation ?? ""}\n\n[${t("detail.adminOverride")}]`,
+    });
+  };
+
+  const handleReassess = async () => {
+    if (!onReassess) return;
+    setReassessing(true);
+    await onReassess(report.id);
+    setReassessing(false);
   };
 
   return (
@@ -82,6 +110,44 @@ export default function ReportDetail({ report, open, onClose, onUpdate }: Report
         <div className="space-y-4">
           {report.image_url && (
             <img src={report.image_url} alt="" className="w-full h-48 object-cover rounded-md" />
+          )}
+
+          {/* AI Explanation */}
+          {report.ai_explanation && (
+            <div className="rounded-md border border-accent/20 bg-accent/5 p-3">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-xs font-semibold text-accent flex items-center gap-1">
+                  <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
+                </h4>
+                {isAdmin && (
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
+                    <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
+                    {t("detail.reassess")}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{report.ai_explanation}</p>
+            </div>
+          )}
+
+          {/* Admin risk override */}
+          {isAdmin && !editing && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground">{t("detail.overrideRisk")}:</span>
+              {RISK_LEVELS.map((level) => (
+                <button
+                  key={level}
+                  onClick={() => handleOverrideRisk(level)}
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-all ${
+                    report.risk_level === level
+                      ? `${riskBadgeClass[level]} ring-2 ring-offset-1 ring-current`
+                      : `${riskBadgeClass[level]} opacity-50 hover:opacity-100`
+                  }`}
+                >
+                  {t(`risk.${level}`)}
+                </button>
+              ))}
+            </div>
           )}
 
           {editing ? (
