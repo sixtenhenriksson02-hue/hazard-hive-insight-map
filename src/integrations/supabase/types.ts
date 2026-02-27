@@ -114,12 +114,15 @@ export type Database = {
           injury_type: string | null
           location: string
           medical_care_required: boolean | null
+          plan_x: number | null
+          plan_y: number | null
           project_id: string | null
           report_type: string
           reported_by: string | null
           resolved_at: string | null
           risk_level: string
           severity_rating: number | null
+          site_plan_id: string | null
           specific_location: string | null
           status: string
           title: string
@@ -139,12 +142,15 @@ export type Database = {
           injury_type?: string | null
           location: string
           medical_care_required?: boolean | null
+          plan_x?: number | null
+          plan_y?: number | null
           project_id?: string | null
           report_type?: string
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
           severity_rating?: number | null
+          site_plan_id?: string | null
           specific_location?: string | null
           status?: string
           title: string
@@ -164,12 +170,15 @@ export type Database = {
           injury_type?: string | null
           location?: string
           medical_care_required?: boolean | null
+          plan_x?: number | null
+          plan_y?: number | null
           project_id?: string | null
           report_type?: string
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
           severity_rating?: number | null
+          site_plan_id?: string | null
           specific_location?: string | null
           status?: string
           title?: string
@@ -178,6 +187,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "risk_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_reports_site_plan_id_fkey"
+            columns: ["site_plan_id"]
+            isOneToOne: false
+            referencedRelation: "site_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          image_url: string
+          name: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          image_url: string
+          name: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_url?: string
+          name?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_plans_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

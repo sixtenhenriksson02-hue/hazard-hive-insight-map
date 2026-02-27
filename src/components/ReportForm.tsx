@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Camera, Send, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
+import SitePlanViewer from "@/components/SitePlanViewer";
 
 interface ReportFormProps {
   onSubmit: (report: {
@@ -27,6 +28,9 @@ interface ReportFormProps {
     absence_days?: number;
     severity_rating?: number;
     project_id?: string;
+    site_plan_id?: string;
+    plan_x?: number;
+    plan_y?: number;
   }) => void;
 }
 
@@ -52,12 +56,13 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState(activeProjectId ?? "");
   const [submitting, setSubmitting] = useState(false);
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+  const [planLocation, setPlanLocation] = useState<{ planId: string; x: number; y: number } | null>(null);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
   const injuryTypes = INJURY_TYPES_I18N[lang];
 
-  // Available projects for the form
   const availableProjects = isAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
   const currentProjectName = availableProjects.find(p => p.id === (selectedProjectId || activeProjectId))?.name ?? "";
 
@@ -80,7 +85,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     setSubmitting(true);
     const pid = selectedProjectId || activeProjectId || "";
     const building = availableProjects.find(p => p.id === pid)?.name ?? "";
-    
+
     await onSubmit({
       title,
       description,
@@ -96,9 +101,11 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       absence_required: reportType === "injury" ? absenceRequired : false,
       absence_days: reportType === "injury" ? absenceDays : 0,
       project_id: pid,
+      site_plan_id: planLocation?.planId,
+      plan_x: planLocation?.x,
+      plan_y: planLocation?.y,
     });
     setSubmitting(false);
-    // Reset
     setTitle("");
     setDescription("");
     setSpecificLocation("");
@@ -110,6 +117,8 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     setAbsenceDays(0);
     setImageFile(null);
     setImagePreview(null);
+    setPlanLocation(null);
+    setShowPlanPicker(false);
   };
 
   return (
@@ -135,13 +144,11 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       </div>
 
       <div className="space-y-3">
-        {/* Title */}
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.title")}</label>
           <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
-        {/* Project selector */}
         {availableProjects.length > 1 && (
           <div>
             <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.project")}</label>
@@ -155,7 +162,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           </div>
         )}
 
-        {/* Building (auto from project) + Location */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
@@ -171,7 +177,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           </div>
         </div>
 
-        {/* Category */}
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.category")}</label>
           <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -179,18 +184,15 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           </select>
         </div>
 
-        {/* Description */}
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
           <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
           <p className="text-xs text-muted-foreground mt-1">{t("form.aiNote")}</p>
         </div>
 
-        {/* Injury-specific fields */}
         {reportType === "injury" && (
           <div className="space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3">
             <h3 className="text-sm font-semibold text-destructive">{t("detail.injuryDetails")}</h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-sm font-medium text-card-foreground mb-1 block">{t("injury.bodyPart")}</label>
@@ -207,7 +209,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
                 </select>
               </div>
             </div>
-
             <div className="flex gap-4">
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={medicalCare} onChange={(e) => setMedicalCare(e.target.checked)} className="rounded border-border" />
@@ -218,7 +219,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
                 {t("injury.absence")}
               </label>
             </div>
-
             {absenceRequired && (
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-card-foreground">{t("injury.absenceDays")}:</label>
@@ -228,6 +228,29 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
             )}
           </div>
         )}
+
+        {/* APD Plan placement */}
+        <div>
+          <Button
+            type="button"
+            variant={planLocation ? "default" : "outline"}
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => setShowPlanPicker(!showPlanPicker)}
+          >
+            <MapPin className="h-3.5 w-3.5 mr-1" />
+            {planLocation ? `✓ ${t("apd.placeOnPlan")}` : t("apd.placeOnPlan")}
+          </Button>
+          {showPlanPicker && (
+            <div className="mt-2">
+              <SitePlanViewer
+                reports={[]}
+                selectionMode={true}
+                onSelectLocation={(planId, x, y) => setPlanLocation({ planId, x, y })}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Image */}
         <div>

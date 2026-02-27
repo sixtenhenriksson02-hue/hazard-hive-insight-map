@@ -8,10 +8,11 @@ import RiskMatrix from "@/components/RiskMatrix";
 import AdminStats from "@/components/AdminStats";
 import ProjectManager from "@/components/ProjectManager";
 import WorkerProjectManager from "@/components/WorkerProjectManager";
+import SitePlanViewer from "@/components/SitePlanViewer";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, List, Grid3X3, BarChart3, FolderPlus } from "lucide-react";
+import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -47,14 +48,19 @@ const Index = () => {
 
   return (
     <AppLayout onManageProjects={() => setShowProjects(true)}>
-      <div className="mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
-        <p className="text-muted-foreground mt-1">{t("dashboard.subtitle")}</p>
+      <div className="mb-6">
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
+        <p className="text-muted-foreground text-sm mt-0.5">{t("dashboard.subtitle")}</p>
       </div>
 
       <StatsCards reports={statsReports} />
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-8 mb-4">
+      {/* APD Plan on dashboard */}
+      <div className="mt-6">
+        <SitePlanViewer reports={reports} />
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 mb-4">
         <div className="flex gap-2">
           <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("reports")}>
             <List className="h-4 w-4 mr-1.5" />{t("dashboard.reports")}

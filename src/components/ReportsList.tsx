@@ -85,7 +85,7 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{report.building}{report.specific_location ? ` – ${report.specific_location}` : ""}</span>
                 )}
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(report.created_at).toLocaleDateString("sv-SE")}</span>
-                {isAdmin && report.reporter_name && (
+                {report.reporter_name && (
                   <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{report.reporter_name}</span>
                 )}
               </div>

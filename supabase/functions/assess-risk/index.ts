@@ -9,10 +9,15 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location } = await req.json();
+    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location, comments } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const hasComments = comments && comments.length > 0;
+    const commentsText = hasComments
+      ? `\n\nRecent comments on this report:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
+      : "";
 
     const prompt = `You are a workplace safety risk assessor. Analyze the following incident/observation report and provide a risk assessment.
 
@@ -28,8 +33,38 @@ ${report_type === "injury" ? `- Body part injured: ${body_part || "N/A"}
 - Medical care required: ${medical_care_required ? "Yes" : "No"}
 - Absence required: ${absence_required ? "Yes" : "No"}
 - Absence days: ${absence_days || 0}` : ""}
+${commentsText}
 
-Assess the risk level and provide a brief explanation in the same language as the report (Swedish if the text is in Swedish, English if in English).`;
+${hasComments ? `IMPORTANT: If the comments indicate that the risk has been fixed, resolved, or addressed, you should assess the risk level as "low" and update the explanation accordingly. If comments suggest partial fixes, adjust the risk level down appropriately.` : ""}
+
+Assess the risk level and provide a brief explanation in the same language as the report (Swedish if the text is in Swedish, English if in English).
+${hasComments ? `Also indicate whether the report should be marked as "resolved" based on the comments.` : ""}`;
+
+    const toolProperties: Record<string, unknown> = {
+      risk_level: {
+        type: "string",
+        enum: ["low", "medium", "high", "critical"],
+        description: "The assessed risk level",
+      },
+      explanation: {
+        type: "string",
+        description: "A brief explanation (2-3 sentences) of why this risk level was assigned. Write in the same language as the report.",
+      },
+      severity_rating: {
+        type: "number",
+        description: "Severity rating from 1-5 (1=minor, 5=very serious)",
+      },
+    };
+
+    const required = ["risk_level", "explanation", "severity_rating"];
+
+    if (hasComments) {
+      toolProperties.should_resolve = {
+        type: "boolean",
+        description: "Whether the report should be marked as resolved based on the comments indicating the issue has been fixed.",
+      };
+      required.push("should_resolve");
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -51,22 +86,8 @@ Assess the risk level and provide a brief explanation in the same language as th
               description: "Provide a structured risk assessment",
               parameters: {
                 type: "object",
-                properties: {
-                  risk_level: {
-                    type: "string",
-                    enum: ["low", "medium", "high", "critical"],
-                    description: "The assessed risk level",
-                  },
-                  explanation: {
-                    type: "string",
-                    description: "A brief explanation (2-3 sentences) of why this risk level was assigned. Write in the same language as the report.",
-                  },
-                  severity_rating: {
-                    type: "number",
-                    description: "Severity rating from 1-5 (1=minor, 5=very serious)",
-                  },
-                },
-                required: ["risk_level", "explanation", "severity_rating"],
+                properties: toolProperties,
+                required,
                 additionalProperties: false,
               },
             },
@@ -108,7 +129,6 @@ Assess the risk level and provide a brief explanation in the same language as th
     });
   } catch (e) {
     console.error("assess-risk error:", e);
-    // Fallback assessment
     return new Response(JSON.stringify({
       risk_level: "medium",
       explanation: "Automatisk bedömning kunde inte genomföras. Standardnivå tilldelad.",

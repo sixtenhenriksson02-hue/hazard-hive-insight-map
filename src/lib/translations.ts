@@ -155,6 +155,27 @@ const translations: Record<string, Record<Language, string>> = {
   "matrix.moderate": { sv: "Måttlig", en: "Moderate" },
   "matrix.serious": { sv: "Allvarlig", en: "Serious" },
   "matrix.verySevere": { sv: "Mycket allvarlig", en: "Very severe" },
+  "matrix.aiInfoTitle": { sv: "Hur bedömer AI riskerna?", en: "How does AI assess risks?" },
+  "matrix.aiInfoText1": { sv: "AI:n analyserar titel, beskrivning, kategori, platsinfo och skadedetaljer för att bedöma risknivån. Den använder riskmatrisen ovan som grund – sannolikhet × konsekvens.", en: "The AI analyzes title, description, category, location info and injury details to assess the risk level. It uses the risk matrix above as a basis – probability × consequence." },
+  "matrix.aiInfoText2": { sv: "Om en kommentar indikerar att risken har åtgärdats gör AI:n en ny bedömning automatiskt. Administratörer kan alltid manuellt ändra risknivån.", en: "If a comment indicates the risk has been resolved, the AI automatically reassesses. Admins can always manually override the risk level." },
+  "matrix.aiInfoTips": { sv: "Tips för bättre AI-bedömning:", en: "Tips for better AI assessment:" },
+  "matrix.aiTip1": { sv: "Beskriv vad som hände eller kan hända så detaljerat som möjligt", en: "Describe what happened or could happen as detailed as possible" },
+  "matrix.aiTip2": { sv: "Ange exakt plats (byggnad, våning, gång)", en: "Specify exact location (building, floor, aisle)" },
+  "matrix.aiTip3": { sv: "Välj rätt kategori – det hjälper AI:n att bedöma konsekvenserna", en: "Choose the right category – it helps the AI assess consequences" },
+  "matrix.aiTip4": { sv: "Vid skadeanmälan: fyll i alla skadedetaljer noggrant", en: "For injury reports: fill in all injury details carefully" },
+
+  // APD Plans
+  "apd.title": { sv: "APD-plan", en: "Site Plan" },
+  "apd.upload": { sv: "Ladda upp", en: "Upload" },
+  "apd.uploadTitle": { sv: "Ladda upp APD-plan", en: "Upload Site Plan" },
+  "apd.planName": { sv: "Namn på planen", en: "Plan name" },
+  "apd.selectFile": { sv: "Välj fil (bild)", en: "Select file (image)" },
+  "apd.uploaded": { sv: "APD-plan uppladdad!", en: "Site plan uploaded!" },
+  "apd.noPlan": { sv: "Ingen APD-plan uppladdad för detta projekt.", en: "No site plan uploaded for this project." },
+  "apd.uploadFirst": { sv: "Ladda upp en plan", en: "Upload a plan" },
+  "apd.selectProject": { sv: "Välj ett projekt för att se APD-planen.", en: "Select a project to view the site plan." },
+  "apd.clickToPlace": { sv: "Klicka på planen för att markera var risken uppstod", en: "Click on the plan to mark where the risk occurred" },
+  "apd.placeOnPlan": { sv: "Markera på APD-plan", en: "Mark on site plan" },
 
   // Admin stats
   "adminStats.title": { sv: "Statistik", en: "Statistics" },

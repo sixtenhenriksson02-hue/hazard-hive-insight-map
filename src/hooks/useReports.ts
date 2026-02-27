@@ -33,6 +33,9 @@ export interface RiskReport {
   absence_days?: number;
   severity_rating?: number;
   ai_explanation?: string | null;
+  site_plan_id?: string | null;
+  plan_x?: number | null;
+  plan_y?: number | null;
 }
 
 export interface ReportComment {
@@ -58,7 +61,8 @@ async function assessRiskWithAI(report: {
   medical_care_required?: boolean;
   absence_required?: boolean;
   absence_days?: number;
-}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number }> {
+  comments?: string[];
+}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean }> {
   try {
     const { data, error } = await supabase.functions.invoke("assess-risk", {
       body: report,
@@ -128,6 +132,9 @@ export function useReports() {
     absence_days?: number;
     severity_rating?: number;
     project_id?: string;
+    site_plan_id?: string;
+    plan_x?: number;
+    plan_y?: number;
   }) => {
     if (!user) return;
 
@@ -179,6 +186,9 @@ export function useReports() {
       absence_days: report.absence_days ?? 0,
       severity_rating: assessment.severity_rating,
       ai_explanation: assessment.explanation,
+      site_plan_id: report.site_plan_id ?? null,
+      plan_x: report.plan_x ?? null,
+      plan_y: report.plan_y ?? null,
     });
 
     if (error) {
@@ -204,6 +214,15 @@ export function useReports() {
     const report = reports.find(r => r.id === id);
     if (!report) return;
 
+    // Fetch comments for this report to give AI context
+    const { data: commentData } = await supabase
+      .from("report_comments")
+      .select("content")
+      .eq("report_id", id)
+      .order("created_at", { ascending: true });
+
+    const comments = commentData?.map(c => c.content) ?? [];
+
     const assessment = await assessRiskWithAI({
       title: report.title,
       description: report.description,
@@ -216,12 +235,21 @@ export function useReports() {
       medical_care_required: report.medical_care_required,
       absence_required: report.absence_required,
       absence_days: report.absence_days,
+      comments,
     });
 
-    await updateReport(id, {
+    const updates: any = {
       risk_level: assessment.risk_level as RiskLevel,
       ai_explanation: assessment.explanation,
-    });
+    };
+
+    // If AI suggests resolving, auto-resolve
+    if (assessment.should_resolve && report.status !== "resolved") {
+      updates.status = "resolved";
+      updates.resolved_at = new Date().toISOString();
+    }
+
+    await updateReport(id, updates);
   };
 
   const sortReports = (list: RiskReport[], sort: SortOption): RiskReport[] => {
