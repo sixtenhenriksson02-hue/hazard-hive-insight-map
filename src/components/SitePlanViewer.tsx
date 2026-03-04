@@ -43,6 +43,20 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number } | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!overlayRef.current) return;
+    const rect = overlayRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    if (selectionMode && onSelectLocation && activePlan) {
+      setSelectedPoint({ x, y });
+      onSelectLocation(activePlan.id, x, y);
+    }
+  };
 
   const fetchPlans = useCallback(async () => {
     if (!activeProjectId) return;
@@ -180,56 +194,109 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
       {activePlan ? (
         <div ref={containerRef} className="relative rounded-md overflow-hidden border border-border">
-          <img
-            ref={imgRef}
-            src={activePlan.image_url}
-            alt={activePlan.name}
-            className={`w-full h-auto max-h-[400px] object-contain bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
-            onClick={handleImageClick}
-          />
+          {isPdf(activePlan.image_url) ? (
+            <div className="relative" style={{ minHeight: selectionMode ? 300 : 400 }}>
+              <iframe
+                src={`${activePlan.image_url}#toolbar=0&navpanes=0`}
+                title={activePlan.name}
+                className="w-full border-0 bg-muted"
+                style={{ height: selectionMode ? 300 : 400 }}
+              />
+              {/* Transparent overlay for click detection on PDF */}
+              <div
+                ref={overlayRef}
+                className={`absolute inset-0 ${selectionMode ? "cursor-crosshair" : "pointer-events-none"}`}
+                onClick={selectionMode ? handleOverlayClick : undefined}
+              />
+              {/* Markers on PDF overlay */}
+              {planReports.map(r => (
+                <div
+                  key={r.id}
+                  className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                  style={{
+                    left: `${r.plan_x}%`,
+                    top: `${r.plan_y}%`,
+                    backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                  }}
+                  title={`${r.title} (${r.risk_level})`}
+                />
+              ))}
+              {riskZones.map((zone, i) => (
+                <div
+                  key={`zone-${i}`}
+                  className="absolute rounded-full pointer-events-none animate-pulse"
+                  style={{
+                    left: `${zone.x}%`,
+                    top: `${zone.y}%`,
+                    width: "60px",
+                    height: "60px",
+                    transform: "translate(-50%, -50%)",
+                    background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
+                    border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
+                  }}
+                />
+              ))}
+              {selectionMode && selectedPoint && (
+                <div
+                  className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
+                  style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
+                />
+              )}
+            </div>
+          ) : (
+            <>
+              <img
+                ref={imgRef}
+                src={activePlan.image_url}
+                alt={activePlan.name}
+                className={`w-full h-auto max-h-[400px] object-contain bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
+                onClick={handleImageClick}
+              />
 
-          {/* Risk zone highlights */}
-          {riskZones.map((zone, i) => (
-            <div
-              key={`zone-${i}`}
-              className="absolute rounded-full pointer-events-none animate-pulse"
-              style={{
-                left: `${zone.x}%`,
-                top: `${zone.y}%`,
-                width: "60px",
-                height: "60px",
-                transform: "translate(-50%, -50%)",
-                background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
-                border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
-              }}
-            />
-          ))}
+              {/* Risk zone highlights */}
+              {riskZones.map((zone, i) => (
+                <div
+                  key={`zone-${i}`}
+                  className="absolute rounded-full pointer-events-none animate-pulse"
+                  style={{
+                    left: `${zone.x}%`,
+                    top: `${zone.y}%`,
+                    width: "60px",
+                    height: "60px",
+                    transform: "translate(-50%, -50%)",
+                    background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
+                    border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
+                  }}
+                />
+              ))}
 
-          {/* Report markers */}
-          {planReports.map(r => (
-            <div
-              key={r.id}
-              className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-150"
-              style={{
-                left: `${r.plan_x}%`,
-                top: `${r.plan_y}%`,
-                backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-              }}
-              title={`${r.title} (${r.risk_level})`}
-            />
-          ))}
+              {/* Report markers */}
+              {planReports.map(r => (
+                <div
+                  key={r.id}
+                  className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-150"
+                  style={{
+                    left: `${r.plan_x}%`,
+                    top: `${r.plan_y}%`,
+                    backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                  }}
+                  title={`${r.title} (${r.risk_level})`}
+                />
+              ))}
 
-          {/* Selection mode point */}
-          {selectionMode && selectedPoint && (
-            <div
-              className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
-              style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
-            />
+              {/* Selection mode point */}
+              {selectionMode && selectedPoint && (
+                <div
+                  className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                  style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
+                />
+              )}
+            </>
           )}
 
           {/* Legend */}
           {planReports.length > 0 && (
-            <div className="absolute bottom-2 right-2 bg-card/90 border border-border rounded-md px-2 py-1.5 flex gap-2 text-[10px]">
+            <div className="absolute bottom-2 right-2 bg-card/90 border border-border rounded-md px-2 py-1.5 flex gap-2 text-[10px] z-10">
               {(["low", "medium", "high", "critical"] as const).map(level => (
                 <span key={level} className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[level] }} />
