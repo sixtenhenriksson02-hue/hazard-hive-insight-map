@@ -197,10 +197,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           {isPdf(activePlan.image_url) ? (
             <div className="relative" style={{ minHeight: selectionMode ? 300 : 400 }}>
               <iframe
-                src={`${activePlan.image_url}#toolbar=0&navpanes=0`}
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
                 title={activePlan.name}
                 className="w-full border-0 bg-muted"
                 style={{ height: selectionMode ? 300 : 400 }}
+                sandbox="allow-scripts allow-same-origin"
               />
               {/* Transparent overlay for click detection on PDF */}
               <div
