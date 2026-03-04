@@ -175,6 +175,8 @@ const translations: Record<string, Record<Language, string>> = {
   "apd.uploadFirst": { sv: "Ladda upp en plan", en: "Upload a plan" },
   "apd.selectProject": { sv: "Välj ett projekt för att se APD-planen.", en: "Select a project to view the site plan." },
   "apd.clickToPlace": { sv: "Klicka på planen för att markera var risken uppstod", en: "Click on the plan to mark where the risk occurred" },
+  "apd.confirmDelete": { sv: "Är du säker på att du vill ta bort denna APD-plan?", en: "Are you sure you want to delete this site plan?" },
+  "apd.deleted": { sv: "APD-plan borttagen", en: "Site plan deleted" },
   "apd.placeOnPlan": { sv: "Markera på APD-plan", en: "Mark on site plan" },
 
   // Admin stats

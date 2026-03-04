@@ -185,9 +185,35 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             </select>
           )}
           {isAdmin && (
-            <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowUpload(true)}>
-              <Upload className="h-3 w-3 mr-1" /> {t("apd.upload")}
-            </Button>
+            <>
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowUpload(true)}>
+                <Upload className="h-3 w-3 mr-1" /> {t("apd.upload")}
+              </Button>
+              {activePlan && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={async () => {
+                    if (!activePlan) return;
+                    const confirmed = window.confirm(t("apd.confirmDelete"));
+                    if (!confirmed) return;
+                    // Delete from storage
+                    const storagePath = activePlan.image_url.split("/site-plans/")[1];
+                    if (storagePath) {
+                      await supabase.storage.from("site-plans").remove([storagePath]);
+                    }
+                    // Delete from DB
+                    await supabase.from("site_plans").delete().eq("id", activePlan.id);
+                    setActivePlan(null);
+                    await fetchPlans();
+                    toast({ title: t("apd.deleted") });
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>
