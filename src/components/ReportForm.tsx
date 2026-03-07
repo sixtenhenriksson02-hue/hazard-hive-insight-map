@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, Send, MapPin, Building2 } from "lucide-react";
+import { Camera, Send, MapPin, Building2, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -229,27 +230,36 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
           </div>
         )}
 
-        {/* APD Plan placement */}
+        {/* APD Plan placement - opens in large dialog */}
         <div>
           <Button
             type="button"
             variant={planLocation ? "default" : "outline"}
             size="sm"
             className="w-full text-xs"
-            onClick={() => setShowPlanPicker(!showPlanPicker)}
+            onClick={() => setShowPlanPicker(true)}
           >
             <MapPin className="h-3.5 w-3.5 mr-1" />
             {planLocation ? `✓ ${t("apd.placeOnPlan")}` : t("apd.placeOnPlan")}
           </Button>
-          {showPlanPicker && (
-            <div className="mt-2">
+          <Dialog open={showPlanPicker} onOpenChange={setShowPlanPicker}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-accent" />
+                  {t("apd.placeOnPlan")}
+                </DialogTitle>
+              </DialogHeader>
               <SitePlanViewer
                 reports={[]}
                 selectionMode={true}
-                onSelectLocation={(planId, x, y) => setPlanLocation({ planId, x, y })}
+                onSelectLocation={(planId, x, y) => {
+                  setPlanLocation({ planId, x, y });
+                  setShowPlanPicker(false);
+                }}
               />
-            </div>
-          )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Image */}

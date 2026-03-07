@@ -129,9 +129,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     }
   };
 
-  // Filter reports that have coordinates on the active plan
+  // Filter reports that have coordinates on the active plan (exclude resolved)
   const planReports = activePlan
-    ? reports.filter(r => r.site_plan_id === activePlan.id && r.plan_x != null && r.plan_y != null)
+    ? reports.filter(r => r.site_plan_id === activePlan.id && r.plan_x != null && r.plan_y != null && r.status !== "resolved")
     : [];
 
   // Calculate high-risk zones (cluster areas)
@@ -221,12 +221,12 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       {activePlan ? (
         <div ref={containerRef} className="relative rounded-md overflow-hidden border border-border">
           {isPdf(activePlan.image_url) ? (
-            <div className="relative" style={{ minHeight: selectionMode ? 300 : 400 }}>
+            <div className="relative" style={{ minHeight: selectionMode ? 500 : 400 }}>
               <iframe
                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
                 title={activePlan.name}
                 className="w-full border-0 bg-muted"
-                style={{ height: selectionMode ? 300 : 400 }}
+                style={{ height: selectionMode ? 500 : 400 }}
                 sandbox="allow-scripts allow-same-origin"
               />
               {/* Transparent overlay for click detection on PDF */}
@@ -276,7 +276,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto max-h-[400px] object-contain bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
+                className={`w-full h-auto object-contain bg-muted ${selectionMode ? "cursor-crosshair max-h-[600px]" : "max-h-[400px]"}`}
                 onClick={handleImageClick}
               />
 

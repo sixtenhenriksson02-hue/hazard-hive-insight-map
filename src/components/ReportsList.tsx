@@ -48,9 +48,9 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${riskBadgeClass[report.risk_level]}`}>
                   {t(`risk.${report.risk_level}`)}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status]}`} />
-                  {report.status === "open" ? t("status.open") : report.status === "in-progress" ? t("status.inProgress") : t("status.resolved")}
+                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status] ?? statusDotClass["open"]}`} />
+                  {report.status === "resolved" ? t("status.resolved") : t("status.open")}
                 </span>
                 <span className="text-xs text-muted-foreground">•</span>
                 {report.report_type === "injury" ? (
@@ -94,7 +94,7 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
             <div className="flex flex-col items-end gap-2">
               <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
               {isAdmin && report.status !== "resolved" && onUpdateStatus && (
-                <select
+                 <select
                   className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
                   value={report.status}
                   onClick={(e) => e.stopPropagation()}
@@ -104,7 +104,6 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                   }}
                 >
                   <option value="open">{t("status.open")}</option>
-                  <option value="in-progress">{t("status.inProgress")}</option>
                   <option value="resolved">{t("status.resolved")}</option>
                 </select>
               )}
