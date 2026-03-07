@@ -229,13 +229,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 style={{ height: selectionMode ? 500 : 400 }}
                 sandbox="allow-scripts allow-same-origin"
               />
-              {/* Transparent overlay for click detection on PDF */}
               <div
                 ref={overlayRef}
                 className={`absolute inset-0 ${selectionMode ? "cursor-crosshair" : "pointer-events-none"}`}
                 onClick={selectionMode ? handleOverlayClick : undefined}
               />
-              {/* Markers on PDF overlay */}
               {planReports.map(r => (
                 <div
                   key={r.id}
@@ -271,13 +269,14 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               )}
             </div>
           ) : (
-            <>
+            <div className="relative">
               <img
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto object-contain bg-muted ${selectionMode ? "cursor-crosshair max-h-[600px]" : "max-h-[400px]"}`}
+                className={`w-full h-auto block bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
                 onClick={handleImageClick}
+                draggable={false}
               />
 
               {/* Risk zone highlights */}
@@ -314,11 +313,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {/* Selection mode point */}
               {selectionMode && selectedPoint && (
                 <div
-                  className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                  className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
                   style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
                 />
               )}
-            </>
+            </div>
           )}
 
           {/* Legend */}
