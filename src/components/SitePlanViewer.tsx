@@ -276,7 +276,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto max-h-[400px] object-contain bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
+                className={`w-full h-auto object-contain bg-muted ${selectionMode ? "cursor-crosshair max-h-[600px]" : "max-h-[400px]"}`}
                 onClick={handleImageClick}
               />
 

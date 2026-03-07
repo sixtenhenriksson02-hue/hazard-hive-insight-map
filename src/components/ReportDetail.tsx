@@ -190,8 +190,8 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-muted-foreground">{t("detail.status")}:</span>
-                <span className="font-medium">
-                  {report.status === "open" ? t("status.open") : report.status === "in-progress" ? t("status.inProgress") : t("status.resolved")}
+                 <span className="font-medium">
+                  {report.status === "resolved" ? t("status.resolved") : t("status.open")}
                 </span>
                 <span className="text-muted-foreground">•</span>
                 <span>{report.category}</span>

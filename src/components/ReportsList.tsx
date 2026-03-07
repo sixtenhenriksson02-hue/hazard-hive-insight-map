@@ -48,9 +48,9 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${riskBadgeClass[report.risk_level]}`}>
                   {t(`risk.${report.risk_level}`)}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status]}`} />
-                  {report.status === "open" ? t("status.open") : report.status === "in-progress" ? t("status.inProgress") : t("status.resolved")}
+                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status] ?? statusDotClass["open"]}`} />
+                  {report.status === "resolved" ? t("status.resolved") : t("status.open")}
                 </span>
                 <span className="text-xs text-muted-foreground">•</span>
                 {report.report_type === "injury" ? (

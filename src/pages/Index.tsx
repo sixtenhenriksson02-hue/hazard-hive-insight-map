@@ -103,7 +103,7 @@ const Index = () => {
           {activeTab === "reports" && (
             <>
               <div className="flex gap-2 mb-4 flex-wrap">
-                {(["all", "open", "in-progress", ...(isAdmin ? ["resolved" as const] : [])] as const).map((s) => (
+                {(["all", "open", ...(isAdmin ? ["resolved" as const] : [])] as const).map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
@@ -113,7 +113,7 @@ const Index = () => {
                         : "bg-card text-muted-foreground border-border hover:border-accent"
                     }`}
                   >
-                    {s === "all" ? t("status.all") : s === "open" ? t("status.openPlural") : s === "in-progress" ? t("status.inProgress") : t("status.resolvedPlural")}
+                    {s === "all" ? t("status.all") : s === "open" ? t("status.openPlural") : t("status.resolvedPlural")}
                   </button>
                 ))}
               </div>
