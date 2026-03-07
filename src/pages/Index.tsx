@@ -43,7 +43,7 @@ const Index = () => {
     updateReport(id, { status });
   };
 
-  const statsReports = isAdmin ? reports : reports.filter((r) => r.status !== "resolved");
+  
 
   return (
     <AppLayout onManageProjects={() => setShowProjects(true)}>
