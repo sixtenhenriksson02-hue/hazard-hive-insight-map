@@ -129,9 +129,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     }
   };
 
-  // Filter reports that have coordinates on the active plan
+  // Filter reports that have coordinates on the active plan (exclude resolved)
   const planReports = activePlan
-    ? reports.filter(r => r.site_plan_id === activePlan.id && r.plan_x != null && r.plan_y != null)
+    ? reports.filter(r => r.site_plan_id === activePlan.id && r.plan_x != null && r.plan_y != null && r.status !== "resolved")
     : [];
 
   // Calculate high-risk zones (cluster areas)
