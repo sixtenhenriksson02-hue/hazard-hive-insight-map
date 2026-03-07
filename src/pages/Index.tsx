@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import AppLayout from "@/components/AppLayout";
-import StatsCards from "@/components/StatsCards";
 import ReportForm from "@/components/ReportForm";
 import ReportsList from "@/components/ReportsList";
 import ReportDetail from "@/components/ReportDetail";
@@ -44,7 +43,7 @@ const Index = () => {
     updateReport(id, { status });
   };
 
-  const statsReports = isAdmin ? reports : reports.filter((r) => r.status !== "resolved");
+  
 
   return (
     <AppLayout onManageProjects={() => setShowProjects(true)}>
@@ -53,7 +52,7 @@ const Index = () => {
         <p className="text-muted-foreground text-sm mt-0.5">{t("dashboard.subtitle")}</p>
       </div>
 
-      <StatsCards reports={statsReports} />
+      {/* Removed StatsCards */}
 
       {/* APD Plan on dashboard */}
       <div className="mt-6">
