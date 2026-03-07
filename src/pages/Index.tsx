@@ -52,7 +52,7 @@ const Index = () => {
         <p className="text-muted-foreground text-sm mt-0.5">{t("dashboard.subtitle")}</p>
       </div>
 
-      <StatsCards reports={statsReports} />
+      {/* Removed StatsCards */}
 
       {/* APD Plan on dashboard */}
       <div className="mt-6">

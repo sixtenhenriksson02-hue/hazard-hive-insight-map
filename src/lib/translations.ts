@@ -164,20 +164,20 @@ const translations: Record<string, Record<Language, string>> = {
   "matrix.aiTip3": { sv: "Välj rätt kategori – det hjälper AI:n att bedöma konsekvenserna", en: "Choose the right category – it helps the AI assess consequences" },
   "matrix.aiTip4": { sv: "Vid skadeanmälan: fyll i alla skadedetaljer noggrant", en: "For injury reports: fill in all injury details carefully" },
 
-  // APD Plans
-  "apd.title": { sv: "APD-plan", en: "Site Plan" },
+  // APD Plans / Riskanalys-karta
+  "apd.title": { sv: "Riskanalys-karta", en: "Risk Analysis Map" },
   "apd.upload": { sv: "Ladda upp", en: "Upload" },
-  "apd.uploadTitle": { sv: "Ladda upp APD-plan", en: "Upload Site Plan" },
+  "apd.uploadTitle": { sv: "Ladda upp riskanalys-karta", en: "Upload Risk Analysis Map" },
   "apd.planName": { sv: "Namn på planen", en: "Plan name" },
   "apd.selectFile": { sv: "Välj fil (bild)", en: "Select file (image)" },
-  "apd.uploaded": { sv: "APD-plan uppladdad!", en: "Site plan uploaded!" },
-  "apd.noPlan": { sv: "Ingen APD-plan uppladdad för detta projekt.", en: "No site plan uploaded for this project." },
-  "apd.uploadFirst": { sv: "Ladda upp en plan", en: "Upload a plan" },
-  "apd.selectProject": { sv: "Välj ett projekt för att se APD-planen.", en: "Select a project to view the site plan." },
-  "apd.clickToPlace": { sv: "Klicka på planen för att markera var risken uppstod", en: "Click on the plan to mark where the risk occurred" },
-  "apd.confirmDelete": { sv: "Är du säker på att du vill ta bort denna APD-plan?", en: "Are you sure you want to delete this site plan?" },
-  "apd.deleted": { sv: "APD-plan borttagen", en: "Site plan deleted" },
-  "apd.placeOnPlan": { sv: "Markera på APD-plan", en: "Mark on site plan" },
+  "apd.uploaded": { sv: "Riskanalys-karta uppladdad!", en: "Risk analysis map uploaded!" },
+  "apd.noPlan": { sv: "Ingen riskanalys-karta uppladdad för detta projekt.", en: "No risk analysis map uploaded for this project." },
+  "apd.uploadFirst": { sv: "Ladda upp en karta", en: "Upload a map" },
+  "apd.selectProject": { sv: "Välj ett projekt för att se riskanalys-kartan.", en: "Select a project to view the risk analysis map." },
+  "apd.clickToPlace": { sv: "Klicka på kartan för att markera var risken uppstod", en: "Click on the map to mark where the risk occurred" },
+  "apd.confirmDelete": { sv: "Är du säker på att du vill ta bort denna riskanalys-karta?", en: "Are you sure you want to delete this risk analysis map?" },
+  "apd.deleted": { sv: "Riskanalys-karta borttagen", en: "Risk analysis map deleted" },
+  "apd.placeOnPlan": { sv: "Markera på riskanalys-karta", en: "Mark on risk analysis map" },
 
   // Admin stats
   "adminStats.title": { sv: "Statistik", en: "Statistics" },
