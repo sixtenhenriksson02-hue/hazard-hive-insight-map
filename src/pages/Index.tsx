@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import AppLayout from "@/components/AppLayout";
-import StatsCards from "@/components/StatsCards";
 import ReportForm from "@/components/ReportForm";
 import ReportsList from "@/components/ReportsList";
 import ReportDetail from "@/components/ReportDetail";
