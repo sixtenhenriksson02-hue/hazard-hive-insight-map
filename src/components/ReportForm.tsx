@@ -223,8 +223,27 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
-          <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
-          <p className="text-xs text-muted-foreground mt-1">{t("form.aiNote")}</p>
+          <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }} />
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-muted-foreground">{t("form.aiNote")}</p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1"
+              onClick={handleSpellCheck}
+              disabled={spellChecking || (!title.trim() && !description.trim())}
+            >
+              {spellChecking ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : spellChecked ? (
+                <CheckCircle2 className="h-3 w-3 text-risk-low" />
+              ) : (
+                <SpellCheck className="h-3 w-3" />
+              )}
+              {spellChecking ? t("spellcheck.checking") : spellChecked ? t("spellcheck.done") : t("spellcheck.button")}
+            </Button>
+          </div>
         </div>
 
         {reportType === "injury" && (
