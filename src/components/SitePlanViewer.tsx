@@ -320,15 +320,24 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             </div>
           )}
 
-          {/* Legend */}
+          {/* Legend overlay */}
           {planReports.length > 0 && (
-            <div className="absolute bottom-2 right-2 bg-card/90 border border-border rounded-md px-2 py-1.5 flex gap-2 text-[10px] z-10">
-              {(["low", "medium", "high", "critical"] as const).map(level => (
-                <span key={level} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[level] }} />
-                  {t(`risk.${level}`)}
-                </span>
-              ))}
+            <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2.5 py-2 text-[10px] z-10 max-w-[200px]">
+              <p className="font-semibold text-card-foreground mb-1 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 text-accent" />
+                {t("apd.legendTitle")}
+              </p>
+              {(["critical", "high", "medium", "low"] as const).map(level => {
+                const count = planReports.filter(r => r.risk_level === level).length;
+                if (count === 0) return null;
+                return (
+                  <div key={level} className="flex items-center gap-1.5 py-0.5">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-card" style={{ backgroundColor: riskDotColor[level] }} />
+                    <span className="text-card-foreground font-medium">{t(`risk.${level}`)}</span>
+                    <span className="text-muted-foreground ml-auto">({count})</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -346,6 +355,43 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
       {selectionMode && activePlan && (
         <p className="text-xs text-accent mt-2 text-center">{t("apd.clickToPlace")}</p>
+      )}
+
+      {/* Risk summary panel below map */}
+      {!selectionMode && planReports.length > 0 && (
+        <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
+          <h3 className="text-xs font-semibold text-card-foreground mb-2 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-accent" />
+            {t("apd.activeRisks")}
+          </h3>
+          <div className="space-y-2">
+            {(["critical", "high", "medium", "low"] as const).map(level => {
+              const levelReports = planReports.filter(r => r.risk_level === level);
+              if (levelReports.length === 0) return null;
+              return (
+                <div key={level} className="space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: riskDotColor[level] }} />
+                    <span className="text-xs font-semibold" style={{ color: riskDotColor[level] }}>
+                      {t(`risk.${level}`)} ({levelReports.length})
+                    </span>
+                  </div>
+                  <div className="ml-4 space-y-0.5">
+                    {levelReports.map(r => (
+                      <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
+                        <span className="text-muted-foreground">•</span>
+                        <div>
+                          <span className="text-card-foreground font-medium">{r.title}</span>
+                          <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Upload dialog */}

@@ -178,6 +178,8 @@ const translations: Record<string, Record<Language, string>> = {
   "apd.confirmDelete": { sv: "Är du säker på att du vill ta bort denna riskanalys-karta?", en: "Are you sure you want to delete this risk analysis map?" },
   "apd.deleted": { sv: "Riskanalys-karta borttagen", en: "Risk analysis map deleted" },
   "apd.placeOnPlan": { sv: "Markera på riskanalys-karta", en: "Mark on risk analysis map" },
+  "apd.legendTitle": { sv: "Risker på kartan", en: "Risks on map" },
+  "apd.activeRisks": { sv: "Aktiva risker på kartan", en: "Active risks on map" },
 
   // Admin stats
   "adminStats.title": { sv: "Statistik", en: "Statistics" },
