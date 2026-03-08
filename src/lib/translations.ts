@@ -180,6 +180,7 @@ const translations: Record<string, Record<Language, string>> = {
   "apd.placeOnPlan": { sv: "Markera på riskanalys-karta", en: "Mark on risk analysis map" },
   "apd.legendTitle": { sv: "Risker på kartan", en: "Risks on map" },
   "apd.activeRisks": { sv: "Aktiva risker på kartan", en: "Active risks on map" },
+  "apd.enhance": { sv: "Förbättra bild", en: "Enhance image" },
 
   // Admin stats
   "adminStats.title": { sv: "Statistik", en: "Statistics" },
