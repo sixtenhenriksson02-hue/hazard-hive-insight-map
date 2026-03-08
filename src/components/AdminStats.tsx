@@ -83,7 +83,7 @@ export default function AdminStats({ reports }: AdminStatsProps) {
       {/* Period selector */}
       <div className="flex items-center gap-3">
         <span className="text-sm font-medium text-card-foreground">{t("adminStats.period")}:</span>
-        {[7, 30, 90].map((d) => (
+        {[7, 30, 90, 180, 365, 0].map((d) => (
           <button
             key={d}
             onClick={() => setPeriod(d)}
@@ -93,7 +93,7 @@ export default function AdminStats({ reports }: AdminStatsProps) {
                 : "bg-card text-muted-foreground border-border hover:border-accent"
             }`}
           >
-            {d === 7 ? t("adminStats.last7") : d === 30 ? t("adminStats.last30") : t("adminStats.last90")}
+            {d === 7 ? t("adminStats.last7") : d === 30 ? t("adminStats.last30") : d === 90 ? t("adminStats.last90") : d === 180 ? t("adminStats.last180") : d === 365 ? t("adminStats.last365") : t("adminStats.allTime")}
           </button>
         ))}
       </div>
