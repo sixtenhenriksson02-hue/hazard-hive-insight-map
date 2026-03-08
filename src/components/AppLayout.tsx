@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useProjects } from "@/hooks/useProjects";
+import NotificationBell from "@/components/NotificationBell";
 
 interface AppLayoutProps {
   children: React.ReactNode;
