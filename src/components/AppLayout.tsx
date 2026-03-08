@@ -77,6 +77,15 @@ export default function AppLayout({ children, onManageProjects, onJoinProject }:
                 )}
               </>
             )}
+            {!isAdmin && onJoinProject && (
+              <button
+                onClick={onJoinProject}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                {t("project.joinWithCode")}
+              </button>
+            )}
             <span className="text-primary-foreground/70 text-xs">
               {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? t("auth.admin") : t("auth.worker")}</span>
             </span>
