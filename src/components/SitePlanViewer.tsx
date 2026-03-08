@@ -394,10 +394,15 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
-                style={enhanceImage ? {
-                  filter: "contrast(1.35) brightness(1.08) saturate(0.15)",
-                } : undefined}
+                className={`w-full block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
+                style={{
+                  minHeight: "350px",
+                  maxHeight: "70vh",
+                  objectFit: "contain",
+                  ...(enhanceImage ? {
+                    filter: "contrast(1.4) brightness(1.1) saturate(0.1) sharpen(1)",
+                  } : {}),
+                }}
                 onClick={handleImageClick}
                 draggable={false}
               />
