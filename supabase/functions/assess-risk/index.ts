@@ -16,43 +16,86 @@ serve(async (req) => {
 
     const hasComments = comments && comments.length > 0;
     const commentsText = hasComments
-      ? `\n\nRecent comments on this report:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
+      ? `\n\nSenaste kommentarer på denna rapport:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
       : "";
 
-    const prompt = `You are a workplace safety risk assessor. Analyze the following incident/observation report and provide a risk assessment.
+    const prompt = `Du är en erfaren arbetsmiljöexpert och riskbedömare inom bygg- och anläggningsbranschen i Sverige. Du följer AFS (Arbetsmiljöverkets föreskrifter) och har djup kunskap om vanliga arbetsplatsrisker.
 
-Report details:
-- Type: ${report_type === "injury" ? "Injury report" : "Risk observation"}
-- Title: ${title}
-- Description: ${description}
-- Category: ${category}
-- Building/Project: ${building || "N/A"}
-- Location: ${specific_location || "N/A"}
-${report_type === "injury" ? `- Body part injured: ${body_part || "N/A"}
-- Injury type: ${injury_type || "N/A"}
-- Medical care required: ${medical_care_required ? "Yes" : "No"}
-- Absence required: ${absence_required ? "Yes" : "No"}
-- Absence days: ${absence_days || 0}` : ""}
+Analysera följande rapport och ge en detaljerad riskbedömning.
+
+RAPPORTINFORMATION:
+- Typ: ${report_type === "injury" ? "Skaderapport (inträffad olycka)" : "Riskobservation (potentiell risk)"}
+- Rubrik: ${title}
+- Beskrivning: ${description}
+- Kategori: ${category}
+- Byggnad/Projekt: ${building || "Ej angivet"}
+- Plats: ${specific_location || "Ej angivet"}
+${report_type === "injury" ? `- Skadad kroppsdel: ${body_part || "Ej angivet"}
+- Skadetyp: ${injury_type || "Ej angivet"}
+- Sjukvård krävdes: ${medical_care_required ? "Ja" : "Nej"}
+- Frånvaro krävdes: ${absence_required ? "Ja" : "Nej"}
+- Frånvarodagar: ${absence_days || 0}` : ""}
 ${commentsText}
 
-${hasComments ? `IMPORTANT: If the comments indicate that the risk has been fixed, resolved, or addressed, you should assess the risk level as "low" and update the explanation accordingly. If comments suggest partial fixes, adjust the risk level down appropriately.` : ""}
+BEDÖMNINGSKRITERIER:
+Använd följande riktlinjer för risknivå:
 
-Assess the risk level and provide a brief explanation in the same language as the report (Swedish if the text is in Swedish, English if in English).
-${hasComments ? `Also indicate whether the report should be marked as "resolved" based on the comments.` : ""}`;
+KRITISK (critical):
+- Omedelbar livsfara eller risk för allvarlig permanent skada
+- Bristande fallskydd vid höjdarbete (>2m)
+- Ras- eller kollapseringsrisk
+- Exponering för farliga ämnen utan skyddsutrustning
+- Elektriska risker med hög spänning
+- Allvarliga skador som krävt sjukhusvård
+
+HÖG (high):
+- Risk för allvarlig skada som kräver sjukvård
+- Bristande säkerhetsutrustning vid riskfyllda moment
+- Upprepade incidenter i samma område
+- Ergonomiska risker med hög belastning
+- Skador med frånvaro > 3 dagar
+
+MEDEL (medium):
+- Risk för lättare skada
+- Mindre brister i ordning/säkerhet
+- Ergonomiska besvär
+- Skador med kortare frånvaro (1-3 dagar)
+
+LÅG (low):
+- Minimal risk för skada
+- Mindre observationer som är enkla att åtgärda
+- Skador utan frånvaro och utan sjukvårdsbehov
+- Redan delvis åtgärdade risker
+
+ALLVARLIGHETSGRAD (1-5):
+1 = Obetydlig påverkan, ingen skaderisk
+2 = Mindre påverkan, lättare skada möjlig
+3 = Måttlig påverkan, skada som kräver vård möjlig
+4 = Allvarlig påverkan, allvarlig skada möjlig
+5 = Mycket allvarlig, livsfara eller permanent skada möjlig
+
+${hasComments ? `KOMMENTARSBEDÖMNING:
+Analysera kommentarerna noggrant:
+- Om kommentarer tydligt anger att risken är ÅTGÄRDAD (t.ex. "fixat", "åtgärdat", "reparerat", "bytt ut") → sänk risknivån till "low" och markera som bör lösas
+- Om kommentarer anger DELVIS åtgärdad → sänk risknivån ett steg
+- Om kommentarer anger att risken KVARSTÅR eller FÖRVÄRRATS → behåll eller höj risknivån
+- Var kritisk och kräv tydliga bevis på åtgärd innan du sänker nivån` : ""}
+
+Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar till de faktiska detaljerna i rapporten. Undvik generiska svar.`;
 
     const toolProperties: Record<string, unknown> = {
       risk_level: {
         type: "string",
         enum: ["low", "medium", "high", "critical"],
-        description: "The assessed risk level",
+        description: "Bedömd risknivå baserat på kriterierna ovan",
       },
       explanation: {
         type: "string",
-        description: "A brief explanation (2-3 sentences) of why this risk level was assigned. Write in the same language as the report.",
+        description: "En konkret förklaring (3-4 meningar) på svenska som refererar till specifika detaljer i rapporten och motiverar risknivån. Inkludera rekommenderade åtgärder.",
       },
       severity_rating: {
         type: "number",
-        description: "Severity rating from 1-5 (1=minor, 5=very serious)",
+        description: "Allvarlighetsgrad 1-5 enligt kriterierna ovan",
       },
     };
 
@@ -61,7 +104,7 @@ ${hasComments ? `Also indicate whether the report should be marked as "resolved"
     if (hasComments) {
       toolProperties.should_resolve = {
         type: "boolean",
-        description: "Whether the report should be marked as resolved based on the comments indicating the issue has been fixed.",
+        description: "Om rapporten bör markeras som åtgärdad baserat på kommentarer som tydligt anger att problemet är löst.",
       };
       required.push("should_resolve");
     }
@@ -73,9 +116,9 @@ ${hasComments ? `Also indicate whether the report should be marked as "resolved"
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are a workplace safety expert. Always respond using the assess_risk tool." },
+          { role: "system", content: "Du är en senior arbetsmiljöingenjör med 20+ års erfarenhet inom svensk bygg- och anläggningsbransch. Du gör noggranna och välmotiverade riskbedömningar enligt AFS-standarder. Svara alltid med assess_risk-verktyget." },
           { role: "user", content: prompt },
         ],
         tools: [
@@ -83,7 +126,7 @@ ${hasComments ? `Also indicate whether the report should be marked as "resolved"
             type: "function",
             function: {
               name: "assess_risk",
-              description: "Provide a structured risk assessment",
+              description: "Ge en strukturerad riskbedömning av arbetsplatsrapporten",
               parameters: {
                 type: "object",
                 properties: toolProperties,
@@ -131,7 +174,7 @@ ${hasComments ? `Also indicate whether the report should be marked as "resolved"
     console.error("assess-risk error:", e);
     return new Response(JSON.stringify({
       risk_level: "medium",
-      explanation: "Automatisk bedömning kunde inte genomföras. Standardnivå tilldelad.",
+      explanation: "Automatisk bedömning kunde inte genomföras. Standardnivå tilldelad – granska manuellt.",
       severity_rating: 3,
     }), {
       status: 200,
