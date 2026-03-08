@@ -10,7 +10,7 @@ interface AppLayoutProps {
   onJoinProject?: () => void;
 }
 
-export default function AppLayout({ children, onManageProjects }: AppLayoutProps) {
+export default function AppLayout({ children, onManageProjects, onJoinProject }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
