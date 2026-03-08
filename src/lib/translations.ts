@@ -146,6 +146,11 @@ const translations: Record<string, Record<Language, string>> = {
   "project.inviteCode": { sv: "Inbjudningskod", en: "Invite code" },
   "project.codeCopied": { sv: "Kod kopierad!", en: "Code copied!" },
   "project.joinWithCode": { sv: "Gå med i projekt med kod", en: "Join project with code" },
+  "project.archive": { sv: "Arkivera", en: "Archive" },
+  "project.activate": { sv: "Aktivera", en: "Activate" },
+  "project.archived": { sv: "Arkiverat", en: "Archived" },
+  "project.showArchived": { sv: "Visa arkiverade", en: "Show archived" },
+  "project.hideArchived": { sv: "Dölj arkiverade", en: "Hide archived" },
   "project.enterCode": { sv: "Ange kod", en: "Enter code" },
   "project.join": { sv: "Gå med", en: "Join" },
 
