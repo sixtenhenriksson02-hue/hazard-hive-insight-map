@@ -512,15 +512,23 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     </span>
                   </div>
                   <div className="ml-4 space-y-0.5">
-                    {levelReports.map(r => (
-                      <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
-                        <span className="text-muted-foreground">•</span>
-                        <div>
-                          <span className="text-card-foreground font-medium">{r.title}</span>
-                          <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
+                    {levelReports.map(r => {
+                      const globalIdx = planReports.indexOf(r) + 1;
+                      return (
+                        <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
+                          <span
+                            className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[8px] font-bold text-white mt-0.5"
+                            style={{ backgroundColor: riskDotColor[r.risk_level] }}
+                          >
+                            {globalIdx}
+                          </span>
+                          <div>
+                            <span className="text-card-foreground font-medium">{r.title}</span>
+                            <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
