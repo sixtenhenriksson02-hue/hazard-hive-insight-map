@@ -5,8 +5,10 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SitePlan {
