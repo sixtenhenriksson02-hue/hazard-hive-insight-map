@@ -38,6 +38,8 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [reassessing, setReassessing] = useState(false);
   const [translatedExplanation, setTranslatedExplanation] = useState<string | null>(null);
   const [translatedActions, setTranslatedActions] = useState<string[] | null>(null);
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [showTranslated, setShowTranslated] = useState(false);
 
