@@ -347,17 +347,19 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 className={`absolute inset-0 ${selectionMode ? "cursor-crosshair" : "pointer-events-none"}`}
                 onClick={selectionMode ? handleOverlayClick : undefined}
               />
-              {planReports.map(r => (
+              {planReports.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                  className="absolute w-5 h-5 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                   style={{
                     left: `${r.plan_x}%`,
                     top: `${r.plan_y}%`,
                     backgroundColor: riskDotColor[r.risk_level] ?? "#888",
                   }}
-                  title={`${r.title} (${r.risk_level})`}
-                />
+                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
+                >
+                  <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
+                </div>
               ))}
               {riskZones.map((zone, i) => (
                 <div
