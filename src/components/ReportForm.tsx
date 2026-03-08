@@ -87,8 +87,9 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     const pid = selectedProjectId || activeProjectId || "";
     const building = availableProjects.find(p => p.id === pid)?.name ?? "";
 
+    const capitalizedTitle = title.charAt(0).toUpperCase() + title.slice(1);
     await onSubmit({
-      title,
+      title: capitalizedTitle,
       description,
       location: `${building} - ${specificLocation}`,
       category,
