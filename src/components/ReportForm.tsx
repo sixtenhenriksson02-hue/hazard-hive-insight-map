@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, Maximize2 } from "lucide-react";
+import { Camera, Send, MapPin, Building2, Maximize2, SpellCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
 import SitePlanViewer from "@/components/SitePlanViewer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReportFormProps {
   onSubmit: (report: {
@@ -59,6 +60,8 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [planLocation, setPlanLocation] = useState<{ planId: string; x: number; y: number } | null>(null);
+  const [spellChecking, setSpellChecking] = useState(false);
+  const [spellChecked, setSpellChecked] = useState(false);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
@@ -75,6 +78,38 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       reader.onload = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSpellCheck = async () => {
+    const textsToCheck = [title, description].filter(t => t.trim().length > 0);
+    if (textsToCheck.length === 0) return;
+
+    setSpellChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("spellcheck", {
+        body: { texts: textsToCheck },
+      });
+
+      if (!error && data?.corrected && data.corrected.length > 0) {
+        let idx = 0;
+        if (title.trim()) {
+          setTitle(data.corrected[idx++]);
+        }
+        if (description.trim() && idx < data.corrected.length) {
+          setDescription(data.corrected[idx]);
+        }
+        setSpellChecked(true);
+        if (data.had_errors) {
+          toast({ title: t("spellcheck.corrected") });
+        } else {
+          toast({ title: t("spellcheck.noErrors") });
+        }
+        setTimeout(() => setSpellChecked(false), 3000);
+      }
+    } catch (e) {
+      console.error("Spellcheck error:", e);
+    }
+    setSpellChecking(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -148,7 +183,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.title")}</label>
-          <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => { setTitle(e.target.value); setSpellChecked(false); }} />
         </div>
 
         {availableProjects.length > 1 && (
@@ -188,8 +223,27 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
-          <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
-          <p className="text-xs text-muted-foreground mt-1">{t("form.aiNote")}</p>
+          <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }} />
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-muted-foreground">{t("form.aiNote")}</p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs gap-1"
+              onClick={handleSpellCheck}
+              disabled={spellChecking || (!title.trim() && !description.trim())}
+            >
+              {spellChecking ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : spellChecked ? (
+                <CheckCircle2 className="h-3 w-3 text-risk-low" />
+              ) : (
+                <SpellCheck className="h-3 w-3" />
+              )}
+              {spellChecking ? t("spellcheck.checking") : spellChecked ? t("spellcheck.done") : t("spellcheck.button")}
+            </Button>
+          </div>
         </div>
 
         {reportType === "injury" && (

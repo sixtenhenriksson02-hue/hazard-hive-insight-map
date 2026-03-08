@@ -249,6 +249,13 @@ const translations: Record<string, Record<Language, string>> = {
   "translate.translating": { sv: "Översätter...", en: "Translating..." },
   "translate.original": { sv: "Visa original", en: "Show original" },
 
+  // Spellcheck
+  "spellcheck.button": { sv: "Stavningskoll", en: "Spell check" },
+  "spellcheck.checking": { sv: "Kontrollerar...", en: "Checking..." },
+  "spellcheck.done": { sv: "Kontrollerad", en: "Checked" },
+  "spellcheck.corrected": { sv: "Stavning korrigerad!", en: "Spelling corrected!" },
+  "spellcheck.noErrors": { sv: "Inga stavfel hittades!", en: "No spelling errors found!" },
+
   // Navigation
   "nav.dashboard": { sv: "Dashboard", en: "Dashboard" },
   "nav.documents": { sv: "Dokument", en: "Documents" },
