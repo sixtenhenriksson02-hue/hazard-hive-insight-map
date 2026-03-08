@@ -3,14 +3,16 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useProjects } from "@/hooks/useProjects";
+import NotificationBell from "@/components/NotificationBell";
 
 interface AppLayoutProps {
   children: React.ReactNode;
   onManageProjects?: () => void;
   onJoinProject?: () => void;
+  onSelectReport?: (reportId: string) => void;
 }
 
-export default function AppLayout({ children, onManageProjects, onJoinProject }: AppLayoutProps) {
+export default function AppLayout({ children, onManageProjects, onJoinProject, onSelectReport }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
@@ -97,6 +99,7 @@ export default function AppLayout({ children, onManageProjects, onJoinProject }:
             <span className="text-primary-foreground/60 text-xs">
               {displayName} · <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span>
             </span>
+            {showAdminUI && <NotificationBell onSelectReport={onSelectReport} />}
             <button onClick={signOut} className="text-primary-foreground/40 hover:text-accent transition-colors" title={t("auth.logout")}>
               <LogOut className="h-4 w-4" />
             </button>
