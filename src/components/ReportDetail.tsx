@@ -164,10 +164,6 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                   <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
                 </h4>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleTranslate} disabled={translating}>
-                    {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
-                    {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
-                  </Button>
                   {isAdmin && (
                     <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
                       <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
