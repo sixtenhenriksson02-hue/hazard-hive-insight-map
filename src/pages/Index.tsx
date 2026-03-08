@@ -83,11 +83,6 @@ const Index = () => {
               <option value="oldest-open">{t("sort.oldestOpen")}</option>
             </select>
           )}
-          {role === "worker" && (
-            <Button variant="outline" size="sm" onClick={() => setShowWorkerProjects(true)}>
-              <FolderPlus className="h-4 w-4 mr-1.5" />{t("project.joinWithCode")}
-            </Button>
-          )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="h-4 w-4 mr-1.5" />{t("dashboard.newReport")}
           </Button>

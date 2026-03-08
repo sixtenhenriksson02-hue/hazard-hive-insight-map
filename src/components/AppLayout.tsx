@@ -7,6 +7,7 @@ import { useProjects } from "@/hooks/useProjects";
 interface AppLayoutProps {
   children: React.ReactNode;
   onManageProjects?: () => void;
+  onJoinProject?: () => void;
 }
 
 export default function AppLayout({ children, onManageProjects }: AppLayoutProps) {
