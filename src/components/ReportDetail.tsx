@@ -91,6 +91,36 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
     setReassessing(false);
   };
 
+  const handleTranslate = async () => {
+    if (showTranslated && translatedExplanation) {
+      setShowTranslated(false);
+      return;
+    }
+    if (translatedExplanation) {
+      setShowTranslated(true);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const textsToTranslate = [
+        report.ai_explanation ?? "",
+        ...(report.suggested_actions ?? []),
+      ].filter(Boolean);
+      const targetLang = lang === "sv" ? "en" : "sv";
+      const { data, error } = await supabase.functions.invoke("translate-text", {
+        body: { texts: textsToTranslate, target_language: targetLang },
+      });
+      if (!error && data?.translations) {
+        setTranslatedExplanation(data.translations[0]);
+        setTranslatedActions(data.translations.slice(1));
+        setShowTranslated(true);
+      }
+    } catch (e) {
+      console.error("Translation error:", e);
+    }
+    setTranslating(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
