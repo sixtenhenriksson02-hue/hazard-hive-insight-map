@@ -6,7 +6,7 @@ import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // Switch removed - always enhance
-import { Label } from "@/components/ui/label";
+// Label removed - no longer needed for enhance toggle
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, MapPin, AlertTriangle, X, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
