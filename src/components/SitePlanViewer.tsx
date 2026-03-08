@@ -290,13 +290,6 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
         </h2>
         <div className="flex items-center gap-2">
-          {activePlan && !isPdf(activePlan.image_url) && (
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-3 w-3 text-muted-foreground" />
-              <Label htmlFor="enhance" className="text-[10px] text-muted-foreground cursor-pointer">{t("apd.enhance")}</Label>
-              <Switch id="enhance" checked={enhanceImage} onCheckedChange={setEnhanceImage} className="scale-75" />
-            </div>
-          )}
           {plans.length > 1 && (
             <select
               className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
