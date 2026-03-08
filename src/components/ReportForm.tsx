@@ -193,8 +193,9 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       const result = await runSpellCheck(title, description);
       setSubmitting(false);
 
-      if (result && result.hadErrors) {
-        // Show review dialog with changes
+      if (result && result.hadErrors &&
+          (result.originalTitle !== result.correctedTitle || result.originalDescription !== result.correctedDescription)) {
+        // Show review dialog only when text actually changed
         setSpellDiff(result);
         setShowSpellReview(true);
         return;
