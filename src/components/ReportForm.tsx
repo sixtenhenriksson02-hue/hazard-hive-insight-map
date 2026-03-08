@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, Maximize2, SpellCheck, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -36,6 +36,14 @@ interface ReportFormProps {
   }) => void;
 }
 
+interface SpellCheckDiff {
+  originalTitle: string;
+  originalDescription: string;
+  correctedTitle: string;
+  correctedDescription: string;
+  hadErrors: boolean;
+}
+
 export default function ReportForm({ onSubmit }: ReportFormProps) {
   const { toast } = useToast();
   const { lang, t } = useLanguage();
@@ -62,6 +70,8 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [planLocation, setPlanLocation] = useState<{ planId: string; x: number; y: number } | null>(null);
   const [spellChecking, setSpellChecking] = useState(false);
   const [spellChecked, setSpellChecked] = useState(false);
+  const [showSpellReview, setShowSpellReview] = useState(false);
+  const [spellDiff, setSpellDiff] = useState<SpellCheckDiff | null>(null);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
@@ -80,11 +90,10 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     }
   };
 
-  const handleSpellCheck = async () => {
-    const textsToCheck = [title, description].filter(t => t.trim().length > 0);
-    if (textsToCheck.length === 0) return;
+  const runSpellCheck = async (titleText: string, descText: string): Promise<SpellCheckDiff | null> => {
+    const textsToCheck = [titleText, descText].filter(t => t.trim().length > 0);
+    if (textsToCheck.length === 0) return null;
 
-    setSpellChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke("spellcheck", {
         body: { texts: textsToCheck },
@@ -92,40 +101,52 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
       if (!error && data?.corrected && data.corrected.length > 0) {
         let idx = 0;
-        if (title.trim()) {
-          setTitle(data.corrected[idx++]);
-        }
-        if (description.trim() && idx < data.corrected.length) {
-          setDescription(data.corrected[idx]);
-        }
-        setSpellChecked(true);
-        if (data.had_errors) {
-          toast({ title: t("spellcheck.corrected") });
-        } else {
-          toast({ title: t("spellcheck.noErrors") });
-        }
-        setTimeout(() => setSpellChecked(false), 3000);
+        const correctedTitle = titleText.trim() ? data.corrected[idx++] : titleText;
+        const correctedDesc = descText.trim() && idx < data.corrected.length ? data.corrected[idx] : descText;
+
+        return {
+          originalTitle: titleText,
+          originalDescription: descText,
+          correctedTitle,
+          correctedDescription: correctedDesc,
+          hadErrors: data.had_errors ?? false,
+        };
       }
     } catch (e) {
       console.error("Spellcheck error:", e);
     }
+    return null;
+  };
+
+  const handleSpellCheck = async () => {
+    const textsToCheck = [title, description].filter(t => t.trim().length > 0);
+    if (textsToCheck.length === 0) return;
+
+    setSpellChecking(true);
+    const result = await runSpellCheck(title, description);
+    if (result) {
+      if (result.hadErrors) {
+        setTitle(result.correctedTitle);
+        setDescription(result.correctedDescription);
+        toast({ title: t("spellcheck.corrected") });
+      } else {
+        toast({ title: t("spellcheck.noErrors") });
+      }
+      setSpellChecked(true);
+      setTimeout(() => setSpellChecked(false), 3000);
+    }
     setSpellChecking(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !specificLocation) {
-      toast({ title: t("form.fillAllFields"), variant: "destructive" });
-      return;
-    }
+  const doSubmit = async (finalTitle: string, finalDescription: string) => {
     setSubmitting(true);
     const pid = selectedProjectId || activeProjectId || "";
     const building = availableProjects.find(p => p.id === pid)?.name ?? "";
+    const capitalizedTitle = finalTitle.charAt(0).toUpperCase() + finalTitle.slice(1);
 
-    const capitalizedTitle = title.charAt(0).toUpperCase() + title.slice(1);
     await onSubmit({
       title: capitalizedTitle,
-      description,
+      description: finalDescription,
       location: `${building} - ${specificLocation}`,
       category,
       imageFile: imageFile ?? undefined,
@@ -142,6 +163,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       plan_x: planLocation?.x,
       plan_y: planLocation?.y,
     });
+
     setSubmitting(false);
     setTitle("");
     setDescription("");
@@ -158,190 +180,285 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     setShowPlanPicker(false);
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !specificLocation) {
+      toast({ title: t("form.fillAllFields"), variant: "destructive" });
+      return;
+    }
+
+    // Auto spell-check before submitting
+    if (!spellChecked && (title.trim() || description.trim())) {
+      setSubmitting(true);
+      const result = await runSpellCheck(title, description);
+      setSubmitting(false);
+
+      if (result && result.hadErrors) {
+        // Show review dialog with changes
+        setSpellDiff(result);
+        setShowSpellReview(true);
+        return;
+      }
+      // No errors — submit directly
+    }
+
+    await doSubmit(title, description);
+  };
+
+  const handleAcceptSpellCheck = async () => {
+    if (!spellDiff) return;
+    setShowSpellReview(false);
+    setTitle(spellDiff.correctedTitle);
+    setDescription(spellDiff.correctedDescription);
+    setSpellChecked(true);
+    await doSubmit(spellDiff.correctedTitle, spellDiff.correctedDescription);
+    setSpellDiff(null);
+  };
+
+  const handleRejectSpellCheck = async () => {
+    if (!spellDiff) return;
+    setShowSpellReview(false);
+    setSpellChecked(true);
+    await doSubmit(spellDiff.originalTitle, spellDiff.originalDescription);
+    setSpellDiff(null);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-4 md:p-6 animate-fade-in">
-      <h2 className="text-lg font-bold text-card-foreground mb-4">{t("dashboard.newReport")}</h2>
+    <>
+      <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-4 md:p-6 animate-fade-in">
+        <h2 className="text-lg font-bold text-card-foreground mb-4">{t("dashboard.newReport")}</h2>
 
-      {/* Report type toggle */}
-      <div className="flex gap-2 mb-4">
-        {(["observation", "injury"] as const).map((rt) => (
-          <button
-            key={rt}
-            type="button"
-            onClick={() => setReportType(rt)}
-            className={`flex-1 text-sm font-medium px-3 py-2.5 rounded-md border transition-colors ${
-              reportType === rt
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-muted-foreground border-border hover:border-accent"
-            }`}
-          >
-            {rt === "observation" ? t("form.observation") : t("form.injury")}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        <div>
-          <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.title")}</label>
-          <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => { setTitle(e.target.value); setSpellChecked(false); }} />
+        {/* Report type toggle */}
+        <div className="flex gap-2 mb-4">
+          {(["observation", "injury"] as const).map((rt) => (
+            <button
+              key={rt}
+              type="button"
+              onClick={() => setReportType(rt)}
+              className={`flex-1 text-sm font-medium px-3 py-2.5 rounded-md border transition-colors ${
+                reportType === rt
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-muted-foreground border-border hover:border-accent"
+              }`}
+            >
+              {rt === "observation" ? t("form.observation") : t("form.injury")}
+            </button>
+          ))}
         </div>
 
-        {availableProjects.length > 1 && (
+        <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.project")}</label>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={selectedProjectId || activeProjectId || ""}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-            >
-              {availableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.title")}</label>
+            <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => { setTitle(e.target.value); setSpellChecked(false); }} />
+          </div>
+
+          {availableProjects.length > 1 && (
+            <div>
+              <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.project")}</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={selectedProjectId || activeProjectId || ""}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+              >
+                {availableProjects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
+                <Building2 className="h-3.5 w-3.5" />{t("form.building")}
+              </label>
+              <Input value={currentProjectName || "-"} disabled className="bg-muted" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />{t("form.specificLocation")}
+              </label>
+              <Input placeholder={t("form.specificLocationPlaceholder")} value={specificLocation} onChange={(e) => setSpecificLocation(e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.category")}</label>
+            <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-        )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
-              <Building2 className="h-3.5 w-3.5" />{t("form.building")}
-            </label>
-            <Input value={currentProjectName || "-"} disabled className="bg-muted" />
+            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
+            <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }} />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-muted-foreground">{t("form.aiNote")}</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1"
+                onClick={handleSpellCheck}
+                disabled={spellChecking || (!title.trim() && !description.trim())}
+              >
+                {spellChecking ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : spellChecked ? (
+                  <CheckCircle2 className="h-3 w-3 text-risk-low" />
+                ) : (
+                  <SpellCheck className="h-3 w-3" />
+                )}
+                {spellChecking ? t("spellcheck.checking") : spellChecked ? t("spellcheck.done") : t("spellcheck.button")}
+              </Button>
+            </div>
           </div>
+
+          {reportType === "injury" && (
+            <div className="space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3">
+              <h3 className="text-sm font-semibold text-destructive">{t("detail.injuryDetails")}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-card-foreground mb-1 block">{t("injury.bodyPart")}</label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={bodyPart} onChange={(e) => setBodyPart(e.target.value)}>
+                    <option value="">--</option>
+                    {bodyParts.map((bp) => <option key={bp} value={bp}>{bp}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-card-foreground mb-1 block">{t("injury.type")}</label>
+                  <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={injuryType} onChange={(e) => setInjuryType(e.target.value)}>
+                    <option value="">--</option>
+                    {injuryTypes.map((it) => <option key={it} value={it}>{it}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={medicalCare} onChange={(e) => setMedicalCare(e.target.checked)} className="rounded border-border" />
+                  {t("injury.medicalCare")}
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={absenceRequired} onChange={(e) => setAbsenceRequired(e.target.checked)} className="rounded border-border" />
+                  {t("injury.absence")}
+                </label>
+              </div>
+              {absenceRequired && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-card-foreground">{t("injury.absenceDays")}:</label>
+                  <Input type="number" min={1} value={absenceDays} onChange={(e) => setAbsenceDays(Number(e.target.value))} className="w-20" />
+                  <span className="text-sm text-muted-foreground">{t("common.days")}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* APD Plan placement */}
           <div>
-            <label className="text-sm font-medium text-card-foreground mb-1 flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />{t("form.specificLocation")}
-            </label>
-            <Input placeholder={t("form.specificLocationPlaceholder")} value={specificLocation} onChange={(e) => setSpecificLocation(e.target.value)} />
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.category")}</label>
-          <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.description")}</label>
-          <Textarea placeholder={t("form.descriptionPlaceholder")} rows={2} value={description} onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }} />
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-xs text-muted-foreground">{t("form.aiNote")}</p>
             <Button
               type="button"
-              variant="ghost"
+              variant={planLocation ? "default" : "outline"}
               size="sm"
-              className="h-7 px-2 text-xs gap-1"
-              onClick={handleSpellCheck}
-              disabled={spellChecking || (!title.trim() && !description.trim())}
+              className="w-full text-xs"
+              onClick={() => setShowPlanPicker(true)}
             >
-              {spellChecking ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : spellChecked ? (
-                <CheckCircle2 className="h-3 w-3 text-risk-low" />
-              ) : (
-                <SpellCheck className="h-3 w-3" />
-              )}
-              {spellChecking ? t("spellcheck.checking") : spellChecked ? t("spellcheck.done") : t("spellcheck.button")}
+              <MapPin className="h-3.5 w-3.5 mr-1" />
+              {planLocation ? `✓ ${t("apd.placeOnPlan")}` : t("apd.placeOnPlan")}
             </Button>
+            <Dialog open={showPlanPicker} onOpenChange={setShowPlanPicker}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-accent" />
+                    {t("apd.placeOnPlan")}
+                  </DialogTitle>
+                </DialogHeader>
+                <SitePlanViewer
+                  reports={[]}
+                  selectionMode={true}
+                  onSelectLocation={(planId, x, y) => {
+                    setPlanLocation({ planId, x, y });
+                    setShowPlanPicker(false);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
-        </div>
 
-        {reportType === "injury" && (
-          <div className="space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3">
-            <h3 className="text-sm font-semibold text-destructive">{t("detail.injuryDetails")}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-card-foreground mb-1 block">{t("injury.bodyPart")}</label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={bodyPart} onChange={(e) => setBodyPart(e.target.value)}>
-                  <option value="">--</option>
-                  {bodyParts.map((bp) => <option key={bp} value={bp}>{bp}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-card-foreground mb-1 block">{t("injury.type")}</label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={injuryType} onChange={(e) => setInjuryType(e.target.value)}>
-                  <option value="">--</option>
-                  {injuryTypes.map((it) => <option key={it} value={it}>{it}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={medicalCare} onChange={(e) => setMedicalCare(e.target.checked)} className="rounded border-border" />
-                {t("injury.medicalCare")}
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={absenceRequired} onChange={(e) => setAbsenceRequired(e.target.checked)} className="rounded border-border" />
-                {t("injury.absence")}
-              </label>
-            </div>
-            {absenceRequired && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-card-foreground">{t("injury.absenceDays")}:</label>
-                <Input type="number" min={1} value={absenceDays} onChange={(e) => setAbsenceDays(Number(e.target.value))} className="w-20" />
-                <span className="text-sm text-muted-foreground">{t("common.days")}</span>
+          {/* Image */}
+          <div>
+            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.image")}</label>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground hover:border-accent hover:text-accent transition-colors w-full justify-center">
+              <Camera className="h-4 w-4" />{imagePreview ? t("form.changeImage") : t("form.uploadImage")}
+            </button>
+            {imagePreview && (
+              <div className="mt-2 rounded-md overflow-hidden border border-border">
+                <img src={imagePreview} alt="" className="w-full h-32 object-cover" />
               </div>
             )}
           </div>
-        )}
 
-        {/* APD Plan placement - opens in large dialog */}
-        <div>
-          <Button
-            type="button"
-            variant={planLocation ? "default" : "outline"}
-            size="sm"
-            className="w-full text-xs"
-            onClick={() => setShowPlanPicker(true)}
-          >
-            <MapPin className="h-3.5 w-3.5 mr-1" />
-            {planLocation ? `✓ ${t("apd.placeOnPlan")}` : t("apd.placeOnPlan")}
+          <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+                {t("form.assessing")}
+              </span>
+            ) : (
+              <><Send className="h-4 w-4 mr-2" />{t("form.submitReport")}</>
+            )}
           </Button>
-          <Dialog open={showPlanPicker} onOpenChange={setShowPlanPicker}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-accent" />
-                  {t("apd.placeOnPlan")}
-                </DialogTitle>
-              </DialogHeader>
-              <SitePlanViewer
-                reports={[]}
-                selectionMode={true}
-                onSelectLocation={(planId, x, y) => {
-                  setPlanLocation({ planId, x, y });
-                  setShowPlanPicker(false);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         </div>
+      </form>
 
-        {/* Image */}
-        <div>
-          <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.image")}</label>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-md border border-dashed border-border px-4 py-3 text-sm text-muted-foreground hover:border-accent hover:text-accent transition-colors w-full justify-center">
-            <Camera className="h-4 w-4" />{imagePreview ? t("form.changeImage") : t("form.uploadImage")}
-          </button>
-          {imagePreview && (
-            <div className="mt-2 rounded-md overflow-hidden border border-border">
-              <img src={imagePreview} alt="" className="w-full h-32 object-cover" />
+      {/* Spell check review dialog */}
+      <Dialog open={showSpellReview} onOpenChange={setShowSpellReview}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SpellCheck className="h-5 w-5 text-accent" />
+              {t("spellcheck.reviewTitle")}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("spellcheck.reviewDesc")}</p>
+
+          {spellDiff && (
+            <div className="space-y-4 mt-2">
+              {spellDiff.originalTitle !== spellDiff.correctedTitle && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">{t("form.title")}</p>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm line-through text-muted-foreground">
+                    {spellDiff.originalTitle}
+                  </div>
+                  <div className="rounded-md border border-green-500/30 bg-green-500/5 p-2 text-sm text-foreground">
+                    {spellDiff.correctedTitle}
+                  </div>
+                </div>
+              )}
+              {spellDiff.originalDescription !== spellDiff.correctedDescription && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">{t("form.description")}</p>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm line-through text-muted-foreground">
+                    {spellDiff.originalDescription}
+                  </div>
+                  <div className="rounded-md border border-green-500/30 bg-green-500/5 p-2 text-sm text-foreground">
+                    {spellDiff.correctedDescription}
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </div>
 
-        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={submitting}>
-          {submitting ? (
-            <span className="flex items-center gap-2">
-              <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
-              {t("form.assessing")}
-            </span>
-          ) : (
-            <><Send className="h-4 w-4 mr-2" />{t("form.submitReport")}</>
-          )}
-        </Button>
-      </div>
-    </form>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleRejectSpellCheck}>
+              {t("spellcheck.reject")}
+            </Button>
+            <Button onClick={handleAcceptSpellCheck} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              {t("spellcheck.accept")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
