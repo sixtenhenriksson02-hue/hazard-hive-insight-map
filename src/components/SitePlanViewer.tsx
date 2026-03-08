@@ -415,7 +415,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               ))}
 
               {/* Report markers - larger with labels */}
-              {planReports.map(r => (
+              {planReports.map((r, idx) => (
                 <div
                   key={r.id}
                   className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
@@ -423,11 +423,13 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   onMouseEnter={() => setHoveredReport(r.id)}
                   onMouseLeave={() => setHoveredReport(null)}
                 >
-                  {/* Dot */}
+                  {/* Numbered dot */}
                   <div
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150"
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150 flex items-center justify-center"
                     style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  />
+                  >
+                    <span className="text-[9px] font-bold text-white leading-none">{idx + 1}</span>
+                  </div>
                   {/* Tooltip label on hover */}
                   {hoveredReport === r.id && (
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
