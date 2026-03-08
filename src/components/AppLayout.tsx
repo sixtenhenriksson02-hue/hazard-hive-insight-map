@@ -60,6 +60,31 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
 
             <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
 
+            {/* Nav links */}
+            <button
+              onClick={() => navigate("/")}
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                location.pathname === "/"
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50"
+              }`}
+            >
+              {t("nav.dashboard")}
+            </button>
+            <button
+              onClick={() => navigate("/documents")}
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
+                location.pathname === "/documents"
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50"
+              }`}
+            >
+              <FileText className="h-3 w-3" />
+              {t("nav.documents")}
+            </button>
+
+            <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
+
             <button
               onClick={() => setLang(lang === "sv" ? "en" : "sv")}
               className="text-xs px-2.5 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50 transition-colors"
