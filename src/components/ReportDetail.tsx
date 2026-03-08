@@ -38,6 +38,8 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [reassessing, setReassessing] = useState(false);
   const [translatedExplanation, setTranslatedExplanation] = useState<string | null>(null);
   const [translatedActions, setTranslatedActions] = useState<string[] | null>(null);
+  const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [showTranslated, setShowTranslated] = useState(false);
 
@@ -92,17 +94,19 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   };
 
   const handleTranslate = async () => {
-    if (showTranslated && translatedExplanation) {
+    if (showTranslated && translatedTitle) {
       setShowTranslated(false);
       return;
     }
-    if (translatedExplanation) {
+    if (translatedTitle) {
       setShowTranslated(true);
       return;
     }
     setTranslating(true);
     try {
       const textsToTranslate = [
+        report.title,
+        report.description,
         report.ai_explanation ?? "",
         ...(report.suggested_actions ?? []),
       ].filter(Boolean);
@@ -111,8 +115,13 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
         body: { texts: textsToTranslate, target_language: targetLang },
       });
       if (!error && data?.translations) {
-        setTranslatedExplanation(data.translations[0]);
-        setTranslatedActions(data.translations.slice(1));
+        let idx = 0;
+        setTranslatedTitle(data.translations[idx++]);
+        setTranslatedDescription(data.translations[idx++]);
+        if (report.ai_explanation) {
+          setTranslatedExplanation(data.translations[idx++]);
+        }
+        setTranslatedActions(data.translations.slice(idx));
         setShowTranslated(true);
       }
     } catch (e) {
@@ -137,12 +146,20 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
             {editing ? (
               <Input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
             ) : (
-              <span className="truncate">{report.title ? report.title.charAt(0).toUpperCase() + report.title.slice(1) : report.title}</span>
+              <span className="truncate">{showTranslated && translatedTitle ? translatedTitle.charAt(0).toUpperCase() + translatedTitle.slice(1) : report.title ? report.title.charAt(0).toUpperCase() + report.title.slice(1) : report.title}</span>
             )}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Global translate button */}
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" className="h-7 px-3 text-xs" onClick={handleTranslate} disabled={translating}>
+              {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
+              {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
+            </Button>
+          </div>
+
           {report.image_url && (
             <img src={report.image_url} alt="" className="w-full h-48 object-cover rounded-md" />
           )}
@@ -155,10 +172,6 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                   <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
                 </h4>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleTranslate} disabled={translating}>
-                    {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
-                    {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
-                  </Button>
                   {isAdmin && (
                     <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
                       <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
@@ -239,7 +252,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">{report.description}</p>
+              <p className="text-sm text-muted-foreground">{showTranslated && translatedDescription ? translatedDescription : report.description}</p>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {report.building && (
                   <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{report.building}</span>

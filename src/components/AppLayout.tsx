@@ -1,4 +1,4 @@
-import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown, FileText } from "lucide-react";
+import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -70,17 +70,6 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
               }`}
             >
               {t("nav.dashboard")}
-            </button>
-            <button
-              onClick={() => navigate("/documents")}
-              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
-                location.pathname === "/documents"
-                  ? "border-accent/50 bg-accent/10 text-accent"
-                  : "border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50"
-              }`}
-            >
-              <FileText className="h-3 w-3" />
-              {t("nav.documents")}
             </button>
 
             <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
@@ -158,9 +147,6 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
             <div className="flex gap-2 flex-wrap mb-2">
               <button onClick={() => { navigate("/"); setMobileMenuOpen(false); }} className={`text-xs px-3 py-1.5 rounded-lg border ${location.pathname === "/" ? "border-accent/50 bg-accent/10 text-accent" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
                 {t("nav.dashboard")}
-              </button>
-              <button onClick={() => { navigate("/documents"); setMobileMenuOpen(false); }} className={`text-xs px-3 py-1.5 rounded-lg border flex items-center gap-1 ${location.pathname === "/documents" ? "border-accent/50 bg-accent/10 text-accent" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
-                <FileText className="h-3 w-3" />{t("nav.documents")}
               </button>
             </div>
             <div className="flex gap-2 flex-wrap">
