@@ -67,9 +67,6 @@ const Index = () => {
           <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("reports")}>
             <List className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.reports")}
           </Button>
-          <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("documents")}>
-            <FileText className="h-3.5 w-3.5 mr-1.5" />{t("nav.documents")}
-          </Button>
           <Button variant={activeTab === "matrix" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("matrix")}>
             <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.matrix")}
           </Button>
@@ -81,6 +78,9 @@ const Index = () => {
               <ReportGenerator reports={reports} />
             </>
           )}
+          <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("documents")}>
+            <FileText className="h-3.5 w-3.5 mr-1.5" />{t("nav.documents")}
+          </Button>
         </div>
 
         <div className="flex gap-2">

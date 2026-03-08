@@ -223,7 +223,7 @@ const translations: Record<string, Record<Language, string>> = {
 
   // Report Generator
   "reportGen.title": { sv: "Generera rapport", en: "Generate Report" },
-  "reportGen.button": { sv: "Rapporter", en: "Reports" },
+  "reportGen.button": { sv: "Periodrapporter", en: "Period Reports" },
   "reportGen.monthly": { sv: "Månadsrapport", en: "Monthly" },
   "reportGen.quarterly": { sv: "Kvartalsrapport", en: "Quarterly" },
   "reportGen.yearly": { sv: "Årsrapport", en: "Yearly" },
