@@ -97,9 +97,14 @@ Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar t
         type: "number",
         description: "Allvarlighetsgrad 1-5 enligt kriterierna ovan",
       },
+      suggested_actions: {
+        type: "array",
+        items: { type: "string" },
+        description: "En lista med 2-4 konkreta, genomförbara åtgärder på svenska som kan vidtas för att eliminera eller minska risken. Varje åtgärd ska vara kort (en mening) och direkt applicerbar.",
+      },
     };
 
-    const required = ["risk_level", "explanation", "severity_rating"];
+    const required = ["risk_level", "explanation", "severity_rating", "suggested_actions"];
 
     if (hasComments) {
       toolProperties.should_resolve = {

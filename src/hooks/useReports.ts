@@ -262,6 +262,7 @@ export function useReports() {
     const updates: any = {
       risk_level: assessment.risk_level as RiskLevel,
       ai_explanation: assessment.explanation,
+      suggested_actions: assessment.suggested_actions ?? [],
     };
 
     // If AI suggests resolving, auto-resolve
