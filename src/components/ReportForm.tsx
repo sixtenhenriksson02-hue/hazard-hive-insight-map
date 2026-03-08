@@ -60,6 +60,8 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const [planLocation, setPlanLocation] = useState<{ planId: string; x: number; y: number } | null>(null);
+  const [spellChecking, setSpellChecking] = useState(false);
+  const [spellChecked, setSpellChecked] = useState(false);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
