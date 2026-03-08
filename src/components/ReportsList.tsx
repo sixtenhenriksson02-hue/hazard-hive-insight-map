@@ -8,6 +8,7 @@ interface ReportsListProps {
   onUpdateStatus?: (id: string, status: ReportStatus) => void;
   onSelect: (report: RiskReport) => void;
 }
+const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 const riskColor: Record<string, string> = {
   low: "bg-risk-low",
@@ -49,7 +50,7 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
           {/* Title + location */}
           <div className="flex-1 min-w-0">
             <span className="text-sm font-medium text-card-foreground truncate block group-hover:text-accent transition-colors">
-              {report.title}
+              {capitalize(report.title)}
             </span>
             <span className="text-xs text-muted-foreground truncate block">
               {[report.building, report.specific_location, report.category].filter(Boolean).join(" · ")}
