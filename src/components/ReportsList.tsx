@@ -8,6 +8,7 @@ interface ReportsListProps {
   onUpdateStatus?: (id: string, status: ReportStatus) => void;
   onSelect: (report: RiskReport) => void;
 }
+const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 const riskColor: Record<string, string> = {
   low: "bg-risk-low",
