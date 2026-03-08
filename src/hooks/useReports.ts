@@ -99,7 +99,26 @@ export function useReports() {
       console.error("Error fetching reports:", error);
       return;
     }
-    setReports((data as RiskReport[]) ?? []);
+
+    // Fetch reporter names
+    const reportsData = (data as RiskReport[]) ?? [];
+    const userIds = [...new Set(reportsData.map(r => r.reported_by).filter(Boolean))] as string[];
+    
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", userIds);
+      
+      const nameMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+      reportsData.forEach(r => {
+        if (r.reported_by) {
+          r.reporter_name = nameMap.get(r.reported_by) ?? undefined;
+        }
+      });
+    }
+
+    setReports(reportsData);
     setLoading(false);
   }, []);
 

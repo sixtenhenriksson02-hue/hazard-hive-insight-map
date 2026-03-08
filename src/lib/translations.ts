@@ -199,8 +199,20 @@ const translations: Record<string, Record<Language, string>> = {
 
 // Categories
 export const CATEGORIES_I18N: Record<Language, string[]> = {
-  sv: ["Halkrisk", "Snubbelrisk", "Belysning", "Brandsäkerhet", "Skyddsutrustning", "Ergonomi", "Kemikalier", "Elektricitet", "Fordon/Truckar", "Övrigt"],
-  en: ["Slip hazard", "Trip hazard", "Lighting", "Fire safety", "Protective equipment", "Ergonomics", "Chemicals", "Electricity", "Vehicles/Forklifts", "Other"],
+  sv: [
+    "Halkrisk", "Snubbelrisk", "Fallrisk (höjd)", "Belysning", "Brandsäkerhet",
+    "Skyddsutrustning", "Ergonomi", "Kemikalier", "Elektricitet", "Fordon/Truckar",
+    "Buller/Vibrationer", "Damm/Partiklar", "Ras/Kollaps", "Klämrisk", "Lyftanordningar/Kranarbete",
+    "Arbete i trånga utrymmen", "Heta arbeten (svetsning)", "Ordning & reda", "Bristfällig skyltning",
+    "Psykosocial arbetsmiljö", "Övrigt"
+  ],
+  en: [
+    "Slip hazard", "Trip hazard", "Fall risk (height)", "Lighting", "Fire safety",
+    "Protective equipment", "Ergonomics", "Chemicals", "Electricity", "Vehicles/Forklifts",
+    "Noise/Vibrations", "Dust/Particles", "Collapse risk", "Crush risk", "Lifting equipment/Crane work",
+    "Confined spaces", "Hot work (welding)", "Housekeeping", "Inadequate signage",
+    "Psychosocial work environment", "Other"
+  ],
 };
 
 export const BODY_PARTS_I18N: Record<Language, string[]> = {

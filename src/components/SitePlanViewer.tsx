@@ -5,10 +5,10 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+// Switch removed - always enhance
+// Label removed - no longer needed for enhance toggle
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X, Eye } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SitePlan {
@@ -43,7 +43,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number } | null>(null);
-  const [enhanceImage, setEnhanceImage] = useState(true);
+  
   const [hoveredReport, setHoveredReport] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -290,13 +290,6 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
         </h2>
         <div className="flex items-center gap-2">
-          {activePlan && !isPdf(activePlan.image_url) && (
-            <div className="flex items-center gap-1.5">
-              <Eye className="h-3 w-3 text-muted-foreground" />
-              <Label htmlFor="enhance" className="text-[10px] text-muted-foreground cursor-pointer">{t("apd.enhance")}</Label>
-              <Switch id="enhance" checked={enhanceImage} onCheckedChange={setEnhanceImage} className="scale-75" />
-            </div>
-          )}
           {plans.length > 1 && (
             <select
               className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
@@ -395,9 +388,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 src={activePlan.image_url}
                 alt={activePlan.name}
                 className={`w-full h-auto block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
-                style={enhanceImage ? {
+                style={{
                   filter: "contrast(1.35) brightness(1.08) saturate(0.15)",
-                } : undefined}
+                }}
                 onClick={handleImageClick}
                 draggable={false}
               />

@@ -186,7 +186,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                   <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{report.specific_location}</span>
                 )}
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(report.created_at).toLocaleDateString("sv-SE")}</span>
-                <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{report.reporter_name ?? t("detail.unknown")}</span>
+                <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{report.reporter_name ?? "–"}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-muted-foreground">{t("detail.status")}:</span>
