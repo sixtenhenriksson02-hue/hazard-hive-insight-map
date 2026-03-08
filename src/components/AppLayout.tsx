@@ -15,82 +15,90 @@ export default function AppLayout({ children, onManageProjects, onJoinProject }:
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
   const { projects } = useProjects();
-  const isAdmin = role === "admin";
+  const isActualAdmin = role === "admin";
+  const showAdminUI = viewAs === "admin";
 
   // Admin sees all projects; workers see their enrolled projects
-  const availableProjects = isAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
+  const availableProjects = isActualAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-primary text-primary-foreground">
-        <div className="container flex h-16 items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-primary text-primary-foreground shadow-lg">
+        <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className="h-7 w-7 text-accent" />
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/15">
+              <Shield className="h-5 w-5 text-accent" />
+            </div>
             <div>
-              <h1 className="text-lg font-bold leading-tight">{t("app.name")}</h1>
-              <p className="text-xs text-primary-foreground/70">{projectName ?? t("app.tagline")}</p>
+              <h1 className="text-base font-bold leading-tight tracking-tight">{t("app.name")}</h1>
+              <p className="text-[11px] text-primary-foreground/50 leading-none">{projectName ?? t("app.tagline")}</p>
             </div>
           </div>
 
-          <div className="hidden md:flex items-center gap-3 text-sm">
+          <div className="hidden md:flex items-center gap-2 text-sm">
             {/* Project selector */}
             {availableProjects.length > 0 && (
               <div className="relative">
                 <select
                   value={activeProjectId ?? ""}
                   onChange={(e) => setActiveProjectId(e.target.value || null)}
-                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-full border border-primary-foreground/20 bg-transparent text-primary-foreground hover:border-accent transition-colors cursor-pointer"
+                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 text-primary-foreground hover:border-accent/50 transition-colors cursor-pointer"
                 >
-                  {isAdmin && <option value="">{t("project.allProjects")}</option>}
+                  {isActualAdmin && <option value="">{t("project.allProjects")}</option>}
                   {availableProjects.map((p) => (
                     <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
                   ))}
                 </select>
-                <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
               </div>
             )}
 
+            <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
+
             <button
               onClick={() => setLang(lang === "sv" ? "en" : "sv")}
-              className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50 transition-colors"
             >
-              <Globe className="h-3.5 w-3.5" />
               {lang === "sv" ? "EN" : "SV"}
             </button>
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  {viewAs === "admin" ? t("header.viewAsWorker") : t("header.viewAsAdmin")}
-                </button>
-                {onManageProjects && (
-                  <button
-                    onClick={onManageProjects}
-                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
-                  >
-                    <FolderPlus className="h-3.5 w-3.5" />
-                    {t("project.manage")}
-                  </button>
-                )}
-              </>
+
+            {isActualAdmin && (
+              <button
+                onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50 transition-colors"
+              >
+                <Eye className="h-3.5 w-3.5" />
+                {viewAs === "admin" ? t("header.viewAsWorker") : t("header.viewAsAdmin")}
+              </button>
             )}
-            {!isAdmin && onJoinProject && (
+
+            {showAdminUI && onManageProjects && (
+              <button
+                onClick={onManageProjects}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                {t("project.manage")}
+              </button>
+            )}
+
+            {!showAdminUI && onJoinProject && (
               <button
                 onClick={onJoinProject}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
               >
                 <FolderPlus className="h-3.5 w-3.5" />
                 {t("project.joinWithCode")}
               </button>
             )}
-            <span className="text-primary-foreground/70 text-xs">
-              {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? t("auth.admin") : t("auth.worker")}</span>
+
+            <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
+
+            <span className="text-primary-foreground/60 text-xs">
+              {displayName} · <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span>
             </span>
-            <button onClick={signOut} className="text-primary-foreground/70 hover:text-accent transition-colors" title={t("auth.logout")}>
-              <LogOut className="h-5 w-5" />
+            <button onClick={signOut} className="text-primary-foreground/40 hover:text-accent transition-colors" title={t("auth.logout")}>
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
 
@@ -102,41 +110,41 @@ export default function AppLayout({ children, onManageProjects, onJoinProject }:
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-primary-foreground/10 p-4 space-y-3">
             <p className="text-sm text-primary-foreground/70">
-              {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? t("auth.admin") : t("auth.worker")}</span>
+              {displayName} · <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span>
             </p>
             {availableProjects.length > 0 && (
               <select
                 value={activeProjectId ?? ""}
                 onChange={(e) => setActiveProjectId(e.target.value || null)}
-                className="w-full text-xs px-3 py-2 rounded-md border border-primary-foreground/20 bg-transparent text-primary-foreground"
+                className="w-full text-xs px-3 py-2 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 text-primary-foreground"
               >
-                {isAdmin && <option value="">{t("project.allProjects")}</option>}
+                {isActualAdmin && <option value="">{t("project.allProjects")}</option>}
                 {availableProjects.map((p) => (
                   <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
                 ))}
               </select>
             )}
             <div className="flex gap-2 flex-wrap">
-              <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
-                <Globe className="h-3.5 w-3.5" />{lang === "sv" ? "English" : "Svenska"}
+              <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5">
+                {lang === "sv" ? "English" : "Svenska"}
               </button>
-              {isAdmin && (
-                <button onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
+              {isActualAdmin && (
+                <button onClick={() => setViewAs(viewAs === "admin" ? "worker" : "admin")} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5">
                   <Eye className="h-3.5 w-3.5" />{viewAs === "admin" ? t("header.viewAsWorker") : t("header.viewAsAdmin")}
                 </button>
               )}
-              {isAdmin && onManageProjects && (
-                <button onClick={onManageProjects} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
+              {showAdminUI && onManageProjects && (
+                <button onClick={onManageProjects} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/10 text-accent">
                   <FolderPlus className="h-3.5 w-3.5" />{t("project.manage")}
                 </button>
               )}
-              {!isAdmin && onJoinProject && (
-                <button onClick={onJoinProject} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
+              {!showAdminUI && onJoinProject && (
+                <button onClick={onJoinProject} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/10 text-accent">
                   <FolderPlus className="h-3.5 w-3.5" />{t("project.joinWithCode")}
                 </button>
               )}
             </div>
-            <button onClick={signOut} className="flex items-center gap-2 text-sm text-primary-foreground/70">
+            <button onClick={signOut} className="flex items-center gap-2 text-sm text-primary-foreground/50">
               <LogOut className="h-4 w-4" /> {t("auth.logout")}
             </button>
           </div>
