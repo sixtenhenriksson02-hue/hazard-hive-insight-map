@@ -206,6 +206,7 @@ export function useReports() {
       absence_days: report.absence_days ?? 0,
       severity_rating: assessment.severity_rating,
       ai_explanation: assessment.explanation,
+      suggested_actions: assessment.suggested_actions ?? [],
       site_plan_id: report.site_plan_id ?? null,
       plan_x: report.plan_x ?? null,
       plan_y: report.plan_y ?? null,
