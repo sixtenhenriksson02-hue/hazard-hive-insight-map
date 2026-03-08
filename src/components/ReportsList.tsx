@@ -1,6 +1,6 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
-import { MapPin, Calendar, User, ChevronRight, AlertTriangle, FileText, Bot } from "lucide-react";
+import { AlertTriangle, FileText, ChevronRight } from "lucide-react";
 
 interface ReportsListProps {
   reports: RiskReport[];
@@ -9,17 +9,11 @@ interface ReportsListProps {
   onSelect: (report: RiskReport) => void;
 }
 
-const riskBadgeClass: Record<string, string> = {
-  low: "bg-risk-low/15 text-risk-low",
-  medium: "bg-risk-medium/15 text-risk-medium",
-  high: "bg-risk-high/15 text-risk-high",
-  critical: "bg-risk-critical/15 text-risk-critical",
-};
-
-const statusDotClass: Record<string, string> = {
-  open: "bg-status-open",
-  "in-progress": "bg-status-in-progress",
-  resolved: "bg-status-resolved",
+const riskColor: Record<string, string> = {
+  low: "bg-risk-low",
+  medium: "bg-risk-medium",
+  high: "bg-risk-high",
+  critical: "bg-risk-critical",
 };
 
 export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect }: ReportsListProps) {
@@ -34,81 +28,51 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {reports.map((report, i) => (
         <div
           key={report.id}
           onClick={() => onSelect(report)}
-          className="group rounded-lg border border-border bg-card p-4 md:p-5 hover:border-accent/40 transition-all cursor-pointer animate-fade-in"
-          style={{ animationDelay: `${i * 60}ms` }}
+          className="group flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-accent/40 transition-all cursor-pointer animate-fade-in"
+          style={{ animationDelay: `${i * 40}ms` }}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${riskBadgeClass[report.risk_level]}`}>
-                  {t(`risk.${report.risk_level}`)}
-                </span>
-                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className={`inline-block h-2 w-2 rounded-full ${statusDotClass[report.status] ?? statusDotClass["open"]}`} />
-                  {report.status === "resolved" ? t("status.resolved") : t("status.open")}
-                </span>
-                <span className="text-xs text-muted-foreground">•</span>
-                {report.report_type === "injury" ? (
-                  <span className="flex items-center gap-1 text-xs text-destructive font-medium">
-                    <AlertTriangle className="h-3 w-3" />{t("form.injury")}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <FileText className="h-3 w-3" />{t("form.observation")}
-                  </span>
-                )}
-              </div>
+          {/* Risk indicator dot */}
+          <span className={`shrink-0 h-3 w-3 rounded-full ${riskColor[report.risk_level]}`} />
 
-              <h3 className="font-semibold text-card-foreground group-hover:text-accent transition-colors truncate">
-                {report.title}
-              </h3>
+          {/* Type icon */}
+          {report.report_type === "injury" ? (
+            <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
+          ) : (
+            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+          )}
 
-              {/* AI explanation preview */}
-              {report.ai_explanation && (
-                <p className="text-xs text-accent/80 mt-1 line-clamp-1 flex items-center gap-1">
-                  <Bot className="h-3 w-3 shrink-0" />
-                  {report.ai_explanation}
-                </p>
-              )}
+          {/* Title */}
+          <span className="flex-1 min-w-0 text-sm font-medium text-card-foreground truncate group-hover:text-accent transition-colors">
+            {report.title}
+          </span>
 
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {report.description || report.category}
-              </p>
+          {/* Date */}
+          <span className="shrink-0 text-xs text-muted-foreground hidden sm:block">
+            {new Date(report.created_at).toLocaleDateString("sv-SE")}
+          </span>
 
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground flex-wrap">
-                {report.building && (
-                  <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{report.building}{report.specific_location ? ` – ${report.specific_location}` : ""}</span>
-                )}
-                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(report.created_at).toLocaleDateString("sv-SE")}</span>
-                {report.reporter_name && (
-                  <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" />{report.reporter_name}</span>
-                )}
-              </div>
-            </div>
+          {/* Admin quick status */}
+          {isAdmin && onUpdateStatus && report.status !== "resolved" && (
+            <select
+              className="shrink-0 text-xs border border-border rounded px-1.5 py-0.5 bg-card text-card-foreground"
+              value={report.status}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                e.stopPropagation();
+                onUpdateStatus(report.id, e.target.value as ReportStatus);
+              }}
+            >
+              <option value="open">{t("status.open")}</option>
+              <option value="resolved">{t("status.resolved")}</option>
+            </select>
+          )}
 
-            <div className="flex flex-col items-end gap-2">
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors" />
-              {isAdmin && report.status !== "resolved" && onUpdateStatus && (
-                 <select
-                  className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
-                  value={report.status}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onUpdateStatus(report.id, e.target.value as ReportStatus);
-                  }}
-                >
-                  <option value="open">{t("status.open")}</option>
-                  <option value="resolved">{t("status.resolved")}</option>
-                </select>
-              )}
-            </div>
-          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent transition-colors" />
         </div>
       ))}
     </div>
