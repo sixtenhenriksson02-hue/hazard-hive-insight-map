@@ -320,15 +320,24 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             </div>
           )}
 
-          {/* Legend */}
+          {/* Legend overlay */}
           {planReports.length > 0 && (
-            <div className="absolute bottom-2 right-2 bg-card/90 border border-border rounded-md px-2 py-1.5 flex gap-2 text-[10px] z-10">
-              {(["low", "medium", "high", "critical"] as const).map(level => (
-                <span key={level} className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[level] }} />
-                  {t(`risk.${level}`)}
-                </span>
-              ))}
+            <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2.5 py-2 text-[10px] z-10 max-w-[200px]">
+              <p className="font-semibold text-card-foreground mb-1 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3 text-accent" />
+                {t("apd.legendTitle")}
+              </p>
+              {(["critical", "high", "medium", "low"] as const).map(level => {
+                const count = planReports.filter(r => r.risk_level === level).length;
+                if (count === 0) return null;
+                return (
+                  <div key={level} className="flex items-center gap-1.5 py-0.5">
+                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-card" style={{ backgroundColor: riskDotColor[level] }} />
+                    <span className="text-card-foreground font-medium">{t(`risk.${level}`)}</span>
+                    <span className="text-muted-foreground ml-auto">({count})</span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
