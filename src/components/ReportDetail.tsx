@@ -154,14 +154,22 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 <h4 className="text-xs font-semibold text-accent flex items-center gap-1">
                   <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
                 </h4>
-                {isAdmin && (
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
-                    <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
-                    {t("detail.reassess")}
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleTranslate} disabled={translating}>
+                    {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
+                    {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
                   </Button>
-                )}
+                  {isAdmin && (
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
+                      <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
+                      {t("detail.reassess")}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{report.ai_explanation}</p>
+              <p className="text-xs text-muted-foreground">
+                {showTranslated && translatedExplanation ? translatedExplanation : report.ai_explanation}
+              </p>
             </div>
           )}
 
