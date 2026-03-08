@@ -176,7 +176,7 @@ const translations: Record<string, Record<Language, string>> = {
   "notifications.markAllRead": { sv: "Markera alla lästa", en: "Mark all read" },
 
   // Monthly Report
-  "monthly.title": { sv: "AI Månadsrapport", en: "AI Monthly Report" },
+  "monthly.title": { sv: "Månadsrapport", en: "Monthly Report" },
   "monthly.generate": { sv: "Månadsrapport", en: "Monthly Report" },
   "monthly.generating": { sv: "Genererar...", en: "Generating..." },
   "monthly.keyRisks": { sv: "Identifierade risker", en: "Key Risks" },
