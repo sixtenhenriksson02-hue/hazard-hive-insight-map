@@ -183,7 +183,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       <div className="space-y-3">
         <div>
           <label className="text-sm font-medium text-card-foreground mb-1 block">{t("form.title")}</label>
-          <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => setTitle(e.target.value)} />
+          <Input placeholder={t("form.titlePlaceholder")} value={title} onChange={(e) => { setTitle(e.target.value); setSpellChecked(false); }} />
         </div>
 
         {availableProjects.length > 1 && (
