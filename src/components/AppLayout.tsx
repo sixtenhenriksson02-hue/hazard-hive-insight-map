@@ -99,6 +99,7 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
             <span className="text-primary-foreground/60 text-xs">
               {displayName} · <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span>
             </span>
+            {showAdminUI && <NotificationBell onSelectReport={onSelectReport} />}
             <button onClick={signOut} className="text-primary-foreground/40 hover:text-accent transition-colors" title={t("auth.logout")}>
               <LogOut className="h-4 w-4" />
             </button>
