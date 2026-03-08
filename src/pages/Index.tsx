@@ -29,15 +29,12 @@ const Index = () => {
   const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
 
   const visibleReports = useMemo(() => {
-    let filtered = reports;
-    if (!isAdmin) {
-      filtered = filtered.filter((r) => r.status !== "resolved");
-    }
+    let filtered = reports.filter((r) => r.status !== "resolved");
     if (statusFilter !== "all") {
       filtered = filtered.filter((r) => r.status === statusFilter);
     }
     return sortReports(filtered, sortBy);
-  }, [reports, isAdmin, statusFilter, sortBy, sortReports]);
+  }, [reports, statusFilter, sortBy, sortReports]);
 
   const handleUpdateStatus = (id: string, status: ReportStatus) => {
     updateReport(id, { status });
