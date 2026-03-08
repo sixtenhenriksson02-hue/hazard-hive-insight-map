@@ -220,6 +220,33 @@ const translations: Record<string, Record<Language, string>> = {
   "adminStats.noResolved": { sv: "Inga åtgärdade rapporter i perioden.", en: "No resolved reports in this period." },
   "adminStats.injuryReports": { sv: "Skadeanmälningar", en: "Injury reports" },
   "adminStats.observations": { sv: "Riskobservationer", en: "Risk observations" },
+
+  // Report Generator
+  "reportGen.title": { sv: "Generera rapport", en: "Generate Report" },
+  "reportGen.button": { sv: "Rapporter", en: "Reports" },
+  "reportGen.monthly": { sv: "Månadsrapport", en: "Monthly" },
+  "reportGen.quarterly": { sv: "Kvartalsrapport", en: "Quarterly" },
+  "reportGen.yearly": { sv: "Årsrapport", en: "Yearly" },
+  "reportGen.generate": { sv: "Generera", en: "Generate" },
+  "reportGen.generating": { sv: "Genererar...", en: "Generating..." },
+  "reportGen.saveDoc": { sv: "Spara som dokument", en: "Save as document" },
+  "reportGen.saved": { sv: "Rapport sparad som dokument!", en: "Report saved as document!" },
+  "reportGen.saveError": { sv: "Kunde inte spara dokumentet", en: "Could not save document" },
+  "reportGen.error": { sv: "Kunde inte generera rapport", en: "Could not generate report" },
+
+  // Documents
+  "documents.title": { sv: "Dokument", en: "Documents" },
+  "documents.subtitle": { sv: "Sparade rapporter och analyser", en: "Saved reports and analyses" },
+  "documents.empty": { sv: "Inga dokument sparade ännu.", en: "No documents saved yet." },
+
+  // Translate
+  "translate.button": { sv: "Översätt till engelska", en: "Translate to Swedish" },
+  "translate.translating": { sv: "Översätter...", en: "Translating..." },
+  "translate.original": { sv: "Visa original", en: "Show original" },
+
+  // Navigation
+  "nav.dashboard": { sv: "Dashboard", en: "Dashboard" },
+  "nav.documents": { sv: "Dokument", en: "Documents" },
 };
 
 // Categories

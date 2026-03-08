@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2 } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2 } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
@@ -35,6 +36,10 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", location: "", category: "" });
   const [reassessing, setReassessing] = useState(false);
+  const [translatedExplanation, setTranslatedExplanation] = useState<string | null>(null);
+  const [translatedActions, setTranslatedActions] = useState<string[] | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showTranslated, setShowTranslated] = useState(false);
 
   if (!report) return null;
 
@@ -86,6 +91,36 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
     setReassessing(false);
   };
 
+  const handleTranslate = async () => {
+    if (showTranslated && translatedExplanation) {
+      setShowTranslated(false);
+      return;
+    }
+    if (translatedExplanation) {
+      setShowTranslated(true);
+      return;
+    }
+    setTranslating(true);
+    try {
+      const textsToTranslate = [
+        report.ai_explanation ?? "",
+        ...(report.suggested_actions ?? []),
+      ].filter(Boolean);
+      const targetLang = lang === "sv" ? "en" : "sv";
+      const { data, error } = await supabase.functions.invoke("translate-text", {
+        body: { texts: textsToTranslate, target_language: targetLang },
+      });
+      if (!error && data?.translations) {
+        setTranslatedExplanation(data.translations[0]);
+        setTranslatedActions(data.translations.slice(1));
+        setShowTranslated(true);
+      }
+    } catch (e) {
+      console.error("Translation error:", e);
+    }
+    setTranslating(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -119,14 +154,22 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 <h4 className="text-xs font-semibold text-accent flex items-center gap-1">
                   <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
                 </h4>
-                {isAdmin && (
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
-                    <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
-                    {t("detail.reassess")}
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleTranslate} disabled={translating}>
+                    {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
+                    {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
                   </Button>
-                )}
+                  {isAdmin && (
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={handleReassess} disabled={reassessing}>
+                      <RefreshCw className={`h-3 w-3 mr-1 ${reassessing ? "animate-spin" : ""}`} />
+                      {t("detail.reassess")}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{report.ai_explanation}</p>
+              <p className="text-xs text-muted-foreground">
+                {showTranslated && translatedExplanation ? translatedExplanation : report.ai_explanation}
+              </p>
             </div>
           )}
 
@@ -137,7 +180,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 <CheckCircle2 className="h-3.5 w-3.5" /> {t("detail.suggestedActions")}
               </h4>
               <ul className="space-y-1.5">
-                {report.suggested_actions.map((action, i) => (
+                {(showTranslated && translatedActions ? translatedActions : report.suggested_actions).map((action, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-card-foreground">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] mt-0.5">
                       {i + 1}

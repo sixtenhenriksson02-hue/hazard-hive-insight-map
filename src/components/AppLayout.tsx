@@ -1,5 +1,6 @@
-import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown } from "lucide-react";
+import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown, FileText } from "lucide-react";
 import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useProjects } from "@/hooks/useProjects";
@@ -14,6 +15,8 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, onManageProjects, onJoinProject, onSelectReport }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
   const { projects } = useProjects();
@@ -54,6 +57,31 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
               </div>
             )}
+
+            <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
+
+            {/* Nav links */}
+            <button
+              onClick={() => navigate("/")}
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                location.pathname === "/"
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50"
+              }`}
+            >
+              {t("nav.dashboard")}
+            </button>
+            <button
+              onClick={() => navigate("/documents")}
+              className={`text-xs px-2.5 py-1.5 rounded-lg border transition-colors flex items-center gap-1 ${
+                location.pathname === "/documents"
+                  ? "border-accent/50 bg-accent/10 text-accent"
+                  : "border-primary-foreground/15 bg-primary-foreground/5 hover:border-accent/50"
+              }`}
+            >
+              <FileText className="h-3 w-3" />
+              {t("nav.documents")}
+            </button>
 
             <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
 
@@ -127,6 +155,14 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 ))}
               </select>
             )}
+            <div className="flex gap-2 flex-wrap mb-2">
+              <button onClick={() => { navigate("/"); setMobileMenuOpen(false); }} className={`text-xs px-3 py-1.5 rounded-lg border ${location.pathname === "/" ? "border-accent/50 bg-accent/10 text-accent" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
+                {t("nav.dashboard")}
+              </button>
+              <button onClick={() => { navigate("/documents"); setMobileMenuOpen(false); }} className={`text-xs px-3 py-1.5 rounded-lg border flex items-center gap-1 ${location.pathname === "/documents" ? "border-accent/50 bg-accent/10 text-accent" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
+                <FileText className="h-3 w-3" />{t("nav.documents")}
+              </button>
+            </div>
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5">
                 {lang === "sv" ? "English" : "Svenska"}
