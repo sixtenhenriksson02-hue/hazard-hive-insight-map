@@ -66,9 +66,12 @@ const Index = () => {
             <Grid3X3 className="h-4 w-4 mr-1.5" />{t("dashboard.matrix")}
           </Button>
           {isAdmin && (
-            <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("stats")}>
-              <BarChart3 className="h-4 w-4 mr-1.5" />{t("dashboard.stats")}
-            </Button>
+            <>
+              <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("stats")}>
+                <BarChart3 className="h-4 w-4 mr-1.5" />{t("dashboard.stats")}
+              </Button>
+              <MonthlyReport reports={reports} />
+            </>
           )}
         </div>
 

@@ -175,7 +175,15 @@ const translations: Record<string, Record<Language, string>> = {
   "notifications.empty": { sv: "Inga notifikationer", en: "No notifications" },
   "notifications.markAllRead": { sv: "Markera alla lästa", en: "Mark all read" },
 
-  // APD Plans / Riskanalys-karta
+  // Monthly Report
+  "monthly.title": { sv: "AI Månadsrapport", en: "AI Monthly Report" },
+  "monthly.generate": { sv: "Månadsrapport", en: "Monthly Report" },
+  "monthly.generating": { sv: "Genererar...", en: "Generating..." },
+  "monthly.keyRisks": { sv: "Identifierade risker", en: "Key Risks" },
+  "monthly.trends": { sv: "Trender", en: "Trends" },
+  "monthly.improvements": { sv: "Förbättringar", en: "Improvements" },
+  "monthly.actionPlan": { sv: "Åtgärdsplan", en: "Action Plan" },
+
   "apd.title": { sv: "Riskanalys-karta", en: "Risk Analysis Map" },
   "apd.upload": { sv: "Ladda upp", en: "Upload" },
   "apd.uploadTitle": { sv: "Ladda upp riskanalys-karta", en: "Upload Risk Analysis Map" },
