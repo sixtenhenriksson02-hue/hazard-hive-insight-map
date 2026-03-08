@@ -63,20 +63,20 @@ const Index = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 mb-4">
-        <div className="flex gap-2">
-          <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("reports")}>
-            <List className="h-4 w-4 mr-1.5" />{t("dashboard.reports")}
+        <div className="flex gap-2 flex-wrap">
+          <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("reports")}>
+            <List className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.reports")}
           </Button>
-          <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("documents")}>
-            <FileText className="h-4 w-4 mr-1.5" />{t("nav.documents")}
+          <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("documents")}>
+            <FileText className="h-3.5 w-3.5 mr-1.5" />{t("nav.documents")}
           </Button>
-          <Button variant={activeTab === "matrix" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("matrix")}>
-            <Grid3X3 className="h-4 w-4 mr-1.5" />{t("dashboard.matrix")}
+          <Button variant={activeTab === "matrix" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("matrix")}>
+            <Grid3X3 className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.matrix")}
           </Button>
           {isAdmin && (
             <>
-              <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("stats")}>
-                <BarChart3 className="h-4 w-4 mr-1.5" />{t("dashboard.stats")}
+              <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("stats")}>
+                <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.stats")}
               </Button>
               <ReportGenerator reports={reports} />
             </>
