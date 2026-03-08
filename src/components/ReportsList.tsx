@@ -46,10 +46,15 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
             <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
 
-          {/* Title */}
-          <span className="flex-1 min-w-0 text-sm font-medium text-card-foreground truncate group-hover:text-accent transition-colors">
-            {report.title}
-          </span>
+          {/* Title + location */}
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-card-foreground truncate block group-hover:text-accent transition-colors">
+              {report.title}
+            </span>
+            <span className="text-xs text-muted-foreground truncate block">
+              {[report.building, report.specific_location, report.category].filter(Boolean).join(" · ")}
+            </span>
+          </div>
 
           {/* Date */}
           <span className="shrink-0 text-xs text-muted-foreground hidden sm:block">
