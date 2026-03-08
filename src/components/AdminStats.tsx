@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { RiskReport } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { CheckCircle2, Calendar, MapPin, AlertTriangle } from "lucide-react";
 
 interface AdminStatsProps {
   reports: RiskReport[];
@@ -12,6 +13,13 @@ const RISK_COLORS: Record<string, string> = {
   medium: "hsl(48, 96%, 53%)",
   high: "hsl(25, 95%, 53%)",
   critical: "hsl(0, 72%, 51%)",
+};
+
+const riskBadgeClass: Record<string, string> = {
+  low: "bg-risk-low/15 text-risk-low",
+  medium: "bg-risk-medium/15 text-risk-medium",
+  high: "bg-risk-high/15 text-risk-high",
+  critical: "bg-risk-critical/15 text-risk-critical",
 };
 
 const TYPE_COLORS = ["hsl(217, 91%, 60%)", "hsl(0, 72%, 51%)"];
@@ -30,14 +38,20 @@ export default function AdminStats({ reports }: AdminStatsProps) {
   const total = filtered.length;
   const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
+  const resolvedReports = useMemo(() => {
+    return filtered
+      .filter((r) => r.status === "resolved")
+      .sort((a, b) => new Date(b.resolved_at ?? b.updated_at).getTime() - new Date(a.resolved_at ?? a.updated_at).getTime());
+  }, [filtered]);
+
   const avgResolutionDays = useMemo(() => {
-    const resolvedReports = filtered.filter((r) => r.resolved_at);
-    if (resolvedReports.length === 0) return 0;
-    const totalDays = resolvedReports.reduce((sum, r) => {
+    const rr = filtered.filter((r) => r.resolved_at);
+    if (rr.length === 0) return 0;
+    const totalDays = rr.reduce((sum, r) => {
       const diff = new Date(r.resolved_at!).getTime() - new Date(r.created_at).getTime();
       return sum + diff / (1000 * 60 * 60 * 24);
     }, 0);
-    return Math.round(totalDays / resolvedReports.length * 10) / 10;
+    return Math.round(totalDays / rr.length * 10) / 10;
   }, [filtered]);
 
   const byRisk = useMemo(() => {
@@ -106,7 +120,6 @@ export default function AdminStats({ reports }: AdminStatsProps) {
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* By category */}
         <div className="rounded-lg border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-card-foreground mb-3">{t("adminStats.byCategory")}</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -119,7 +132,6 @@ export default function AdminStats({ reports }: AdminStatsProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* By risk level */}
         <div className="rounded-lg border border-border bg-card p-4">
           <h3 className="text-sm font-semibold text-card-foreground mb-3">{t("adminStats.byRisk")}</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -135,7 +147,6 @@ export default function AdminStats({ reports }: AdminStatsProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* By type */}
         <div className="rounded-lg border border-border bg-card p-4 md:col-span-2">
           <h3 className="text-sm font-semibold text-card-foreground mb-3">{t("form.reportType")}</h3>
           <ResponsiveContainer width="100%" height={150}>
@@ -151,6 +162,48 @@ export default function AdminStats({ reports }: AdminStatsProps) {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Resolved reports history */}
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="text-sm font-semibold text-card-foreground mb-3 flex items-center gap-1.5">
+          <CheckCircle2 className="h-4 w-4 text-status-resolved" />
+          {t("adminStats.resolvedHistory")} ({resolvedReports.length})
+        </h3>
+        {resolvedReports.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">{t("adminStats.noResolved")}</p>
+        ) : (
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {resolvedReports.map((r) => (
+              <div key={r.id} className="flex items-start gap-3 rounded-md border border-border bg-muted/30 p-3">
+                <CheckCircle2 className="h-4 w-4 text-status-resolved mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-medium text-card-foreground">{r.title}</span>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${riskBadgeClass[r.risk_level]}`}>
+                      {t(`risk.${r.risk_level}`)}
+                    </span>
+                    {r.report_type === "injury" && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive flex items-center gap-0.5">
+                        <AlertTriangle className="h-2.5 w-2.5" />{t("form.injury")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />{r.location}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {t("adminStats.resolvedAt")}: {new Date(r.resolved_at ?? r.updated_at).toLocaleDateString("sv-SE")}
+                    </span>
+                    <span className="text-muted-foreground">{r.category}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
