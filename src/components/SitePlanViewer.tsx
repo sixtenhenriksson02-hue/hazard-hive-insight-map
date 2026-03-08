@@ -283,7 +283,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto block bg-muted ${selectionMode ? "cursor-crosshair" : ""}`}
+                className={`w-full h-auto block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
+                style={enhanceImage ? {
+                  filter: "contrast(1.3) brightness(1.05) saturate(0.1) sharpen(1)",
+                  imageRendering: "auto",
+                } : undefined}
                 onClick={handleImageClick}
                 draggable={false}
               />
@@ -296,33 +300,48 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   style={{
                     left: `${zone.x}%`,
                     top: `${zone.y}%`,
-                    width: "60px",
-                    height: "60px",
+                    width: "80px",
+                    height: "80px",
                     transform: "translate(-50%, -50%)",
-                    background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
-                    border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
+                    background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}44 0%, transparent 70%)`,
+                    border: `2px dashed ${riskDotColor[zone.maxRisk]}88`,
                   }}
                 />
               ))}
 
-              {/* Report markers */}
+              {/* Report markers - larger with labels */}
               {planReports.map(r => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-150"
-                  style={{
-                    left: `${r.plan_x}%`,
-                    top: `${r.plan_y}%`,
-                    backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-                  }}
-                  title={`${r.title} (${r.risk_level})`}
-                />
+                  className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                  style={{ left: `${r.plan_x}%`, top: `${r.plan_y}%` }}
+                  onMouseEnter={() => setHoveredReport(r.id)}
+                  onMouseLeave={() => setHoveredReport(null)}
+                >
+                  {/* Dot */}
+                  <div
+                    className="w-5 h-5 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150"
+                    style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
+                  />
+                  {/* Tooltip label on hover */}
+                  {hoveredReport === r.id && (
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
+                      <p className="font-semibold text-card-foreground">{r.title}</p>
+                      <p className="text-muted-foreground">{r.category} • {r.location}</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
+                        <span className="font-medium" style={{ color: riskDotColor[r.risk_level] }}>{t(`risk.${r.risk_level}`)}</span>
+                      </div>
+                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+                    </div>
+                  )}
+                </div>
               ))}
 
               {/* Selection mode point */}
               {selectionMode && selectedPoint && (
                 <div
-                  className="absolute w-5 h-5 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
+                  className="absolute w-6 h-6 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
                   style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
                 />
               )}
