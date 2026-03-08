@@ -180,7 +180,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 <CheckCircle2 className="h-3.5 w-3.5" /> {t("detail.suggestedActions")}
               </h4>
               <ul className="space-y-1.5">
-                {report.suggested_actions.map((action, i) => (
+                {(showTranslated && translatedActions ? translatedActions : report.suggested_actions).map((action, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-card-foreground">
                     <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] mt-0.5">
                       {i + 1}
