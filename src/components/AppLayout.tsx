@@ -7,9 +7,10 @@ import { useProjects } from "@/hooks/useProjects";
 interface AppLayoutProps {
   children: React.ReactNode;
   onManageProjects?: () => void;
+  onJoinProject?: () => void;
 }
 
-export default function AppLayout({ children, onManageProjects }: AppLayoutProps) {
+export default function AppLayout({ children, onManageProjects, onJoinProject }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
@@ -76,6 +77,15 @@ export default function AppLayout({ children, onManageProjects }: AppLayoutProps
                 )}
               </>
             )}
+            {!isAdmin && onJoinProject && (
+              <button
+                onClick={onJoinProject}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20 hover:border-accent transition-colors"
+              >
+                <FolderPlus className="h-3.5 w-3.5" />
+                {t("project.joinWithCode")}
+              </button>
+            )}
             <span className="text-primary-foreground/70 text-xs">
               {displayName} · <span className="font-semibold text-accent">{viewAs === "admin" ? t("auth.admin") : t("auth.worker")}</span>
             </span>
@@ -118,6 +128,11 @@ export default function AppLayout({ children, onManageProjects }: AppLayoutProps
               {isAdmin && onManageProjects && (
                 <button onClick={onManageProjects} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
                   <FolderPlus className="h-3.5 w-3.5" />{t("project.manage")}
+                </button>
+              )}
+              {!isAdmin && onJoinProject && (
+                <button onClick={onJoinProject} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
+                  <FolderPlus className="h-3.5 w-3.5" />{t("project.joinWithCode")}
                 </button>
               )}
             </div>

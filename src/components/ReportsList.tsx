@@ -54,6 +54,11 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
             <span className="text-xs text-muted-foreground truncate block">
               {[report.building, report.specific_location, report.category].filter(Boolean).join(" · ")}
             </span>
+            {report.description && (
+              <span className="text-xs text-muted-foreground/70 line-clamp-1 block mt-0.5">
+                {report.description}
+              </span>
+            )}
           </div>
 
           {/* Date */}

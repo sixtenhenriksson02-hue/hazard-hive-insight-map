@@ -43,7 +43,7 @@ const Index = () => {
   
 
   return (
-    <AppLayout onManageProjects={() => setShowProjects(true)}>
+    <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)}>
       <div className="mb-6">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
         <p className="text-muted-foreground text-sm mt-0.5">{t("dashboard.subtitle")}</p>
@@ -82,11 +82,6 @@ const Index = () => {
               <option value="severity">{t("sort.severity")}</option>
               <option value="oldest-open">{t("sort.oldestOpen")}</option>
             </select>
-          )}
-          {role === "worker" && (
-            <Button variant="outline" size="sm" onClick={() => setShowWorkerProjects(true)}>
-              <FolderPlus className="h-4 w-4 mr-1.5" />{t("project.joinWithCode")}
-            </Button>
           )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="h-4 w-4 mr-1.5" />{t("dashboard.newReport")}
