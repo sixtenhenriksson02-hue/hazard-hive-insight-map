@@ -29,6 +29,7 @@ export default function AdminStats({ reports }: AdminStatsProps) {
   const [period, setPeriod] = useState(30);
 
   const filtered = useMemo(() => {
+    if (period === 0) return reports;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - period);
     return reports.filter((r) => new Date(r.created_at) >= cutoff);
