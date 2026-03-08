@@ -9,6 +9,7 @@ interface AppLayoutProps {
   children: React.ReactNode;
   onManageProjects?: () => void;
   onJoinProject?: () => void;
+  onSelectReport?: (reportId: string) => void;
 }
 
 export default function AppLayout({ children, onManageProjects, onJoinProject }: AppLayoutProps) {
