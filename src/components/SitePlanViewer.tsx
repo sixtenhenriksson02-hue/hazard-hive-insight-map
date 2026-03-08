@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 // Switch removed - always enhance
 // Label removed - no longer needed for enhance toggle
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X, Eye } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SitePlan {
