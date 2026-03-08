@@ -10,6 +10,7 @@ import WorkerProjectManager from "@/components/WorkerProjectManager";
 import SitePlanViewer from "@/components/SitePlanViewer";
 import ReportGenerator from "@/components/ReportGenerator";
 import DocumentsView from "@/components/DocumentsView";
+import HelpGuide from "@/components/HelpGuide";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
