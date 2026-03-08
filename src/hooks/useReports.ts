@@ -63,7 +63,7 @@ async function assessRiskWithAI(report: {
   absence_required?: boolean;
   absence_days?: number;
   comments?: string[];
-}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean }> {
+}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[] }> {
   try {
     const { data, error } = await supabase.functions.invoke("assess-risk", {
       body: report,
