@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2 } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2 } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
