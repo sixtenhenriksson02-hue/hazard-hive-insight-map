@@ -232,10 +232,6 @@ export const BODY_PARTS_I18N: Record<Language, string[]> = {
 export const INJURY_TYPES_I18N: Record<Language, string[]> = {
   sv: ["Sårskada", "Stukning/Vrickning", "Fraktur", "Brännskada", "Klämskada", "Skärskada", "Ögonskada", "Hörselskada", "Andningsbesvär", "Övrigt"],
   en: ["Wound", "Sprain/Strain", "Fracture", "Burn", "Crush injury", "Cut", "Eye injury", "Hearing damage", "Breathing difficulty", "Other"],
-  // Notifications
-  "notifications.title": { sv: "Notifikationer", en: "Notifications" },
-  "notifications.empty": { sv: "Inga notifikationer", en: "No notifications" },
-  "notifications.markAllRead": { sv: "Markera alla lästa", en: "Mark all read" },
 };
 
 export function t(key: string, lang: Language): string {
