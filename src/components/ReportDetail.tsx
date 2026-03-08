@@ -248,7 +248,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
             </div>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">{report.description}</p>
+              <p className="text-sm text-muted-foreground">{showTranslated && translatedDescription ? translatedDescription : report.description}</p>
               <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 {report.building && (
                   <span className="flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{report.building}</span>
