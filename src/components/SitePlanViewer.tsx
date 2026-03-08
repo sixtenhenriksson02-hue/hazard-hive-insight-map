@@ -347,17 +347,19 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 className={`absolute inset-0 ${selectionMode ? "cursor-crosshair" : "pointer-events-none"}`}
                 onClick={selectionMode ? handleOverlayClick : undefined}
               />
-              {planReports.map(r => (
+              {planReports.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                  className="absolute w-5 h-5 rounded-full border-2 border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                   style={{
                     left: `${r.plan_x}%`,
                     top: `${r.plan_y}%`,
                     backgroundColor: riskDotColor[r.risk_level] ?? "#888",
                   }}
-                  title={`${r.title} (${r.risk_level})`}
-                />
+                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
+                >
+                  <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
+                </div>
               ))}
               {riskZones.map((zone, i) => (
                 <div
@@ -413,7 +415,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               ))}
 
               {/* Report markers - larger with labels */}
-              {planReports.map(r => (
+              {planReports.map((r, idx) => (
                 <div
                   key={r.id}
                   className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
@@ -421,11 +423,13 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   onMouseEnter={() => setHoveredReport(r.id)}
                   onMouseLeave={() => setHoveredReport(null)}
                 >
-                  {/* Dot */}
+                  {/* Numbered dot */}
                   <div
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150"
+                    className="w-6 h-6 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150 flex items-center justify-center"
                     style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  />
+                  >
+                    <span className="text-[9px] font-bold text-white leading-none">{idx + 1}</span>
+                  </div>
                   {/* Tooltip label on hover */}
                   {hoveredReport === r.id && (
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
@@ -508,15 +512,23 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     </span>
                   </div>
                   <div className="ml-4 space-y-0.5">
-                    {levelReports.map(r => (
-                      <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
-                        <span className="text-muted-foreground">•</span>
-                        <div>
-                          <span className="text-card-foreground font-medium">{r.title}</span>
-                          <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
+                    {levelReports.map(r => {
+                      const globalIdx = planReports.indexOf(r) + 1;
+                      return (
+                        <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
+                          <span
+                            className="w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-[8px] font-bold text-white mt-0.5"
+                            style={{ backgroundColor: riskDotColor[r.risk_level] }}
+                          >
+                            {globalIdx}
+                          </span>
+                          <div>
+                            <span className="text-card-foreground font-medium">{r.title}</span>
+                            <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
