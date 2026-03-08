@@ -63,6 +63,9 @@ const Index = () => {
           <Button variant={activeTab === "reports" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("reports")}>
             <List className="h-4 w-4 mr-1.5" />{t("dashboard.reports")}
           </Button>
+          <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("documents")}>
+            <FileText className="h-4 w-4 mr-1.5" />{t("nav.documents")}
+          </Button>
           <Button variant={activeTab === "matrix" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("matrix")}>
             <Grid3X3 className="h-4 w-4 mr-1.5" />{t("dashboard.matrix")}
           </Button>
