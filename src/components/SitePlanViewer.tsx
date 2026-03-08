@@ -388,9 +388,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 src={activePlan.image_url}
                 alt={activePlan.name}
                 className={`w-full h-auto block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
-                style={enhanceImage ? {
+                style={{
                   filter: "contrast(1.35) brightness(1.08) saturate(0.15)",
-                } : undefined}
+                }}
                 onClick={handleImageClick}
                 draggable={false}
               />
