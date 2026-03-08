@@ -121,6 +121,11 @@ export default function AppLayout({ children, onManageProjects, onJoinProject }:
                   <FolderPlus className="h-3.5 w-3.5" />{t("project.manage")}
                 </button>
               )}
+              {!isAdmin && onJoinProject && (
+                <button onClick={onJoinProject} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-primary-foreground/20">
+                  <FolderPlus className="h-3.5 w-3.5" />{t("project.joinWithCode")}
+                </button>
+              )}
             </div>
             <button onClick={signOut} className="flex items-center gap-2 text-sm text-primary-foreground/70">
               <LogOut className="h-4 w-4" /> {t("auth.logout")}
