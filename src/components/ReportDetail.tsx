@@ -147,7 +147,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 ))}
               </ul>
             </div>
-          )
+          )}
 
           {/* Admin risk override */}
           {isAdmin && !editing && (
