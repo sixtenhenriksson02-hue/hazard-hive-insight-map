@@ -136,6 +136,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          archived: boolean
           created_at: string
           created_by: string
           id: string
@@ -143,6 +144,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          archived?: boolean
           created_at?: string
           created_by: string
           id?: string
@@ -150,6 +152,7 @@ export type Database = {
           name: string
         }
         Update: {
+          archived?: boolean
           created_at?: string
           created_by?: string
           id?: string
