@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2 } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
