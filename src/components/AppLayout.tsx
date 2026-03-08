@@ -23,8 +23,10 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
   const isActualAdmin = role === "admin";
   const showAdminUI = viewAs === "admin";
 
-  // Admin sees all projects; workers see their enrolled projects
-  const availableProjects = isActualAdmin ? projects : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
+  // Admin sees all active projects; workers see their enrolled (non-archived) projects
+  const availableProjects = isActualAdmin
+    ? projects.filter(p => !(p as any).archived)
+    : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
 
   return (
     <div className="min-h-screen bg-background">

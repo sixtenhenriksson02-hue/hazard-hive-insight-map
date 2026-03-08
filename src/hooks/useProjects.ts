@@ -8,6 +8,7 @@ export interface Project {
   created_by: string;
   created_at: string;
   invite_code?: string;
+  archived?: boolean;
 }
 
 export function useProjects() {
@@ -77,5 +78,18 @@ export function useProjects() {
     return true;
   };
 
-  return { projects, loading, createProject, joinByCode, refetch: fetchProjects };
+  const archiveProject = async (projectId: string, archived: boolean) => {
+    const { error } = await supabase
+      .from("projects")
+      .update({ archived } as any)
+      .eq("id", projectId);
+    if (error) {
+      toast({ title: "Kunde inte uppdatera projekt", description: error.message, variant: "destructive" });
+      return false;
+    }
+    await fetchProjects();
+    return true;
+  };
+
+  return { projects, loading, createProject, joinByCode, archiveProject, refetch: fetchProjects };
 }

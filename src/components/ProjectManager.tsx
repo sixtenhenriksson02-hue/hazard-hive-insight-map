@@ -5,7 +5,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderPlus, Calendar, Copy, Check } from "lucide-react";
+import { FolderPlus, Calendar, Copy, Check, Archive, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProjectManagerProps {
@@ -16,11 +16,12 @@ interface ProjectManagerProps {
 export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, archiveProject } = useProjects();
   const { toast } = useToast();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const handleCreate = async () => {
     if (!name.trim() || !user) return;
@@ -36,6 +37,9 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
     toast({ title: t("project.codeCopied") });
     setTimeout(() => setCopiedId(null), 2000);
   };
+
+  const activeProjects = projects.filter(p => !p.archived);
+  const archivedProjects = projects.filter(p => p.archived);
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -60,16 +64,25 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
           </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {projects.length === 0 && (
+            {activeProjects.length === 0 && !showArchived && (
               <p className="text-sm text-muted-foreground text-center py-4">{t("project.noProjects")}</p>
             )}
-            {projects.map((p) => (
+            {activeProjects.map((p) => (
               <div key={p.id} className="rounded-md border border-border bg-muted/50 p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-card-foreground">{p.name}</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />{new Date(p.created_at).toLocaleDateString("sv-SE")}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />{new Date(p.created_at).toLocaleDateString("sv-SE")}
+                    </span>
+                    <button
+                      onClick={() => archiveProject(p.id, true)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      title={t("project.archive")}
+                    >
+                      <Archive className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
                 {p.invite_code && (
                   <div className="mt-2 flex items-center gap-2">
@@ -88,6 +101,38 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
               </div>
             ))}
           </div>
+
+          {archivedProjects.length > 0 && (
+            <div>
+              <button
+                onClick={() => setShowArchived(!showArchived)}
+                className="text-xs text-muted-foreground hover:text-accent transition-colors"
+              >
+                {showArchived ? t("project.hideArchived") : t("project.showArchived")} ({archivedProjects.length})
+              </button>
+              {showArchived && (
+                <div className="space-y-2 mt-2">
+                  {archivedProjects.map((p) => (
+                    <div key={p.id} className="rounded-md border border-border bg-muted/30 p-3 opacity-60">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-card-foreground">{p.name}</span>
+                          <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{t("project.archived")}</span>
+                        </div>
+                        <button
+                          onClick={() => archiveProject(p.id, false)}
+                          className="text-muted-foreground hover:text-accent transition-colors"
+                          title={t("project.activate")}
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -69,14 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const projectIds = data.map(d => d.project_id);
     const { data: projects } = await supabase
       .from("projects")
-      .select("id, name")
+      .select("id, name, archived")
       .in("id", projectIds);
+
+    // Filter out archived projects for workers
+    const activeProjects = projects?.filter((p: any) => !p.archived) ?? [];
 
     const result: UserProject[] = data.map(d => ({
       id: d.id,
       project_id: d.project_id,
-      project_name: projects?.find(p => p.id === d.project_id)?.name ?? "",
-    }));
+      project_name: activeProjects.find(p => p.id === d.project_id)?.name ?? "",
+    })).filter(d => activeProjects.some(p => p.id === d.project_id));
 
     setUserProjects(result);
     return result;
