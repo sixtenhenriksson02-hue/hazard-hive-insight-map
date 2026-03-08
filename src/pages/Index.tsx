@@ -115,6 +115,7 @@ const Index = () => {
           )}
           {activeTab === "matrix" && <RiskMatrix />}
           {activeTab === "stats" && isAdmin && <AdminStats reports={reports} />}
+          {activeTab === "documents" && <DocumentsView />}
         </div>
 
         {showForm && (
