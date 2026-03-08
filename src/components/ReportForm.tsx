@@ -80,6 +80,38 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     }
   };
 
+  const handleSpellCheck = async () => {
+    const textsToCheck = [title, description].filter(t => t.trim().length > 0);
+    if (textsToCheck.length === 0) return;
+
+    setSpellChecking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("spellcheck", {
+        body: { texts: textsToCheck },
+      });
+
+      if (!error && data?.corrected && data.corrected.length > 0) {
+        let idx = 0;
+        if (title.trim()) {
+          setTitle(data.corrected[idx++]);
+        }
+        if (description.trim() && idx < data.corrected.length) {
+          setDescription(data.corrected[idx]);
+        }
+        setSpellChecked(true);
+        if (data.had_errors) {
+          toast({ title: t("spellcheck.corrected") });
+        } else {
+          toast({ title: t("spellcheck.noErrors") });
+        }
+        setTimeout(() => setSpellChecked(false), 3000);
+      }
+    } catch (e) {
+      console.error("Spellcheck error:", e);
+    }
+    setSpellChecking(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !specificLocation) {
