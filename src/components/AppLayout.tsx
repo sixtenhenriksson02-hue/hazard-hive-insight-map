@@ -132,11 +132,6 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 ))}
               </select>
             )}
-            <div className="flex gap-2 flex-wrap mb-2">
-              <button onClick={() => { navigate("/"); setMobileMenuOpen(false); }} className={`text-xs px-3 py-1.5 rounded-lg border ${location.pathname === "/" ? "border-accent/50 bg-accent/10 text-accent" : "border-primary-foreground/15 bg-primary-foreground/5"}`}>
-                {t("nav.dashboard")}
-              </button>
-            </div>
             <div className="flex gap-2 flex-wrap">
               <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5">
                 {lang === "sv" ? "English" : "Svenska"}

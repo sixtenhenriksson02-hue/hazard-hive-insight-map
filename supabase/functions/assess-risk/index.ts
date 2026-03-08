@@ -19,88 +19,109 @@ serve(async (req) => {
       ? `\n\nSenaste kommentarer på denna rapport:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
       : "";
 
-    const prompt = `Du är en erfaren arbetsmiljöexpert och riskbedömare inom bygg- och anläggningsbranschen i Sverige. Du följer AFS (Arbetsmiljöverkets föreskrifter) och har djup kunskap om vanliga arbetsplatsrisker.
+    const prompt = `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch. Du har expertkunskap inom:
+- AFS 2001:1 Systematiskt arbetsmiljöarbete
+- AFS 2020:1 Arbetsplatsens utformning
+- AFS 2006:4 Användning av arbetsutrustning
+- Arbetsmiljölagen (AML) kapitel 2-4
 
-Analysera följande rapport och ge en detaljerad riskbedömning.
+Analysera följande rapport noggrant och ge en detaljerad, specifik riskbedömning. Undvik generiska formuleringar – referera alltid till konkreta detaljer i rapporten.
 
+═══════════════════════════════════════
 RAPPORTINFORMATION:
-- Typ: ${report_type === "injury" ? "Skaderapport (inträffad olycka)" : "Riskobservation (potentiell risk)"}
+═══════════════════════════════════════
+- Typ: ${report_type === "injury" ? "SKADERAPPORT (inträffad olycka)" : "RISKOBSERVATION (potentiell risk)"}
 - Rubrik: ${title}
 - Beskrivning: ${description}
 - Kategori: ${category}
 - Byggnad/Projekt: ${building || "Ej angivet"}
-- Plats: ${specific_location || "Ej angivet"}
-${report_type === "injury" ? `- Skadad kroppsdel: ${body_part || "Ej angivet"}
+- Specifik plats: ${specific_location || "Ej angivet"}
+${report_type === "injury" ? `
+SKADEDETALJER:
+- Skadad kroppsdel: ${body_part || "Ej angivet"}
 - Skadetyp: ${injury_type || "Ej angivet"}
 - Sjukvård krävdes: ${medical_care_required ? "Ja" : "Nej"}
 - Frånvaro krävdes: ${absence_required ? "Ja" : "Nej"}
 - Frånvarodagar: ${absence_days || 0}` : ""}
 ${commentsText}
 
-BEDÖMNINGSKRITERIER:
-Använd följande riktlinjer för risknivå:
+═══════════════════════════════════════
+BEDÖMNINGSMATRIS (Sannolikhet × Konsekvens):
+═══════════════════════════════════════
 
-KRITISK (critical):
-- Omedelbar livsfara eller risk för allvarlig permanent skada
-- Bristande fallskydd vid höjdarbete (>2m)
-- Ras- eller kollapseringsrisk
-- Exponering för farliga ämnen utan skyddsutrustning
-- Elektriska risker med hög spänning
-- Allvarliga skador som krävt sjukhusvård
+KRITISK (critical) – Omedelbar åtgärd krävs:
+• Omedelbar livsfara eller risk för permanent funktionsnedsättning
+• Fallrisk från höjd >2m utan fallskydd
+• Ras-/kollapsrisk i schakt eller konstruktion
+• Exponering för cancerframkallande/reproduktionstoxiska ämnen utan adekvat skydd
+• Elektrisk fara med >230V utan låsning/märkning
+• Allvarlig olycka som krävt akutsjukvård/sjukhusvistelse
+• Brott mot stoppningsregler enligt AML 6 kap 7§
 
-HÖG (high):
-- Risk för allvarlig skada som kräver sjukvård
-- Bristande säkerhetsutrustning vid riskfyllda moment
-- Upprepade incidenter i samma område
-- Ergonomiska risker med hög belastning
-- Skador med frånvaro > 3 dagar
+HÖG (high) – Åtgärd inom 24-48 timmar:
+• Risk för allvarlig skada som kräver läkarvård
+• Bristande skyddsutrustning vid identifierat riskmoment
+• Upprepade incidenter (≥2) på samma plats/aktivitet
+• Ergonomisk belastning med hög repetivitet eller tunga lyft (>25kg)
+• Skador med frånvaro >3 dagar
+• Bristande säkerhetsrutiner vid heta arbeten, lyft eller trånga utrymmen
 
-MEDEL (medium):
-- Risk för lättare skada
-- Mindre brister i ordning/säkerhet
-- Ergonomiska besvär
-- Skador med kortare frånvaro (1-3 dagar)
+MEDEL (medium) – Åtgärd inom 1 vecka:
+• Risk för lättare skada som kan kräva enklare sjukvård
+• Brister i ordning, skyltning eller belysning
+• Ergonomiska besvär vid arbetsstation
+• Skador med 1-3 dagars frånvaro
+• Enstaka avvikelse från säkerhetsrutin
 
-LÅG (low):
-- Minimal risk för skada
-- Mindre observationer som är enkla att åtgärda
-- Skador utan frånvaro och utan sjukvårdsbehov
-- Redan delvis åtgärdade risker
+LÅG (low) – Åtgärd vid tillfälle:
+• Minimal risk för fysisk skada
+• Mindre observationer som är enkla att åtgärda
+• Skador utan frånvaro och utan behov av sjukvård
+• Risk som redan är delvis åtgärdad eller har temporärt skydd
 
 ALLVARLIGHETSGRAD (1-5):
-1 = Obetydlig påverkan, ingen skaderisk
-2 = Mindre påverkan, lättare skada möjlig
-3 = Måttlig påverkan, skada som kräver vård möjlig
-4 = Allvarlig påverkan, allvarlig skada möjlig
-5 = Mycket allvarlig, livsfara eller permanent skada möjlig
+1 = Obetydlig: Ingen skaderisk, ingen påverkan på drift
+2 = Lindrig: Lättare obehag/skada, <1 dags frånvaro
+3 = Måttlig: Skada som kan kräva läkarvård, 1-7 dagars frånvaro
+4 = Allvarlig: Allvarlig skada, >7 dagars frånvaro eller sjukhusvård
+5 = Mycket allvarlig: Livsfara, permanent funktionsnedsättning eller dödsfall
 
-${hasComments ? `KOMMENTARSBEDÖMNING:
-Analysera kommentarerna noggrant:
-- Om kommentarer tydligt anger att risken är ÅTGÄRDAD (t.ex. "fixat", "åtgärdat", "reparerat", "bytt ut") → sänk risknivån till "low" och markera som bör lösas
-- Om kommentarer anger DELVIS åtgärdad → sänk risknivån ett steg
-- Om kommentarer anger att risken KVARSTÅR eller FÖRVÄRRATS → behåll eller höj risknivån
-- Var kritisk och kräv tydliga bevis på åtgärd innan du sänker nivån` : ""}
+${hasComments ? `═══════════════════════════════════════
+KOMMENTARSBEDÖMNING:
+═══════════════════════════════════════
+Analysera kommentarerna noggrant mot följande kriterier:
+- ÅTGÄRDAD: Kommentarer anger tydligt "fixat", "åtgärdat", "reparerat", "bytt ut", "monterat skydd" etc → sänk till "low", markera should_resolve=true
+- DELVIS ÅTGÄRDAD: Temporär åtgärd eller pågående arbete → sänk ett steg, should_resolve=false
+- OFÖRÄNDRAD/FÖRVÄRRAD: Risk kvarstår eller nya problem identifierade → behåll/höj nivå
+- KRITISK bedömning: Kräv specifika bevis på åtgärd. "Vi tittar på det" räknas INTE som åtgärdat.` : ""}
 
-Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar till de faktiska detaljerna i rapporten. Undvik generiska svar.`;
+═══════════════════════════════════════
+INSTRUKTIONER FÖR SVARET:
+═══════════════════════════════════════
+1. Förklara specifikt VAD som utgör risken med hänvisning till rapportens detaljer
+2. Motivera risknivån med referens till bedömningsmatrisen ovan
+3. Ge 2-4 KONKRETA, genomförbara åtgärder sorterade efter prioritet
+4. Varje åtgärd ska vara specifik nog att en platschef kan agera direkt på den
+5. Om det är en skaderapport: kommentera om skadan tyder på systematiska brister`;
 
     const toolProperties: Record<string, unknown> = {
       risk_level: {
         type: "string",
         enum: ["low", "medium", "high", "critical"],
-        description: "Bedömd risknivå baserat på kriterierna ovan",
+        description: "Bedömd risknivå baserat på bedömningsmatrisen",
       },
       explanation: {
         type: "string",
-        description: "En konkret förklaring (3-4 meningar) på svenska som refererar till specifika detaljer i rapporten och motiverar risknivån. Inkludera rekommenderade åtgärder.",
+        description: "En detaljerad förklaring (4-6 meningar) på svenska som: 1) Identifierar den specifika risken, 2) Motiverar risknivån med hänvisning till bedömningsmatrisen, 3) Beskriver potentiella konsekvenser, 4) Nämner relevanta AFS-föreskrifter om tillämpligt",
       },
       severity_rating: {
         type: "number",
-        description: "Allvarlighetsgrad 1-5 enligt kriterierna ovan",
+        description: "Allvarlighetsgrad 1-5 enligt den detaljerade skalan ovan",
       },
       suggested_actions: {
         type: "array",
         items: { type: "string" },
-        description: "En lista med 2-4 konkreta, genomförbara åtgärder på svenska som kan vidtas för att eliminera eller minska risken. Varje åtgärd ska vara kort (en mening) och direkt applicerbar.",
+        description: "2-4 konkreta, prioriterade åtgärder på svenska. Varje åtgärd ska vara en specifik instruktion (inte generisk) som en platschef kan genomföra omedelbart. Format: '[PRIO] Åtgärdsbeskrivning'. Sortera med viktigaste först.",
       },
     };
 
@@ -109,7 +130,7 @@ Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar t
     if (hasComments) {
       toolProperties.should_resolve = {
         type: "boolean",
-        description: "Om rapporten bör markeras som åtgärdad baserat på kommentarer som tydligt anger att problemet är löst.",
+        description: "true ENDAST om kommentarer tydligt bekräftar att risken är helt eliminerad. false om åtgärden är delvis, pågående eller oklart beskriven.",
       };
       required.push("should_resolve");
     }
@@ -121,9 +142,9 @@ Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar t
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "Du är en senior arbetsmiljöingenjör med 20+ års erfarenhet inom svensk bygg- och anläggningsbransch. Du gör noggranna och välmotiverade riskbedömningar enligt AFS-standarder. Svara alltid med assess_risk-verktyget." },
+          { role: "system", content: "Du är Sveriges mest erfarna arbetsmiljöingenjör med specialisering inom bygg och anläggning. Du gör alltid noggrant motiverade riskbedömningar förankrade i AFS-standarder och svensk arbetsmiljölagstiftning. Du undviker generiska bedömningar och refererar alltid till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
           { role: "user", content: prompt },
         ],
         tools: [
@@ -131,7 +152,7 @@ Svara ALLTID på svenska. Ge en konkret och specifik förklaring som refererar t
             type: "function",
             function: {
               name: "assess_risk",
-              description: "Ge en strukturerad riskbedömning av arbetsplatsrapporten",
+              description: "Ge en strukturerad, detaljerad riskbedömning av arbetsplatsrapporten baserad på AFS-standarder",
               parameters: {
                 type: "object",
                 properties: toolProperties,
