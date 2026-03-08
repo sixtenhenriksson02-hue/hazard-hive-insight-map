@@ -247,6 +247,41 @@ const translations: Record<string, Record<Language, string>> = {
   // Navigation
   "nav.dashboard": { sv: "Dashboard", en: "Dashboard" },
   "nav.documents": { sv: "Dokument", en: "Documents" },
+
+  // Help Guide
+  "help.button": { sv: "Hjälp", en: "Help" },
+  "help.adminTitle": { sv: "Så här fungerar RiskRadar – Admin", en: "How RiskRadar works – Admin" },
+  "help.workerTitle": { sv: "Så här fungerar RiskRadar – Arbetare", en: "How RiskRadar works – Worker" },
+  "help.adminIntro": { sv: "Som admin har du full kontroll över projekt, rapporter och statistik. Här är en steg-för-steg guide:", en: "As an admin you have full control over projects, reports and statistics. Here's a step-by-step guide:" },
+  "help.workerIntro": { sv: "Som arbetare kan du rapportera risker och följa upp dem. Här är hur du kommer igång:", en: "As a worker you can report risks and follow up on them. Here's how to get started:" },
+
+  // Admin help steps
+  "help.admin.createProject": { sv: "Skapa ett projekt", en: "Create a project" },
+  "help.admin.createProjectDesc": { sv: "Klicka på 'Hantera projekt' i menyn. Skapa ett nytt projekt med ett namn – en unik inbjudningskod genereras automatiskt.", en: "Click 'Manage Projects' in the menu. Create a new project with a name – a unique invite code is generated automatically." },
+  "help.admin.inviteWorkers": { sv: "Bjud in arbetare", en: "Invite workers" },
+  "help.admin.inviteWorkersDesc": { sv: "Dela projektets inbjudningskod med dina arbetare. De anger koden under 'Gå med i projekt' för att ansluta sig.", en: "Share the project's invite code with your workers. They enter the code under 'Join project' to connect." },
+  "help.admin.uploadPlan": { sv: "Ladda upp riskanalys-karta", en: "Upload risk analysis map" },
+  "help.admin.uploadPlanDesc": { sv: "Välj ett projekt och klicka 'Ladda upp' på riskanalys-kartan. Ladda upp en bild av arbetsplatsen – rapporterade risker visas sedan som markeringar på kartan.", en: "Select a project and click 'Upload' on the risk analysis map. Upload an image of the workplace – reported risks will then show as markers on the map." },
+  "help.admin.manageReports": { sv: "Hantera rapporter", en: "Manage reports" },
+  "help.admin.manageReportsDesc": { sv: "Granska inkomna rapporter, ändra status (öppen/åtgärdad), justera risknivå manuellt eller låt AI ombedöma. Kommentera för att kommunicera med rapportören.", en: "Review incoming reports, change status (open/resolved), adjust risk level manually or let AI reassess. Comment to communicate with the reporter." },
+  "help.admin.statistics": { sv: "Följ statistik", en: "Track statistics" },
+  "help.admin.statisticsDesc": { sv: "Under fliken Statistik ser du åtgärdsgrad, rapporter över tid, fördelning per kategori och risknivå. Välj tidsperiod från 7 dagar upp till all tid.", en: "Under the Statistics tab you'll see resolution rate, reports over time, distribution by category and risk level. Choose time period from 7 days up to all time." },
+  "help.admin.generateReports": { sv: "Generera rapporter & dokument", en: "Generate reports & documents" },
+  "help.admin.generateReportsDesc": { sv: "Klicka 'Rapporter' för att generera månads-, kvartals- eller årsrapporter med AI. Spara dem som dokument under Dokument-fliken för framtida referens.", en: "Click 'Reports' to generate monthly, quarterly or yearly reports with AI. Save them as documents under the Documents tab for future reference." },
+  "help.admin.translate": { sv: "Översätt rapporter", en: "Translate reports" },
+  "help.admin.translateDesc": { sv: "Öppna en rapport och klicka 'Översätt' för att översätta titel, beskrivning och AI-bedömning till engelska eller svenska.", en: "Open a report and click 'Translate' to translate title, description and AI assessment to English or Swedish." },
+
+  // Worker help steps
+  "help.worker.joinProject": { sv: "Gå med i ett projekt", en: "Join a project" },
+  "help.worker.joinProjectDesc": { sv: "Klicka 'Gå med i projekt med kod' och ange inbjudningskoden du fått från din admin. Du ser sedan projektet i listan.", en: "Click 'Join project with code' and enter the invite code you received from your admin. You'll then see the project in the list." },
+  "help.worker.createReport": { sv: "Rapportera en risk eller skada", en: "Report a risk or injury" },
+  "help.worker.createReportDesc": { sv: "Klicka 'Ny rapport', välj typ (riskobservation eller skadeanmälan), fyll i detaljer och skicka. AI bedömer automatiskt risknivån.", en: "Click 'New Report', choose type (risk observation or injury report), fill in details and submit. AI automatically assesses the risk level." },
+  "help.worker.markOnPlan": { sv: "Markera på riskanalys-kartan", en: "Mark on the risk analysis map" },
+  "help.worker.markOnPlanDesc": { sv: "När du skapar en rapport kan du markera exakt var risken finns på arbetsplatsens riskanalys-karta genom att klicka på bilden.", en: "When creating a report you can mark exactly where the risk is on the workplace risk analysis map by clicking on the image." },
+  "help.worker.viewReports": { sv: "Se och kommentera rapporter", en: "View and comment on reports" },
+  "help.worker.viewReportsDesc": { sv: "Klicka på en rapport i listan för att se detaljer, AI-bedömning och föreslagna åtgärder. Lägg till kommentarer för att uppdatera status.", en: "Click on a report in the list to see details, AI assessment and suggested actions. Add comments to update status." },
+  "help.worker.translate": { sv: "Översätt rapporter", en: "Translate reports" },
+  "help.worker.translateDesc": { sv: "Öppna en rapport och klicka 'Översätt' för att se all text på engelska eller svenska.", en: "Open a report and click 'Translate' to see all text in English or Swedish." },
 };
 
 // Categories
