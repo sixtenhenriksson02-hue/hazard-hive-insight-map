@@ -88,7 +88,7 @@ const Index = () => {
           )}
           {role === "worker" && (
             <Button variant="outline" size="sm" onClick={() => setShowWorkerProjects(true)}>
-              <FolderPlus className="h-4 w-4 mr-1.5" />{t("project.myProjects")}
+              <FolderPlus className="h-4 w-4 mr-1.5" />{t("project.joinWithCode")}
             </Button>
           )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
