@@ -43,6 +43,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number } | null>(null);
+  const [enhanceImage, setEnhanceImage] = useState(true);
+  const [hoveredReport, setHoveredReport] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
