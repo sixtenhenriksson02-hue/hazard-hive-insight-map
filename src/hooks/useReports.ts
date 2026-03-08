@@ -33,6 +33,7 @@ export interface RiskReport {
   absence_days?: number;
   severity_rating?: number;
   ai_explanation?: string | null;
+  suggested_actions?: string[] | null;
   site_plan_id?: string | null;
   plan_x?: number | null;
   plan_y?: number | null;
@@ -62,7 +63,7 @@ async function assessRiskWithAI(report: {
   absence_required?: boolean;
   absence_days?: number;
   comments?: string[];
-}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean }> {
+}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[] }> {
   try {
     const { data, error } = await supabase.functions.invoke("assess-risk", {
       body: report,
@@ -205,6 +206,7 @@ export function useReports() {
       absence_days: report.absence_days ?? 0,
       severity_rating: assessment.severity_rating,
       ai_explanation: assessment.explanation,
+      suggested_actions: assessment.suggested_actions ?? [],
       site_plan_id: report.site_plan_id ?? null,
       plan_x: report.plan_x ?? null,
       plan_y: report.plan_y ?? null,
@@ -260,6 +262,7 @@ export function useReports() {
     const updates: any = {
       risk_level: assessment.risk_level as RiskLevel,
       ai_explanation: assessment.explanation,
+      suggested_actions: assessment.suggested_actions ?? [],
     };
 
     // If AI suggests resolving, auto-resolve

@@ -128,6 +128,7 @@ export type Database = {
           site_plan_id: string | null
           specific_location: string | null
           status: string
+          suggested_actions: string[] | null
           title: string
           updated_at: string
         }
@@ -156,6 +157,7 @@ export type Database = {
           site_plan_id?: string | null
           specific_location?: string | null
           status?: string
+          suggested_actions?: string[] | null
           title: string
           updated_at?: string
         }
@@ -184,6 +186,7 @@ export type Database = {
           site_plan_id?: string | null
           specific_location?: string | null
           status?: string
+          suggested_actions?: string[] | null
           title?: string
           updated_at?: string
         }

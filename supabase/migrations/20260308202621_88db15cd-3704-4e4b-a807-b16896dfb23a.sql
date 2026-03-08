@@ -1,0 +1,1 @@
+ALTER TABLE public.risk_reports ADD COLUMN suggested_actions text[] DEFAULT '{}';

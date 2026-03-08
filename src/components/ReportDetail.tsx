@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2 } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
@@ -127,6 +127,25 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 )}
               </div>
               <p className="text-xs text-muted-foreground">{report.ai_explanation}</p>
+            </div>
+          )}
+
+          {/* Suggested Actions */}
+          {report.suggested_actions && report.suggested_actions.length > 0 && (
+            <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+              <h4 className="text-xs font-semibold text-primary flex items-center gap-1 mb-2">
+                <CheckCircle2 className="h-3.5 w-3.5" /> {t("detail.suggestedActions")}
+              </h4>
+              <ul className="space-y-1.5">
+                {report.suggested_actions.map((action, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-card-foreground">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] mt-0.5">
+                      {i + 1}
+                    </span>
+                    <span>{action}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

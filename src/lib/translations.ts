@@ -126,6 +126,7 @@ const translations: Record<string, Record<Language, string>> = {
   "detail.reassess": { sv: "Ombedöm", en: "Reassess" },
   "detail.overrideRisk": { sv: "Ändra risknivå", en: "Override risk level" },
   "detail.adminOverride": { sv: "Ändrad av admin", en: "Changed by admin" },
+  "detail.suggestedActions": { sv: "Föreslagna åtgärder", en: "Suggested Actions" },
 
   // Projects
   "project.manage": { sv: "Hantera projekt", en: "Manage Projects" },
