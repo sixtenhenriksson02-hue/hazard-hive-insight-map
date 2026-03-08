@@ -102,7 +102,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
             {editing ? (
               <Input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
             ) : (
-              <span className="truncate">{report.title}</span>
+              <span className="truncate">{report.title ? report.title.charAt(0).toUpperCase() + report.title.slice(1) : report.title}</span>
             )}
           </DialogTitle>
         </DialogHeader>
