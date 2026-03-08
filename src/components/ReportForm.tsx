@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, Maximize2 } from "lucide-react";
+import { Camera, Send, MapPin, Building2, Maximize2, SpellCheck, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
 import SitePlanViewer from "@/components/SitePlanViewer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ReportFormProps {
   onSubmit: (report: {
