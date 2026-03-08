@@ -152,6 +152,14 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Global translate button */}
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" className="h-7 px-3 text-xs" onClick={handleTranslate} disabled={translating}>
+              {translating ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Languages className="h-3 w-3 mr-1" />}
+              {translating ? t("translate.translating") : showTranslated ? t("translate.original") : t("translate.button")}
+            </Button>
+          </div>
+
           {report.image_url && (
             <img src={report.image_url} alt="" className="w-full h-48 object-cover rounded-md" />
           )}
