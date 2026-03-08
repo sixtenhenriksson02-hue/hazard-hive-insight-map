@@ -240,7 +240,7 @@ const translations: Record<string, Record<Language, string>> = {
   "documents.empty": { sv: "Inga dokument sparade ännu.", en: "No documents saved yet." },
 
   // Translate
-  "translate.button": { sv: "Översätt till engelska", en: "Translate to Swedish" },
+  "translate.button": { sv: "Översätt till engelska", en: "Translate to English" },
   "translate.translating": { sv: "Översätter...", en: "Translating..." },
   "translate.original": { sv: "Visa original", en: "Show original" },
 
