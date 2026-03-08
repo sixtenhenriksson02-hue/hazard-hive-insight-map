@@ -27,6 +27,7 @@ interface AuthContextType {
   addUserProject: (projectId: string) => Promise<void>;
   removeUserProject: (projectId: string) => Promise<void>;
   refreshProjects: () => Promise<void>;
+  refreshUserProjects: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
