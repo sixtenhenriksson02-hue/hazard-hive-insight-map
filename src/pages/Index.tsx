@@ -8,7 +8,7 @@ import AdminStats from "@/components/AdminStats";
 import ProjectManager from "@/components/ProjectManager";
 import WorkerProjectManager from "@/components/WorkerProjectManager";
 import SitePlanViewer from "@/components/SitePlanViewer";
-import MonthlyReport from "@/components/MonthlyReport";
+import ReportGenerator from "@/components/ReportGenerator";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
