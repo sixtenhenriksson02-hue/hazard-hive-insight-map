@@ -204,7 +204,7 @@ export function useReports() {
       medical_care_required: report.medical_care_required ?? false,
       absence_required: report.absence_required ?? false,
       absence_days: report.absence_days ?? 0,
-      severity_rating: assessment.severity_rating,
+      severity_rating: Math.round(assessment.severity_rating),
       ai_explanation: assessment.explanation,
       suggested_actions: assessment.suggested_actions ?? [],
       site_plan_id: report.site_plan_id ?? null,
