@@ -94,17 +94,19 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   };
 
   const handleTranslate = async () => {
-    if (showTranslated && translatedExplanation) {
+    if (showTranslated && translatedTitle) {
       setShowTranslated(false);
       return;
     }
-    if (translatedExplanation) {
+    if (translatedTitle) {
       setShowTranslated(true);
       return;
     }
     setTranslating(true);
     try {
       const textsToTranslate = [
+        report.title,
+        report.description,
         report.ai_explanation ?? "",
         ...(report.suggested_actions ?? []),
       ].filter(Boolean);
@@ -113,8 +115,13 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
         body: { texts: textsToTranslate, target_language: targetLang },
       });
       if (!error && data?.translations) {
-        setTranslatedExplanation(data.translations[0]);
-        setTranslatedActions(data.translations.slice(1));
+        let idx = 0;
+        setTranslatedTitle(data.translations[idx++]);
+        setTranslatedDescription(data.translations[idx++]);
+        if (report.ai_explanation) {
+          setTranslatedExplanation(data.translations[idx++]);
+        }
+        setTranslatedActions(data.translations.slice(idx));
         setShowTranslated(true);
       }
     } catch (e) {
