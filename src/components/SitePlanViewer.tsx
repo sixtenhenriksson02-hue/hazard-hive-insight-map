@@ -87,14 +87,125 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     if (plans.length === 0) setActivePlan(null);
   }, [plans]);
 
+  // Auto-crop drawing frame from image using canvas analysis
+  const autoCropImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d")!;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const { data, width, height } = imageData;
+
+        // Helper: check if a pixel is "dark" (part of a frame line)
+        const isDark = (x: number, y: number) => {
+          const i = (y * width + x) * 4;
+          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          return avg < 80;
+        };
+
+        // Scan from each edge to find the innermost frame border
+        const scanStep = Math.max(1, Math.floor(Math.min(width, height) / 200));
+
+        // Find top crop line
+        let top = 0;
+        for (let y = 0; y < Math.floor(height * 0.2); y += scanStep) {
+          let darkCount = 0;
+          for (let x = 0; x < width; x += scanStep) {
+            if (isDark(x, y)) darkCount++;
+          }
+          // If more than 40% of the row is dark, it's likely a frame line
+          if (darkCount > (width / scanStep) * 0.4) top = y + 2;
+        }
+
+        // Find bottom crop line
+        let bottom = height;
+        for (let y = height - 1; y > Math.floor(height * 0.7); y -= scanStep) {
+          let darkCount = 0;
+          for (let x = 0; x < width; x += scanStep) {
+            if (isDark(x, y)) darkCount++;
+          }
+          if (darkCount > (width / scanStep) * 0.4) bottom = y - 2;
+        }
+
+        // Find left crop line
+        let left = 0;
+        for (let x = 0; x < Math.floor(width * 0.2); x += scanStep) {
+          let darkCount = 0;
+          for (let y = 0; y < height; y += scanStep) {
+            if (isDark(x, y)) darkCount++;
+          }
+          if (darkCount > (height / scanStep) * 0.4) left = x + 2;
+        }
+
+        // Find right crop line
+        let right = width;
+        for (let x = width - 1; x > Math.floor(width * 0.7); x -= scanStep) {
+          let darkCount = 0;
+          for (let y = 0; y < height; y += scanStep) {
+            if (isDark(x, y)) darkCount++;
+          }
+          if (darkCount > (height / scanStep) * 0.4) right = x - 2;
+        }
+
+        // Also try to detect title block (usually bottom ~15% or right ~20%)
+        // Check if bottom area has dense text/lines
+        const bottomAreaStart = Math.floor(height * 0.82);
+        let bottomDensity = 0;
+        for (let y = bottomAreaStart; y < height; y += scanStep) {
+          for (let x = 0; x < width; x += scanStep) {
+            if (isDark(x, y)) bottomDensity++;
+          }
+        }
+        const bottomAreaPixels = ((height - bottomAreaStart) / scanStep) * (width / scanStep);
+        if (bottomDensity > bottomAreaPixels * 0.15) {
+          bottom = Math.min(bottom, bottomAreaStart);
+        }
+
+        // Ensure minimum crop area
+        const cropW = Math.max(right - left, Math.floor(width * 0.5));
+        const cropH = Math.max(bottom - top, Math.floor(height * 0.5));
+        const finalLeft = Math.max(0, left);
+        const finalTop = Math.max(0, top);
+
+        // Create cropped canvas
+        const croppedCanvas = document.createElement("canvas");
+        croppedCanvas.width = cropW;
+        croppedCanvas.height = cropH;
+        const croppedCtx = croppedCanvas.getContext("2d")!;
+        croppedCtx.drawImage(canvas, finalLeft, finalTop, cropW, cropH, 0, 0, cropW, cropH);
+
+        croppedCanvas.toBlob((blob) => {
+          resolve(blob || file);
+        }, "image/png", 0.95);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !activeProjectId || !user) return;
     setUploading(true);
 
-    const ext = file.name.split(".").pop();
+    // Auto-crop if image (not PDF)
+    let uploadFile: Blob | File = file;
+    const isImage = file.type.startsWith("image/");
+    if (isImage) {
+      try {
+        uploadFile = await autoCropImage(file);
+      } catch {
+        uploadFile = file;
+      }
+    }
+
+    const ext = isImage ? "png" : file.name.split(".").pop();
     const path = `${activeProjectId}/${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("site-plans").upload(path, file);
+    const { error: uploadError } = await supabase.storage.from("site-plans").upload(path, uploadFile);
     if (uploadError) {
       toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
       setUploading(false);
