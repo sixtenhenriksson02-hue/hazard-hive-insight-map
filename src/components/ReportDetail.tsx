@@ -36,6 +36,10 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", location: "", category: "" });
   const [reassessing, setReassessing] = useState(false);
+  const [translatedExplanation, setTranslatedExplanation] = useState<string | null>(null);
+  const [translatedActions, setTranslatedActions] = useState<string[] | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showTranslated, setShowTranslated] = useState(false);
 
   if (!report) return null;
 
