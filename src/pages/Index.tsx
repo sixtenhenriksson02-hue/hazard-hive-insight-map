@@ -43,7 +43,7 @@ const Index = () => {
   
 
   return (
-    <AppLayout onManageProjects={() => setShowProjects(true)}>
+    <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)}>
       <div className="mb-6">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
         <p className="text-muted-foreground text-sm mt-0.5">{t("dashboard.subtitle")}</p>
