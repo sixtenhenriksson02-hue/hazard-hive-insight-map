@@ -24,6 +24,21 @@ serve(async (req) => {
     const medium = reports.filter((r: any) => r.risk_level === "medium").length;
     const low = reports.filter((r: any) => r.risk_level === "low").length;
 
+    // Injury statistics
+    const injuryReports = reports.filter((r: any) => r.report_type === "injury");
+    const totalAbsenceDays = injuryReports.reduce((sum: number, r: any) => sum + (r.absence_days || 0), 0);
+    const medicalCareCount = injuryReports.filter((r: any) => r.medical_care_required).length;
+
+    // Resolution time analysis
+    const resolvedReports = reports.filter((r: any) => r.status === "resolved" && r.resolved_at);
+    const avgResolutionDays = resolvedReports.length > 0
+      ? Math.round(resolvedReports.reduce((sum: number, r: any) => {
+          const created = new Date(r.created_at).getTime();
+          const resolved = new Date(r.resolved_at).getTime();
+          return sum + (resolved - created) / (1000 * 60 * 60 * 24);
+        }, 0) / resolvedReports.length)
+      : null;
+
     const categories: Record<string, number> = {};
     reports.forEach((r: any) => {
       categories[r.category] = (categories[r.category] || 0) + 1;
@@ -44,8 +59,12 @@ serve(async (req) => {
       .map(([loc, count]) => `  - ${loc}: ${count}`)
       .join("\n");
 
+    // Group reports by risk level for better analysis
+    const criticalReports = reports.filter((r: any) => r.risk_level === "critical").map((r: any) => `  • ${r.title} (${r.category}, ${r.specific_location || r.building || '-'})`).join("\n");
+    const highReports = reports.filter((r: any) => r.risk_level === "high").map((r: any) => `  • ${r.title} (${r.category}, ${r.specific_location || r.building || '-'})`).join("\n");
+
     const reportDetails = reports.map((r: any) =>
-      `[${r.report_type}] ${r.title} | ${lang === "sv" ? "Kategori" : "Category"}: ${r.category} | Risk: ${r.risk_level} | ${lang === "sv" ? "Plats" : "Location"}: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI: ${r.ai_explanation}` : ""}`
+      `[${r.report_type}] ${r.title} | ${lang === "sv" ? "Kategori" : "Category"}: ${r.category} | Risk: ${r.risk_level} | ${lang === "sv" ? "Plats" : "Location"}: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI-bedömning: ${r.ai_explanation.substring(0, 200)}` : ""}${r.suggested_actions?.length ? ` | Åtgärder: ${r.suggested_actions.join("; ")}` : ""}`
     ).join("\n");
 
     const typeLabels: Record<string, Record<string, string>> = {
@@ -55,33 +74,125 @@ serve(async (req) => {
     };
     const reportTypeLabel = typeLabels[report_type]?.[lang] ?? typeLabels.monthly[lang];
 
-    const langInstructions = lang === "en"
-      ? "You are a senior occupational health and safety expert. Create a professional report in ENGLISH."
-      : "Du är en senior arbetsmiljöexpert. Skapa en professionell rapport på SVENSKA.";
+    const prompt = lang === "sv"
+      ? `Du är en senior arbetsmiljöingenjör (SAM-certifierad) som skriver en professionell ${reportTypeLabel} för ledningen. Rapporten ska vara konkret, datadriven och handlingsinriktad.
 
-    const prompt = `${langInstructions}
+═══════════════════════════════════════
+RAPPORTMETADATA
+═══════════════════════════════════════
+- Rapporttyp: ${reportTypeLabel.toUpperCase()}
+- Projekt: ${project_name || "Alla projekt"}
+- Period: ${period_label}
 
-${lang === "sv" ? "RAPPORTTYP" : "REPORT TYPE"}: ${reportTypeLabel}
-${lang === "sv" ? "PROJEKT" : "PROJECT"}: ${project_name || (lang === "sv" ? "Alla projekt" : "All projects")}
-${lang === "sv" ? "PERIOD" : "PERIOD"}: ${period_label}
+═══════════════════════════════════════
+NYCKELTAL
+═══════════════════════════════════════
+- Totalt antal rapporter: ${totalReports}
+- Riskobservationer: ${observations}
+- Skadeanmälningar: ${injuries}
+- Åtgärdade: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
+- Genomsnittlig åtgärdstid: ${avgResolutionDays !== null ? avgResolutionDays + " dagar" : "Ej tillräckligt data"}
+- Risknivåer: Kritisk: ${critical}, Hög: ${high}, Medel: ${medium}, Låg: ${low}
 
-${lang === "sv" ? "STATISTIK" : "STATISTICS"}:
-- ${lang === "sv" ? "Totalt antal rapporter" : "Total reports"}: ${totalReports}
-- ${lang === "sv" ? "Riskobservationer" : "Risk observations"}: ${observations}
-- ${lang === "sv" ? "Skadeanmälningar" : "Injury reports"}: ${injuries}
-- ${lang === "sv" ? "Åtgärdade" : "Resolved"}: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
-- ${lang === "sv" ? "Risknivåer" : "Risk levels"}: ${lang === "sv" ? "Kritisk" : "Critical"}: ${critical}, ${lang === "sv" ? "Hög" : "High"}: ${high}, ${lang === "sv" ? "Medel" : "Medium"}: ${medium}, ${lang === "sv" ? "Låg" : "Low"}: ${low}
+SKADESTATISTIK:
+- Skadeanmälningar med sjukvård: ${medicalCareCount}
+- Total frånvaro p.g.a. skador: ${totalAbsenceDays} dagar
 
-${lang === "sv" ? "KATEGORIER" : "CATEGORIES"}:
-${categoryList || (lang === "sv" ? "  Inga rapporter" : "  No reports")}
+═══════════════════════════════════════
+KATEGORIER (efter frekvens)
+═══════════════════════════════════════
+${categoryList || "  Inga rapporter"}
 
-${lang === "sv" ? "PLATSER (topp 10)" : "LOCATIONS (top 10)"}:
-${locationList || (lang === "sv" ? "  Inga rapporter" : "  No reports")}
+═══════════════════════════════════════
+PLATSER (topp 10)
+═══════════════════════════════════════
+${locationList || "  Inga rapporter"}
 
-${lang === "sv" ? "ALLA RAPPORTER" : "ALL REPORTS"}:
-${reportDetails || (lang === "sv" ? "Inga rapporter för perioden." : "No reports for this period.")}
+${criticalReports ? `═══════════════════════════════════════
+KRITISKA RISKER (kräver omedelbar uppmärksamhet)
+═══════════════════════════════════════
+${criticalReports}` : ""}
 
-${lang === "sv" ? "Skapa en strukturerad rapport med följande sektioner. Svara ALLTID med tool-anropet." : "Create a structured report with the following sections. ALWAYS respond with the tool call."}`;
+${highReports ? `═══════════════════════════════════════
+HÖGA RISKER
+═══════════════════════════════════════
+${highReports}` : ""}
+
+═══════════════════════════════════════
+SAMTLIGA RAPPORTER
+═══════════════════════════════════════
+${reportDetails || "Inga rapporter för perioden."}
+
+═══════════════════════════════════════
+INSTRUKTIONER
+═══════════════════════════════════════
+Skapa en professionell rapport med:
+1. SAMMANFATTNING: Koncis men informativ. Nämn antal rapporter, åtgärdsgrad, allvarligaste händelserna och övergripande trend.
+2. NYCKELRISKER: Identifiera 3-6 konkreta risker baserat på faktiska rapporter. Gruppera liknande risker. Ange korrekt severity baserat på data.
+3. TRENDER: 3-5 observerade mönster/trender baserat på data (t.ex. återkommande kategorier, platser med många incidenter, förbättring/försämring).
+4. FÖRBÄTTRINGAR: 2-4 positiva resultat (t.ex. hög åtgärdsgrad, minskade incidenter i viss kategori, snabb responstid).
+5. ÅTGÄRDSPLAN: 4-8 konkreta, prioriterade åtgärder med ansvarig roll. Varje åtgärd ska vara specifik och genomförbar.
+
+Svara ALLTID med generate_report-verktyget.`
+      : `You are a senior occupational health and safety engineer (SAM-certified) writing a professional ${reportTypeLabel} for management. The report should be concrete, data-driven and action-oriented.
+
+═══════════════════════════════════════
+REPORT METADATA
+═══════════════════════════════════════
+- Report type: ${reportTypeLabel.toUpperCase()}
+- Project: ${project_name || "All projects"}
+- Period: ${period_label}
+
+═══════════════════════════════════════
+KEY METRICS
+═══════════════════════════════════════
+- Total reports: ${totalReports}
+- Risk observations: ${observations}
+- Injury reports: ${injuries}
+- Resolved: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
+- Average resolution time: ${avgResolutionDays !== null ? avgResolutionDays + " days" : "Insufficient data"}
+- Risk levels: Critical: ${critical}, High: ${high}, Medium: ${medium}, Low: ${low}
+
+INJURY STATISTICS:
+- Injuries requiring medical care: ${medicalCareCount}
+- Total absence due to injuries: ${totalAbsenceDays} days
+
+═══════════════════════════════════════
+CATEGORIES (by frequency)
+═══════════════════════════════════════
+${categoryList || "  No reports"}
+
+═══════════════════════════════════════
+LOCATIONS (top 10)
+═══════════════════════════════════════
+${locationList || "  No reports"}
+
+${criticalReports ? `═══════════════════════════════════════
+CRITICAL RISKS (immediate attention required)
+═══════════════════════════════════════
+${criticalReports}` : ""}
+
+${highReports ? `═══════════════════════════════════════
+HIGH RISKS
+═══════════════════════════════════════
+${highReports}` : ""}
+
+═══════════════════════════════════════
+ALL REPORTS
+═══════════════════════════════════════
+${reportDetails || "No reports for this period."}
+
+═══════════════════════════════════════
+INSTRUCTIONS
+═══════════════════════════════════════
+Create a professional report with:
+1. SUMMARY: Concise but informative. Mention report count, resolution rate, most serious incidents and overall trend.
+2. KEY RISKS: Identify 3-6 concrete risks based on actual reports. Group similar risks. Set correct severity based on data.
+3. TRENDS: 3-5 observed patterns based on data (recurring categories, locations with many incidents, improvement/deterioration).
+4. IMPROVEMENTS: 2-4 positive results (high resolution rate, reduced incidents in category, fast response time).
+5. ACTION PLAN: 4-8 concrete, prioritized actions with responsible role. Each action must be specific and actionable.
+
+ALWAYS respond with the generate_report tool.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -90,13 +201,13 @@ ${lang === "sv" ? "Skapa en strukturerad rapport med följande sektioner. Svara 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           {
             role: "system",
             content: lang === "en"
-              ? "You are a senior occupational health and safety engineer writing professional reports. Always respond in English using the generate_report tool."
-              : "Du är en senior arbetsmiljöingenjör som skriver professionella rapporter. Svara alltid på svenska med generate_report-verktyget.",
+              ? "You are a senior occupational health and safety engineer writing professional, data-driven reports for construction industry management. Your reports are known for being specific, actionable and well-structured. Never use generic phrases – always reference actual data from the reports. Always respond using the generate_report tool."
+              : "Du är en senior arbetsmiljöingenjör som skriver professionella, datadrivna rapporter för ledningen inom bygg- och anläggningsbranschen. Dina rapporter är kända för att vara specifika, handlingsinriktade och välstrukturerade. Använd aldrig generiska formuleringar – referera alltid till faktisk data från rapporterna. Svara alltid med generate_report-verktyget.",
           },
           { role: "user", content: prompt },
         ],
@@ -106,26 +217,26 @@ ${lang === "sv" ? "Skapa en strukturerad rapport med följande sektioner. Svara 
             function: {
               name: "generate_report",
               description: lang === "en"
-                ? "Generate a structured occupational health and safety report"
-                : "Generera en strukturerad arbetsmiljörapport",
+                ? "Generate a structured, professional occupational health and safety report"
+                : "Generera en strukturerad, professionell arbetsmiljörapport",
               parameters: {
                 type: "object",
                 properties: {
                   summary: {
                     type: "string",
                     description: lang === "en"
-                      ? "A brief summary (3-5 sentences) of the most important events and overall risk picture."
-                      : "En kort sammanfattning (3-5 meningar) av periodens viktigaste händelser och övergripande riskbild.",
+                      ? "Executive summary (4-6 sentences): Total reports, resolution rate, most critical findings, overall risk trend compared to expectations. Include specific numbers."
+                      : "Sammanfattning för ledningen (4-6 meningar): Antal rapporter, åtgärdsgrad, mest kritiska fynd, övergripande risktrend. Inkludera specifika siffror.",
                   },
                   key_risks: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
-                        risk: { type: "string" },
+                        risk: { type: "string", description: lang === "sv" ? "Kort, specifik riskbeskrivning som refererar till faktiska rapporter" : "Short, specific risk description referencing actual reports" },
                         severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
-                        count: { type: "number" },
-                        recommendation: { type: "string" },
+                        count: { type: "number", description: lang === "sv" ? "Antal rapporter relaterade till denna risk" : "Number of reports related to this risk" },
+                        recommendation: { type: "string", description: lang === "sv" ? "Konkret, genomförbar rekommendation med tidsram" : "Concrete, actionable recommendation with timeframe" },
                       },
                       required: ["risk", "severity", "count", "recommendation"],
                     },
@@ -133,19 +244,21 @@ ${lang === "sv" ? "Skapa en strukturerad rapport med följande sektioner. Svara 
                   trends: {
                     type: "array",
                     items: { type: "string" },
+                    description: lang === "sv" ? "3-5 datadrivna trender/mönster observerade i rapporterna" : "3-5 data-driven trends/patterns observed in the reports",
                   },
                   improvements: {
                     type: "array",
                     items: { type: "string" },
+                    description: lang === "sv" ? "2-4 positiva resultat eller förbättringar baserat på data" : "2-4 positive results or improvements based on data",
                   },
                   action_plan: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
-                        action: { type: "string" },
+                        action: { type: "string", description: lang === "sv" ? "Specifik, genomförbar åtgärd med tydligt mål" : "Specific, actionable measure with clear goal" },
                         priority: { type: "string", enum: ["high", "medium", "low"] },
-                        responsible: { type: "string" },
+                        responsible: { type: "string", description: lang === "sv" ? "Ansvarig roll (t.ex. Platschef, Skyddsombud, Arbetsledare)" : "Responsible role (e.g. Site Manager, Safety Officer, Supervisor)" },
                       },
                       required: ["action", "priority", "responsible"],
                     },
