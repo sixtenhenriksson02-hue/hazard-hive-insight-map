@@ -33,6 +33,7 @@ export interface RiskReport {
   absence_days?: number;
   severity_rating?: number;
   ai_explanation?: string | null;
+  suggested_actions?: string[] | null;
   site_plan_id?: string | null;
   plan_x?: number | null;
   plan_y?: number | null;
