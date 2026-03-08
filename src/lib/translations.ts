@@ -255,6 +255,13 @@ const translations: Record<string, Record<Language, string>> = {
   "spellcheck.done": { sv: "Kontrollerad", en: "Checked" },
   "spellcheck.corrected": { sv: "Stavning korrigerad!", en: "Spelling corrected!" },
   "spellcheck.noErrors": { sv: "Inga stavfel hittades!", en: "No spelling errors found!" },
+  "spellcheck.reviewTitle": { sv: "Stavningskontroll", en: "Spell Check" },
+  "spellcheck.reviewDesc": { sv: "Följande ändringar föreslås. Godkänn för att skicka rapporten med rättad text, eller avvisa för att behålla originalet.", en: "The following changes are suggested. Accept to submit with corrected text, or reject to keep the original." },
+  "spellcheck.original": { sv: "Original", en: "Original" },
+  "spellcheck.suggested": { sv: "Förslag", en: "Suggested" },
+  "spellcheck.accept": { sv: "Godkänn & skicka", en: "Accept & submit" },
+  "spellcheck.reject": { sv: "Behåll original & skicka", en: "Keep original & submit" },
+  "spellcheck.autoChecking": { sv: "Kontrollerar stavning...", en: "Checking spelling..." },
 
   // Navigation
   "nav.dashboard": { sv: "Dashboard", en: "Dashboard" },
