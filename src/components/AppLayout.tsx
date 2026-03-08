@@ -15,6 +15,8 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, onManageProjects, onJoinProject, onSelectReport }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
   const { projects } = useProjects();
