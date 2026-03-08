@@ -25,7 +25,7 @@ const Index = () => {
   const [showForm, setShowForm] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
   const [showWorkerProjects, setShowWorkerProjects] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats">("reports");
+  const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats" | "documents">("reports");
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
