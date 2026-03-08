@@ -198,6 +198,9 @@ const translations: Record<string, Record<Language, string>> = {
   "adminStats.byRisk": { sv: "Per risknivå", en: "By risk level" },
   "adminStats.resolutionRate": { sv: "Åtgärdsgrad", en: "Resolution rate" },
   "adminStats.avgResolutionDays": { sv: "Snitt åtgärdstid (dagar)", en: "Avg resolution time (days)" },
+  "adminStats.resolvedHistory": { sv: "Åtgärdade rapporter", en: "Resolved reports" },
+  "adminStats.resolvedAt": { sv: "Åtgärdad", en: "Resolved" },
+  "adminStats.noResolved": { sv: "Inga åtgärdade rapporter i perioden.", en: "No resolved reports in this period." },
   "adminStats.injuryReports": { sv: "Skadeanmälningar", en: "Injury reports" },
   "adminStats.observations": { sv: "Riskobservationer", en: "Risk observations" },
 };

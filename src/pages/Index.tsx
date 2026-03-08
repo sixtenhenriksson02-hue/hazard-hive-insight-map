@@ -29,15 +29,12 @@ const Index = () => {
   const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
 
   const visibleReports = useMemo(() => {
-    let filtered = reports;
-    if (!isAdmin) {
-      filtered = filtered.filter((r) => r.status !== "resolved");
-    }
+    let filtered = reports.filter((r) => r.status !== "resolved");
     if (statusFilter !== "all") {
       filtered = filtered.filter((r) => r.status === statusFilter);
     }
     return sortReports(filtered, sortBy);
-  }, [reports, isAdmin, statusFilter, sortBy, sortReports]);
+  }, [reports, statusFilter, sortBy, sortReports]);
 
   const handleUpdateStatus = (id: string, status: ReportStatus) => {
     updateReport(id, { status });
@@ -101,21 +98,6 @@ const Index = () => {
         <div className={`${showForm ? "lg:col-span-2" : "lg:col-span-3"}`}>
           {activeTab === "reports" && (
             <>
-              <div className="flex gap-2 mb-4 flex-wrap">
-                {(["all", "open", ...(isAdmin ? ["resolved" as const] : [])] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatusFilter(s)}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                      statusFilter === s
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card text-muted-foreground border-border hover:border-accent"
-                    }`}
-                  >
-                    {s === "all" ? t("status.all") : s === "open" ? t("status.openPlural") : t("status.resolvedPlural")}
-                  </button>
-                ))}
-              </div>
               {loading ? (
                 <div className="text-center py-12 text-muted-foreground">{t("dashboard.loadingReports")}</div>
               ) : (
