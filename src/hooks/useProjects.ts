@@ -8,6 +8,7 @@ export interface Project {
   created_by: string;
   created_at: string;
   invite_code?: string;
+  archived?: boolean;
 }
 
 export function useProjects() {
