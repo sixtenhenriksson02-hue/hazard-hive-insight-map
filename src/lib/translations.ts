@@ -170,6 +170,11 @@ const translations: Record<string, Record<Language, string>> = {
   "matrix.aiTip3": { sv: "Välj rätt kategori – det hjälper AI:n att bedöma konsekvenserna", en: "Choose the right category – it helps the AI assess consequences" },
   "matrix.aiTip4": { sv: "Vid skadeanmälan: fyll i alla skadedetaljer noggrant", en: "For injury reports: fill in all injury details carefully" },
 
+  // Notifications
+  "notifications.title": { sv: "Notifikationer", en: "Notifications" },
+  "notifications.empty": { sv: "Inga notifikationer", en: "No notifications" },
+  "notifications.markAllRead": { sv: "Markera alla lästa", en: "Mark all read" },
+
   // APD Plans / Riskanalys-karta
   "apd.title": { sv: "Riskanalys-karta", en: "Risk Analysis Map" },
   "apd.upload": { sv: "Ladda upp", en: "Upload" },

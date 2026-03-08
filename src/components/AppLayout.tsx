@@ -12,7 +12,7 @@ interface AppLayoutProps {
   onSelectReport?: (reportId: string) => void;
 }
 
-export default function AppLayout({ children, onManageProjects, onJoinProject }: AppLayoutProps) {
+export default function AppLayout({ children, onManageProjects, onJoinProject, onSelectReport }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
