@@ -78,8 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result: UserProject[] = data.map(d => ({
       id: d.id,
       project_id: d.project_id,
-      project_name: projects?.find(p => p.id === d.project_id)?.name ?? "",
-    }));
+      project_name: activeProjects.find(p => p.id === d.project_id)?.name ?? "",
+    })).filter(d => activeProjects.some(p => p.id === d.project_id));
 
     setUserProjects(result);
     return result;
