@@ -70,7 +70,7 @@ const Index = () => {
               <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" onClick={() => setActiveTab("stats")}>
                 <BarChart3 className="h-4 w-4 mr-1.5" />{t("dashboard.stats")}
               </Button>
-              <MonthlyReport reports={reports} />
+              <ReportGenerator reports={reports} />
             </>
           )}
         </div>
