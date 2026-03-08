@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      documents: {
+        Row: {
+          content: Json
+          created_at: string
+          created_by: string
+          document_type: string
+          id: string
+          language: string
+          period_label: string
+          project_id: string | null
+          project_name: string | null
+          title: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          created_by: string
+          document_type?: string
+          id?: string
+          language?: string
+          period_label: string
+          project_id?: string | null
+          project_name?: string | null
+          title: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string
+          document_type?: string
+          id?: string
+          language?: string
+          period_label?: string
+          project_id?: string | null
+          project_name?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
