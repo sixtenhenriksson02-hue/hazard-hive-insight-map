@@ -110,7 +110,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
         report.ai_explanation ?? "",
         ...(report.suggested_actions ?? []),
       ].filter(Boolean);
-      const targetLang = lang === "sv" ? "en" : "sv";
+      const targetLang = "en"; // Reports are written in Swedish, always translate to English
       const { data, error } = await supabase.functions.invoke("translate-text", {
         body: { texts: textsToTranslate, target_language: targetLang },
       });
