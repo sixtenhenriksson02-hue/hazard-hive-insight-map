@@ -4,7 +4,8 @@ import { useProjects } from "@/hooks/useProjects";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Check, Trash2, KeyRound } from "lucide-react";
 
 interface WorkerProjectManagerProps {
   open: boolean;
@@ -12,20 +13,21 @@ interface WorkerProjectManagerProps {
 }
 
 export default function WorkerProjectManager({ open, onClose }: WorkerProjectManagerProps) {
-  const { userProjects, addUserProject, removeUserProject, activeProjectId, setActiveProjectId } = useAuth();
-  const { projects } = useProjects();
+  const { user, userProjects, removeUserProject, activeProjectId, setActiveProjectId, refreshUserProjects } = useAuth();
+  const { joinByCode } = useProjects();
   const { t } = useLanguage();
-  const [adding, setAdding] = useState(false);
+  const [code, setCode] = useState("");
+  const [joining, setJoining] = useState(false);
 
-  const enrolledIds = new Set(userProjects.map(p => p.project_id));
-  const availableToAdd = projects.filter(p => !enrolledIds.has(p.id));
-
-  const handleAdd = async (projectId: string) => {
-    await addUserProject(projectId);
-  };
-
-  const handleRemove = async (projectId: string) => {
-    await removeUserProject(projectId);
+  const handleJoin = async () => {
+    if (!code.trim() || !user) return;
+    setJoining(true);
+    const success = await joinByCode(code.trim(), user.id);
+    if (success) {
+      setCode("");
+      await refreshUserProjects();
+    }
+    setJoining(false);
   };
 
   return (
@@ -35,7 +37,27 @@ export default function WorkerProjectManager({ open, onClose }: WorkerProjectMan
           <DialogTitle>{t("project.myProjects")}</DialogTitle>
         </DialogHeader>
 
+        {/* Join by code */}
         <div className="space-y-2">
+          <label className="text-sm font-medium text-card-foreground flex items-center gap-1.5">
+            <KeyRound className="h-3.5 w-3.5" /> {t("project.joinWithCode")}
+          </label>
+          <div className="flex gap-2">
+            <Input
+              placeholder={t("project.enterCode")}
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+              maxLength={6}
+              className="font-mono text-center tracking-widest"
+            />
+            <Button onClick={handleJoin} disabled={joining || !code.trim()} className="bg-accent text-accent-foreground shrink-0">
+              {t("project.join")}
+            </Button>
+          </div>
+        </div>
+
+        <div className="border-t border-border pt-3 space-y-2">
           {userProjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-4 text-center">{t("project.noEnrolled")}</p>
           )}
@@ -51,40 +73,13 @@ export default function WorkerProjectManager({ open, onClose }: WorkerProjectMan
                     {t("project.setActive")}
                   </Button>
                 )}
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleRemove(up.project_id)}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeUserProject(up.project_id)}>
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
           ))}
         </div>
-
-        {!adding && availableToAdd.length > 0 && (
-          <Button variant="outline" size="sm" onClick={() => setAdding(true)} className="w-full mt-2">
-            <Plus className="h-4 w-4 mr-1" /> {t("project.addProject")}
-          </Button>
-        )}
-
-        {adding && (
-          <div className="space-y-2 mt-2 border-t border-border pt-3">
-            <p className="text-xs text-muted-foreground">{t("project.selectToAdd")}</p>
-            {availableToAdd.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => handleAdd(p.id)}
-                className="w-full text-left text-sm px-3 py-2 rounded-md border border-border hover:border-accent transition-colors"
-              >
-                {p.name}
-              </button>
-            ))}
-            {availableToAdd.length === 0 && (
-              <p className="text-xs text-muted-foreground">{t("project.allEnrolled")}</p>
-            )}
-            <Button variant="ghost" size="sm" onClick={() => setAdding(false)} className="text-xs">
-              {t("common.cancel")}
-            </Button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );

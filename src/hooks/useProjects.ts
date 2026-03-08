@@ -7,6 +7,7 @@ export interface Project {
   name: string;
   created_by: string;
   created_at: string;
+  invite_code?: string;
 }
 
 export function useProjects() {
@@ -19,7 +20,7 @@ export function useProjects() {
       .from("projects")
       .select("*")
       .order("created_at", { ascending: false });
-    if (!error) setProjects(data ?? []);
+    if (!error) setProjects((data as Project[]) ?? []);
     setLoading(false);
   }, []);
 
@@ -37,5 +38,44 @@ export function useProjects() {
     return true;
   };
 
-  return { projects, loading, createProject, refetch: fetchProjects };
+  const joinByCode = async (code: string, userId: string): Promise<boolean> => {
+    // Find project by invite code
+    const { data: projectData, error: findError } = await supabase
+      .from("projects")
+      .select("id, name")
+      .eq("invite_code", code.toUpperCase().trim())
+      .maybeSingle();
+
+    if (findError || !projectData) {
+      toast({ title: "Ogiltig kod", description: "Ingen projekt hittades med den koden.", variant: "destructive" });
+      return false;
+    }
+
+    // Check if already enrolled
+    const { data: existing } = await supabase
+      .from("user_projects")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("project_id", projectData.id)
+      .maybeSingle();
+
+    if (existing) {
+      toast({ title: "Redan tillagd", description: `Du är redan med i ${projectData.name}.` });
+      return true;
+    }
+
+    const { error: joinError } = await supabase
+      .from("user_projects")
+      .insert({ user_id: userId, project_id: projectData.id });
+
+    if (joinError) {
+      toast({ title: "Kunde inte gå med", description: joinError.message, variant: "destructive" });
+      return false;
+    }
+
+    toast({ title: "Tillagd!", description: `Du har gått med i ${projectData.name}.` });
+    return true;
+  };
+
+  return { projects, loading, createProject, joinByCode, refetch: fetchProjects };
 }

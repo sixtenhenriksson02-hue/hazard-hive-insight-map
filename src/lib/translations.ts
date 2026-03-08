@@ -142,6 +142,11 @@ const translations: Record<string, Record<Language, string>> = {
   "project.selectToAdd": { sv: "Välj projekt att lägga till:", en: "Select project to add:" },
   "project.noEnrolled": { sv: "Du är inte med i något projekt ännu.", en: "You're not enrolled in any project yet." },
   "project.allEnrolled": { sv: "Du är redan med i alla projekt.", en: "You're already enrolled in all projects." },
+  "project.inviteCode": { sv: "Inbjudningskod", en: "Invite code" },
+  "project.codeCopied": { sv: "Kod kopierad!", en: "Code copied!" },
+  "project.joinWithCode": { sv: "Gå med i projekt med kod", en: "Join project with code" },
+  "project.enterCode": { sv: "Ange kod", en: "Enter code" },
+  "project.join": { sv: "Gå med", en: "Join" },
 
   // Risk matrix
   "matrix.title": { sv: "Riskmatris", en: "Risk Matrix" },
