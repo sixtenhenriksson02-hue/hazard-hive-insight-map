@@ -9,10 +9,11 @@ import ProjectManager from "@/components/ProjectManager";
 import WorkerProjectManager from "@/components/WorkerProjectManager";
 import SitePlanViewer from "@/components/SitePlanViewer";
 import ReportGenerator from "@/components/ReportGenerator";
+import DocumentsView from "@/components/DocumentsView";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin } from "lucide-react";
+import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
