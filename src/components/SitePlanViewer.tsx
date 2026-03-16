@@ -58,6 +58,12 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [hoveredReport, setHoveredReport] = useState<string | null>(null);
   const [safetyMarkers, setSafetyMarkers] = useState<SafetyMarker[]>([]);
   const [safetyPlacingMode, setSafetyPlacingMode] = useState<SafetyPlacingMode>(null);
+  const [pendingSafetyPoint, setPendingSafetyPoint] = useState<{ type: SafetyPlacingMode; x: number; y: number } | null>(null);
+  const [safetyDescription, setSafetyDescription] = useState("");
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+  const [selectedSafetyMarker, setSelectedSafetyMarker] = useState<SafetyMarker | null>(null);
+  const [editingDescription, setEditingDescription] = useState("");
+  const [isEditingMarker, setIsEditingMarker] = useState(false);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
