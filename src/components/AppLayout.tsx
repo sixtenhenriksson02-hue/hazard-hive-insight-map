@@ -126,7 +126,7 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 onChange={(e) => setActiveProjectId(e.target.value || null)}
                 className="w-full text-xs px-3 py-2 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 text-primary-foreground"
               >
-                {isActualAdmin && <option value="">{t("project.allProjects")}</option>}
+                <option value="" disabled>{t("project.selectProject")}</option>
                 {availableProjects.map((p) => (
                   <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
                 ))}
