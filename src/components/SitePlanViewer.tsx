@@ -5,10 +5,8 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// Switch removed - always enhance
-// Label removed - no longer needed for enhance toggle
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X, Cross, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SitePlan {
@@ -16,6 +14,17 @@ interface SitePlan {
   project_id: string;
   name: string;
   image_url: string;
+  created_at: string;
+}
+
+interface SafetyMarker {
+  id: string;
+  project_id: string;
+  site_plan_id: string;
+  marker_type: "first_aid" | "fire_extinguisher";
+  plan_x: number;
+  plan_y: number;
+  created_by: string;
   created_at: string;
 }
 
@@ -32,6 +41,8 @@ const riskDotColor: Record<string, string> = {
   critical: "#ef4444",
 };
 
+type SafetyPlacingMode = "first_aid" | "fire_extinguisher" | null;
+
 export default function SitePlanViewer({ reports, onSelectLocation, selectionMode = false }: SitePlanViewerProps) {
   const { viewAs, activeProjectId, user } = useAuth();
   const { t } = useLanguage();
@@ -43,24 +54,87 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [uploadName, setUploadName] = useState("");
   const [uploading, setUploading] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState<{ x: number; y: number } | null>(null);
-  
   const [hoveredReport, setHoveredReport] = useState<string | null>(null);
+  const [safetyMarkers, setSafetyMarkers] = useState<SafetyMarker[]>([]);
+  const [safetyPlacingMode, setSafetyPlacingMode] = useState<SafetyPlacingMode>(null);
+
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleOverlayClick = async (e: React.MouseEvent<HTMLDivElement>) => {
     if (!overlayRef.current) return;
     const rect = overlayRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (safetyPlacingMode && activePlan && user) {
+      await placeSafetyMarker(safetyPlacingMode, x, y);
+      return;
+    }
+
     if (selectionMode && onSelectLocation && activePlan) {
       setSelectedPoint({ x, y });
       onSelectLocation(activePlan.id, x, y);
     }
   };
+
+  const handleImageClick = async (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    if (safetyPlacingMode && activePlan && user) {
+      await placeSafetyMarker(safetyPlacingMode, x, y);
+      return;
+    }
+
+    if (selectionMode && onSelectLocation && activePlan) {
+      setSelectedPoint({ x, y });
+      onSelectLocation(activePlan.id, x, y);
+    }
+  };
+
+  const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher", x: number, y: number) => {
+    if (!activePlan || !user || !activeProjectId) return;
+    const { error } = await supabase.from("safety_markers" as any).insert({
+      project_id: activeProjectId,
+      site_plan_id: activePlan.id,
+      marker_type: type,
+      plan_x: x,
+      plan_y: y,
+      created_by: user.id,
+    } as any);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("safety.markerPlaced") });
+      setSafetyPlacingMode(null);
+      await fetchSafetyMarkers();
+    }
+  };
+
+  const deleteSafetyMarker = async (markerId: string) => {
+    const { error } = await supabase.from("safety_markers" as any).delete().eq("id", markerId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("safety.markerDeleted") });
+      await fetchSafetyMarkers();
+    }
+  };
+
+  const fetchSafetyMarkers = useCallback(async () => {
+    if (!activeProjectId) return;
+    const { data } = await supabase
+      .from("safety_markers" as any)
+      .select("*")
+      .eq("project_id", activeProjectId);
+    setSafetyMarkers((data as unknown as SafetyMarker[]) ?? []);
+  }, [activeProjectId]);
 
   const fetchPlans = useCallback(async () => {
     if (!activeProjectId) return;
@@ -78,7 +152,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
   useEffect(() => {
     fetchPlans();
-  }, [fetchPlans]);
+    fetchSafetyMarkers();
+  }, [fetchPlans, fetchSafetyMarkers]);
 
   useEffect(() => {
     if (plans.length > 0 && !activePlan) {
@@ -101,78 +176,57 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const { data, width, height } = imageData;
 
-        // Helper: check if a pixel is "dark" (part of a frame line)
         const isDark = (x: number, y: number) => {
           const i = (y * width + x) * 4;
           const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
           return avg < 80;
         };
 
-        // Scan from each edge to find the innermost frame border
         const scanStep = Math.max(1, Math.floor(Math.min(width, height) / 200));
 
-        // Find top crop line
         let top = 0;
         for (let y = 0; y < Math.floor(height * 0.2); y += scanStep) {
           let darkCount = 0;
-          for (let x = 0; x < width; x += scanStep) {
-            if (isDark(x, y)) darkCount++;
-          }
-          // If more than 40% of the row is dark, it's likely a frame line
+          for (let x = 0; x < width; x += scanStep) { if (isDark(x, y)) darkCount++; }
           if (darkCount > (width / scanStep) * 0.4) top = y + 2;
         }
 
-        // Find bottom crop line
         let bottom = height;
         for (let y = height - 1; y > Math.floor(height * 0.7); y -= scanStep) {
           let darkCount = 0;
-          for (let x = 0; x < width; x += scanStep) {
-            if (isDark(x, y)) darkCount++;
-          }
+          for (let x = 0; x < width; x += scanStep) { if (isDark(x, y)) darkCount++; }
           if (darkCount > (width / scanStep) * 0.4) bottom = y - 2;
         }
 
-        // Find left crop line
         let left = 0;
         for (let x = 0; x < Math.floor(width * 0.2); x += scanStep) {
           let darkCount = 0;
-          for (let y = 0; y < height; y += scanStep) {
-            if (isDark(x, y)) darkCount++;
-          }
+          for (let y = 0; y < height; y += scanStep) { if (isDark(x, y)) darkCount++; }
           if (darkCount > (height / scanStep) * 0.4) left = x + 2;
         }
 
-        // Find right crop line
         let right = width;
         for (let x = width - 1; x > Math.floor(width * 0.7); x -= scanStep) {
           let darkCount = 0;
-          for (let y = 0; y < height; y += scanStep) {
-            if (isDark(x, y)) darkCount++;
-          }
+          for (let y = 0; y < height; y += scanStep) { if (isDark(x, y)) darkCount++; }
           if (darkCount > (height / scanStep) * 0.4) right = x - 2;
         }
 
-        // Also try to detect title block (usually bottom ~15% or right ~20%)
-        // Check if bottom area has dense text/lines
         const bottomAreaStart = Math.floor(height * 0.82);
         let bottomDensity = 0;
         for (let y = bottomAreaStart; y < height; y += scanStep) {
-          for (let x = 0; x < width; x += scanStep) {
-            if (isDark(x, y)) bottomDensity++;
-          }
+          for (let x = 0; x < width; x += scanStep) { if (isDark(x, y)) bottomDensity++; }
         }
         const bottomAreaPixels = ((height - bottomAreaStart) / scanStep) * (width / scanStep);
         if (bottomDensity > bottomAreaPixels * 0.15) {
           bottom = Math.min(bottom, bottomAreaStart);
         }
 
-        // Ensure minimum crop area
         const cropW = Math.max(right - left, Math.floor(width * 0.5));
         const cropH = Math.max(bottom - top, Math.floor(height * 0.5));
         const finalLeft = Math.max(0, left);
         const finalTop = Math.max(0, top);
 
-        // Create cropped canvas
         const croppedCanvas = document.createElement("canvas");
         croppedCanvas.width = cropW;
         croppedCanvas.height = cropH;
@@ -192,15 +246,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     if (!file || !activeProjectId || !user) return;
     setUploading(true);
 
-    // Auto-crop if image (not PDF)
     let uploadFile: Blob | File = file;
     const isImage = file.type.startsWith("image/");
     if (isImage) {
-      try {
-        uploadFile = await autoCropImage(file);
-      } catch {
-        uploadFile = file;
-      }
+      try { uploadFile = await autoCropImage(file); } catch { uploadFile = file; }
     }
 
     const ext = isImage ? "png" : file.name.split(".").pop();
@@ -213,7 +262,6 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     }
 
     const { data: urlData } = supabase.storage.from("site-plans").getPublicUrl(path);
-
     const { error } = await supabase.from("site_plans").insert({
       project_id: activeProjectId,
       name: uploadName || file.name,
@@ -232,29 +280,18 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     setUploading(false);
   };
 
-  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    if (!imgRef.current) return;
-    const rect = imgRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    if (selectionMode && onSelectLocation && activePlan) {
-      setSelectedPoint({ x, y });
-      onSelectLocation(activePlan.id, x, y);
-    }
-  };
-
-  // Filter reports that have coordinates on the active plan (exclude resolved)
   const planReports = activePlan
     ? reports.filter(r => r.site_plan_id === activePlan.id && r.plan_x != null && r.plan_y != null && r.status !== "resolved")
     : [];
 
-  // Calculate high-risk zones (cluster areas)
+  const planSafetyMarkers = activePlan
+    ? safetyMarkers.filter(m => m.site_plan_id === activePlan.id)
+    : [];
+
   const getRiskZones = () => {
     if (planReports.length < 2) return [];
     const zones: { x: number; y: number; count: number; maxRisk: string }[] = [];
-    const ZONE_RADIUS = 10; // percentage
-
+    const ZONE_RADIUS = 10;
     planReports.forEach(r => {
       const existing = zones.find(z =>
         Math.abs(z.x - (r.plan_x ?? 0)) < ZONE_RADIUS && Math.abs(z.y - (r.plan_y ?? 0)) < ZONE_RADIUS
@@ -269,7 +306,6 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         zones.push({ x: r.plan_x ?? 0, y: r.plan_y ?? 0, count: 1, maxRisk: r.risk_level });
       }
     });
-
     return zones.filter(z => z.count >= 2);
   };
 
@@ -283,13 +319,46 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     );
   }
 
+  const SafetyMarkerIcon = ({ marker, showDelete }: { marker: SafetyMarker; showDelete: boolean }) => {
+    const isFirstAid = marker.marker_type === "first_aid";
+    return (
+      <div
+        className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20 group"
+        style={{ left: `${marker.plan_x}%`, top: `${marker.plan_y}%` }}
+      >
+        <div
+          className={`w-7 h-7 rounded-md flex items-center justify-center shadow-lg border-2 border-white ${
+            isFirstAid ? "bg-green-600" : "bg-red-600"
+          }`}
+          title={isFirstAid ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+        >
+          {isFirstAid ? (
+            <Cross className="h-4 w-4 text-white" strokeWidth={3} />
+          ) : (
+            <Flame className="h-4 w-4 text-white" strokeWidth={2.5} />
+          )}
+        </div>
+        {showDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); deleteSafetyMarker(marker.id); }}
+            className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[9px] font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            ×
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const cursorClass = safetyPlacingMode ? "cursor-crosshair" : selectionMode ? "cursor-crosshair" : "";
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <h2 className="text-sm font-bold text-card-foreground flex items-center gap-1.5">
           <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {plans.length > 1 && (
             <select
               className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
@@ -301,6 +370,24 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           )}
           {isAdmin && (
             <>
+              {/* Safety marker buttons */}
+              <Button
+                variant={safetyPlacingMode === "first_aid" ? "default" : "outline"}
+                size="sm"
+                className={`text-xs h-7 ${safetyPlacingMode === "first_aid" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
+                onClick={() => setSafetyPlacingMode(safetyPlacingMode === "first_aid" ? null : "first_aid")}
+              >
+                <Cross className="h-3 w-3 mr-1" strokeWidth={3} /> {t("safety.placeFirstAid")}
+              </Button>
+              <Button
+                variant={safetyPlacingMode === "fire_extinguisher" ? "default" : "outline"}
+                size="sm"
+                className={`text-xs h-7 ${safetyPlacingMode === "fire_extinguisher" ? "bg-red-600 hover:bg-red-700 text-white" : ""}`}
+                onClick={() => setSafetyPlacingMode(safetyPlacingMode === "fire_extinguisher" ? null : "fire_extinguisher")}
+              >
+                <Flame className="h-3 w-3 mr-1" strokeWidth={2.5} /> {t("safety.placeFireExtinguisher")}
+              </Button>
+
               <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowUpload(true)}>
                 <Upload className="h-3 w-3 mr-1" /> {t("apd.upload")}
               </Button>
@@ -331,6 +418,15 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         </div>
       </div>
 
+      {/* Safety placing mode banner */}
+      {safetyPlacingMode && (
+        <div className={`mb-3 text-xs text-center py-2 rounded-md font-medium ${
+          safetyPlacingMode === "first_aid" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+        }`}>
+          {t("safety.placingMode")} – {safetyPlacingMode === "first_aid" ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+        </div>
+      )}
+
       {activePlan ? (
         <div ref={containerRef} className="relative rounded-md overflow-hidden border border-border">
           {isPdf(activePlan.image_url) ? (
@@ -344,9 +440,13 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               />
               <div
                 ref={overlayRef}
-                className={`absolute inset-0 ${selectionMode ? "cursor-crosshair" : "pointer-events-none"}`}
-                onClick={selectionMode ? handleOverlayClick : undefined}
+                className={`absolute inset-0 ${(selectionMode || safetyPlacingMode) ? "cursor-crosshair" : "pointer-events-none"}`}
+                onClick={(selectionMode || safetyPlacingMode) ? handleOverlayClick : undefined}
               />
+              {/* Safety markers on PDF */}
+              {planSafetyMarkers.map(m => (
+                <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
+              ))}
               {planReports.map((r, idx) => (
                 <div
                   key={r.id}
@@ -389,7 +489,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 ref={imgRef}
                 src={activePlan.image_url}
                 alt={activePlan.name}
-                className={`w-full h-auto block bg-white ${selectionMode ? "cursor-crosshair" : ""}`}
+                className={`w-full h-auto block bg-white ${cursorClass}`}
                 style={{
                   filter: "contrast(1.35) brightness(1.08) saturate(0.15)",
                 }}
@@ -414,7 +514,12 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 />
               ))}
 
-              {/* Report markers - larger with labels */}
+              {/* Safety markers on image */}
+              {planSafetyMarkers.map(m => (
+                <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
+              ))}
+
+              {/* Report markers */}
               {planReports.map((r, idx) => (
                 <div
                   key={r.id}
@@ -423,14 +528,12 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   onMouseEnter={() => setHoveredReport(r.id)}
                   onMouseLeave={() => setHoveredReport(null)}
                 >
-                  {/* Numbered dot */}
                   <div
                     className="w-6 h-6 rounded-full border-2 border-white shadow-lg transition-transform group-hover:scale-150 flex items-center justify-center"
                     style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
                   >
                     <span className="text-[9px] font-bold text-white leading-none">{idx + 1}</span>
                   </div>
-                  {/* Tooltip label on hover */}
                   {hoveredReport === r.id && (
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
                       <p className="font-semibold text-card-foreground">{r.title}</p>
@@ -456,7 +559,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           )}
 
           {/* Legend overlay */}
-          {planReports.length > 0 && (
+          {(planReports.length > 0 || planSafetyMarkers.length > 0) && (
             <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2.5 py-2 text-[10px] z-10 max-w-[200px]">
               <p className="font-semibold text-card-foreground mb-1 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3 text-accent" />
@@ -473,6 +576,23 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   </div>
                 );
               })}
+              {/* Safety legend */}
+              {planSafetyMarkers.some(m => m.marker_type === "first_aid") && (
+                <div className="flex items-center gap-1.5 py-0.5">
+                  <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-green-600 flex items-center justify-center">
+                    <Cross className="h-1.5 w-1.5 text-white" strokeWidth={4} />
+                  </span>
+                  <span className="text-card-foreground font-medium">{t("safety.firstAid")}</span>
+                </div>
+              )}
+              {planSafetyMarkers.some(m => m.marker_type === "fire_extinguisher") && (
+                <div className="flex items-center gap-1.5 py-0.5">
+                  <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0 bg-red-600 flex items-center justify-center">
+                    <Flame className="h-1.5 w-1.5 text-white" strokeWidth={3} />
+                  </span>
+                  <span className="text-card-foreground font-medium">{t("safety.fireExtinguisher")}</span>
+                </div>
+              )}
             </div>
           )}
         </div>

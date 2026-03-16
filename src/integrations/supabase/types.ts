@@ -298,6 +298,54 @@ export type Database = {
           },
         ]
       }
+      safety_markers: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          marker_type: string
+          plan_x: number
+          plan_y: number
+          project_id: string
+          site_plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          marker_type: string
+          plan_x: number
+          plan_y: number
+          project_id: string
+          site_plan_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          marker_type?: string
+          plan_x?: number
+          plan_y?: number
+          project_id?: string
+          site_plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_markers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safety_markers_site_plan_id_fkey"
+            columns: ["site_plan_id"]
+            isOneToOne: false
+            referencedRelation: "site_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_plans: {
         Row: {
           created_at: string

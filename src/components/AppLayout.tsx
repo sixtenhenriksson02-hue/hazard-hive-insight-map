@@ -49,9 +49,9 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 <select
                   value={activeProjectId ?? ""}
                   onChange={(e) => setActiveProjectId(e.target.value || null)}
-                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 text-primary-foreground hover:border-accent/50 transition-colors cursor-pointer"
+                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-lg border border-primary-foreground/15 bg-primary-foreground/10 text-primary-foreground hover:border-accent/50 transition-colors cursor-pointer font-medium"
                 >
-                  {isActualAdmin && <option value="">{t("project.allProjects")}</option>}
+                  <option value="" disabled>{t("project.selectProject")}</option>
                   {availableProjects.map((p) => (
                     <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
                   ))}
@@ -126,7 +126,7 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 onChange={(e) => setActiveProjectId(e.target.value || null)}
                 className="w-full text-xs px-3 py-2 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 text-primary-foreground"
               >
-                {isActualAdmin && <option value="">{t("project.allProjects")}</option>}
+                <option value="" disabled>{t("project.selectProject")}</option>
                 {availableProjects.map((p) => (
                   <option key={p.id} value={p.id} className="text-foreground bg-background">{p.name}</option>
                 ))}

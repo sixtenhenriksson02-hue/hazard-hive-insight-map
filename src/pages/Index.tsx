@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
-  const { viewAs, role } = useAuth();
+  const { viewAs, role, activeProjectId } = useAuth();
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
 
@@ -57,10 +57,12 @@ const Index = () => {
 
       {/* Removed StatsCards */}
 
-      {/* APD Plan on dashboard */}
-      <div className="mt-6">
-        <SitePlanViewer reports={reports} />
-      </div>
+      {/* APD Plan on dashboard - only show when a project is selected */}
+      {activeProjectId && (
+        <div className="mt-6">
+          <SitePlanViewer reports={reports} />
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-6 mb-4">
         <div className="flex gap-2 flex-wrap">
