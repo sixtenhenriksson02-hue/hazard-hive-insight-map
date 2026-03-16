@@ -343,16 +343,22 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
   const SafetyMarkerIcon = ({ marker, showDelete }: { marker: SafetyMarker; showDelete: boolean }) => {
     const isFirstAid = marker.marker_type === "first_aid";
+    const isSelected = selectedSafetyMarker?.id === marker.id;
     return (
       <div
         className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20 group"
         style={{ left: `${marker.plan_x}%`, top: `${marker.plan_y}%` }}
       >
         <div
-          className={`w-7 h-7 rounded-md flex items-center justify-center shadow-lg border-2 border-white ${
+          className={`w-7 h-7 rounded-md flex items-center justify-center shadow-lg border-2 border-white cursor-pointer transition-transform hover:scale-125 ${
             isFirstAid ? "bg-green-600" : "bg-red-600"
           }`}
-          title={isFirstAid ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedSafetyMarker(isSelected ? null : marker);
+            setEditingDescription(marker.description);
+            setIsEditingMarker(false);
+          }}
         >
           {isFirstAid ? (
             <Cross className="h-4 w-4 text-white" strokeWidth={3} />
@@ -360,6 +366,52 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             <Flame className="h-4 w-4 text-white" strokeWidth={2.5} />
           )}
         </div>
+        {/* Tooltip with description */}
+        {isSelected && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-card border border-border rounded-lg px-3 py-2 shadow-xl z-30 text-[11px]" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-card-foreground mb-1">
+              {isFirstAid ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+            </p>
+            {isEditingMarker && isAdmin ? (
+              <div className="space-y-1.5">
+                <textarea
+                  className="w-full text-xs border border-border rounded px-2 py-1 bg-background text-foreground resize-none"
+                  rows={2}
+                  value={editingDescription}
+                  onChange={(e) => setEditingDescription(e.target.value)}
+                  placeholder={t("safety.descriptionPlaceholder")}
+                />
+                <div className="flex gap-1">
+                  <Button size="sm" className="text-[10px] h-5 px-2" onClick={async () => {
+                    await updateSafetyMarkerDescription(marker.id, editingDescription);
+                    setIsEditingMarker(false);
+                    setSelectedSafetyMarker({ ...marker, description: editingDescription });
+                  }}>
+                    {t("common.save")}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-[10px] h-5 px-2" onClick={() => setIsEditingMarker(false)}>
+                    {t("common.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-muted-foreground">
+                  {marker.description || <span className="italic">{t("safety.noDescription")}</span>}
+                </p>
+                {isAdmin && (
+                  <button
+                    className="mt-1 text-accent text-[10px] font-medium hover:underline"
+                    onClick={() => { setIsEditingMarker(true); setEditingDescription(marker.description); }}
+                  >
+                    {t("common.edit")}
+                  </button>
+                )}
+              </>
+            )}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+          </div>
+        )}
         {showDelete && (
           <button
             onClick={(e) => { e.stopPropagation(); deleteSafetyMarker(marker.id); }}
