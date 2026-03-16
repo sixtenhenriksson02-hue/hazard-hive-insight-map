@@ -24,6 +24,7 @@ interface SafetyMarker {
   marker_type: "first_aid" | "fire_extinguisher";
   plan_x: number;
   plan_y: number;
+  description: string;
   created_by: string;
   created_at: string;
 }
