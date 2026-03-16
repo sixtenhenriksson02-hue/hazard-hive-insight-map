@@ -757,6 +757,41 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Safety marker description dialog */}
+      <Dialog open={showSafetyDialog} onOpenChange={(open) => { if (!open) { setShowSafetyDialog(false); setPendingSafetyPoint(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingSafetyPoint?.type === "first_aid" ? t("safety.firstAid") : t("safety.fireExtinguisher")} – {t("safety.addDescription")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <textarea
+              className="w-full text-sm border border-border rounded-md px-3 py-2 bg-background text-foreground resize-none"
+              rows={3}
+              value={safetyDescription}
+              onChange={(e) => setSafetyDescription(e.target.value)}
+              placeholder={t("safety.descriptionPlaceholder")}
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => { setShowSafetyDialog(false); setPendingSafetyPoint(null); }}>
+                {t("common.cancel")}
+              </Button>
+              <Button size="sm" onClick={async () => {
+                if (pendingSafetyPoint) {
+                  await placeSafetyMarker(pendingSafetyPoint.type!, pendingSafetyPoint.x, pendingSafetyPoint.y, safetyDescription);
+                  setShowSafetyDialog(false);
+                  setPendingSafetyPoint(null);
+                  setSafetyDescription("");
+                }
+              }}>
+                {t("common.save")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
