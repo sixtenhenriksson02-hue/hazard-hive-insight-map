@@ -78,7 +78,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     if (safetyPlacingMode && activePlan && user) {
-      await placeSafetyMarker(safetyPlacingMode, x, y);
+      setPendingSafetyPoint({ type: safetyPlacingMode, x, y });
+      setSafetyDescription("");
+      setShowSafetyDialog(true);
       return;
     }
 
