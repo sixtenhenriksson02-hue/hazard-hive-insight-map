@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
-  const { viewAs, role } = useAuth();
+  const { viewAs, role, activeProjectId } = useAuth();
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
 
