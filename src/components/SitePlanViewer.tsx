@@ -133,7 +133,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       .from("safety_markers" as any)
       .select("*")
       .eq("project_id", activeProjectId);
-    setSafetyMarkers((data as SafetyMarker[]) ?? []);
+    setSafetyMarkers((data as unknown as SafetyMarker[]) ?? []);
   }, [activeProjectId]);
 
   const fetchPlans = useCallback(async () => {
