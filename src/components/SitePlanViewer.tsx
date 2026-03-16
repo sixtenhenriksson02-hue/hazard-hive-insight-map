@@ -24,6 +24,7 @@ interface SafetyMarker {
   marker_type: "first_aid" | "fire_extinguisher";
   plan_x: number;
   plan_y: number;
+  description: string;
   created_by: string;
   created_at: string;
 }
@@ -57,6 +58,12 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [hoveredReport, setHoveredReport] = useState<string | null>(null);
   const [safetyMarkers, setSafetyMarkers] = useState<SafetyMarker[]>([]);
   const [safetyPlacingMode, setSafetyPlacingMode] = useState<SafetyPlacingMode>(null);
+  const [pendingSafetyPoint, setPendingSafetyPoint] = useState<{ type: SafetyPlacingMode; x: number; y: number } | null>(null);
+  const [safetyDescription, setSafetyDescription] = useState("");
+  const [showSafetyDialog, setShowSafetyDialog] = useState(false);
+  const [selectedSafetyMarker, setSelectedSafetyMarker] = useState<SafetyMarker | null>(null);
+  const [editingDescription, setEditingDescription] = useState("");
+  const [isEditingMarker, setIsEditingMarker] = useState(false);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -71,7 +78,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     if (safetyPlacingMode && activePlan && user) {
-      await placeSafetyMarker(safetyPlacingMode, x, y);
+      setPendingSafetyPoint({ type: safetyPlacingMode, x, y });
+      setSafetyDescription("");
+      setShowSafetyDialog(true);
       return;
     }
 
@@ -88,7 +97,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     if (safetyPlacingMode && activePlan && user) {
-      await placeSafetyMarker(safetyPlacingMode, x, y);
+      setPendingSafetyPoint({ type: safetyPlacingMode, x, y });
+      setSafetyDescription("");
+      setShowSafetyDialog(true);
       return;
     }
 
@@ -98,7 +109,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     }
   };
 
-  const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher", x: number, y: number) => {
+  const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher", x: number, y: number, desc: string) => {
     if (!activePlan || !user || !activeProjectId) return;
     const { error } = await supabase.from("safety_markers" as any).insert({
       project_id: activeProjectId,
@@ -106,6 +117,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       marker_type: type,
       plan_x: x,
       plan_y: y,
+      description: desc,
       created_by: user.id,
     } as any);
     if (error) {
@@ -113,6 +125,16 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     } else {
       toast({ title: t("safety.markerPlaced") });
       setSafetyPlacingMode(null);
+      await fetchSafetyMarkers();
+    }
+  };
+
+  const updateSafetyMarkerDescription = async (markerId: string, desc: string) => {
+    const { error } = await supabase.from("safety_markers" as any).update({ description: desc } as any).eq("id", markerId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("safety.markerUpdated") });
       await fetchSafetyMarkers();
     }
   };
@@ -321,16 +343,22 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
   const SafetyMarkerIcon = ({ marker, showDelete }: { marker: SafetyMarker; showDelete: boolean }) => {
     const isFirstAid = marker.marker_type === "first_aid";
+    const isSelected = selectedSafetyMarker?.id === marker.id;
     return (
       <div
         className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20 group"
         style={{ left: `${marker.plan_x}%`, top: `${marker.plan_y}%` }}
       >
         <div
-          className={`w-7 h-7 rounded-md flex items-center justify-center shadow-lg border-2 border-white ${
+          className={`w-7 h-7 rounded-md flex items-center justify-center shadow-lg border-2 border-white cursor-pointer transition-transform hover:scale-125 ${
             isFirstAid ? "bg-green-600" : "bg-red-600"
           }`}
-          title={isFirstAid ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedSafetyMarker(isSelected ? null : marker);
+            setEditingDescription(marker.description);
+            setIsEditingMarker(false);
+          }}
         >
           {isFirstAid ? (
             <Cross className="h-4 w-4 text-white" strokeWidth={3} />
@@ -338,6 +366,52 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             <Flame className="h-4 w-4 text-white" strokeWidth={2.5} />
           )}
         </div>
+        {/* Tooltip with description */}
+        {isSelected && (
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-card border border-border rounded-lg px-3 py-2 shadow-xl z-30 text-[11px]" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-card-foreground mb-1">
+              {isFirstAid ? t("safety.firstAid") : t("safety.fireExtinguisher")}
+            </p>
+            {isEditingMarker && isAdmin ? (
+              <div className="space-y-1.5">
+                <textarea
+                  className="w-full text-xs border border-border rounded px-2 py-1 bg-background text-foreground resize-none"
+                  rows={2}
+                  value={editingDescription}
+                  onChange={(e) => setEditingDescription(e.target.value)}
+                  placeholder={t("safety.descriptionPlaceholder")}
+                />
+                <div className="flex gap-1">
+                  <Button size="sm" className="text-[10px] h-5 px-2" onClick={async () => {
+                    await updateSafetyMarkerDescription(marker.id, editingDescription);
+                    setIsEditingMarker(false);
+                    setSelectedSafetyMarker({ ...marker, description: editingDescription });
+                  }}>
+                    {t("common.save")}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-[10px] h-5 px-2" onClick={() => setIsEditingMarker(false)}>
+                    {t("common.cancel")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-muted-foreground">
+                  {marker.description || <span className="italic">{t("safety.noDescription")}</span>}
+                </p>
+                {isAdmin && (
+                  <button
+                    className="mt-1 text-accent text-[10px] font-medium hover:underline"
+                    onClick={() => { setIsEditingMarker(true); setEditingDescription(marker.description); }}
+                  >
+                    {t("common.edit")}
+                  </button>
+                )}
+              </>
+            )}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+          </div>
+        )}
         {showDelete && (
           <button
             onClick={(e) => { e.stopPropagation(); deleteSafetyMarker(marker.id); }}
@@ -680,6 +754,41 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 disabled={uploading}
               />
             </label>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Safety marker description dialog */}
+      <Dialog open={showSafetyDialog} onOpenChange={(open) => { if (!open) { setShowSafetyDialog(false); setPendingSafetyPoint(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingSafetyPoint?.type === "first_aid" ? t("safety.firstAid") : t("safety.fireExtinguisher")} – {t("safety.addDescription")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <textarea
+              className="w-full text-sm border border-border rounded-md px-3 py-2 bg-background text-foreground resize-none"
+              rows={3}
+              value={safetyDescription}
+              onChange={(e) => setSafetyDescription(e.target.value)}
+              placeholder={t("safety.descriptionPlaceholder")}
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => { setShowSafetyDialog(false); setPendingSafetyPoint(null); }}>
+                {t("common.cancel")}
+              </Button>
+              <Button size="sm" onClick={async () => {
+                if (pendingSafetyPoint) {
+                  await placeSafetyMarker(pendingSafetyPoint.type!, pendingSafetyPoint.x, pendingSafetyPoint.y, safetyDescription);
+                  setShowSafetyDialog(false);
+                  setPendingSafetyPoint(null);
+                  setSafetyDescription("");
+                }
+              }}>
+                {t("common.save")}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

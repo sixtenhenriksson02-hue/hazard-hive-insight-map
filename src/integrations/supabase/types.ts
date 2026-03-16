@@ -302,6 +302,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          description: string
           id: string
           marker_type: string
           plan_x: number
@@ -312,6 +313,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          description?: string
           id?: string
           marker_type: string
           plan_x: number
@@ -322,6 +324,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          description?: string
           id?: string
           marker_type?: string
           plan_x?: number

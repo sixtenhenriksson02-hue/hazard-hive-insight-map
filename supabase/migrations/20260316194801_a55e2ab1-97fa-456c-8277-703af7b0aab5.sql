@@ -1,0 +1,1 @@
+ALTER TABLE public.safety_markers ADD COLUMN description text NOT NULL DEFAULT '';
