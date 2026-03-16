@@ -1,0 +1,1 @@
+CREATE POLICY "Admins can update safety markers" ON public.safety_markers FOR UPDATE TO authenticated USING (has_role(auth.uid(), 'admin'::app_role));
