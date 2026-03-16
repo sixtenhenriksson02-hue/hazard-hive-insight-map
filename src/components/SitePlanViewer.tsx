@@ -109,7 +109,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     }
   };
 
-  const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher", x: number, y: number) => {
+  const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher", x: number, y: number, desc: string) => {
     if (!activePlan || !user || !activeProjectId) return;
     const { error } = await supabase.from("safety_markers" as any).insert({
       project_id: activeProjectId,
@@ -117,6 +117,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       marker_type: type,
       plan_x: x,
       plan_y: y,
+      description: desc,
       created_by: user.id,
     } as any);
     if (error) {
@@ -124,6 +125,16 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     } else {
       toast({ title: t("safety.markerPlaced") });
       setSafetyPlacingMode(null);
+      await fetchSafetyMarkers();
+    }
+  };
+
+  const updateSafetyMarkerDescription = async (markerId: string, desc: string) => {
+    const { error } = await supabase.from("safety_markers" as any).update({ description: desc } as any).eq("id", markerId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("safety.markerUpdated") });
       await fetchSafetyMarkers();
     }
   };
