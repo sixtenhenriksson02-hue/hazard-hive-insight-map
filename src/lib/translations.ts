@@ -142,6 +142,8 @@ const translations: Record<string, Record<Language, string>> = {
   "safety.fireExtinguisher": { sv: "Brandsläckare", en: "Fire Extinguisher" },
   "safety.placeFirstAid": { sv: "Placera förstahjälpen", en: "Place First Aid" },
   "safety.placeFireExtinguisher": { sv: "Placera brandsläckare", en: "Place Fire Ext." },
+  "safety.defibrillator": { sv: "Hjärtstartare", en: "Defibrillator" },
+  "safety.placeDefibrillator": { sv: "Placera hjärtstartare", en: "Place Defibrillator" },
   "safety.placingMode": { sv: "Klicka på kartan för att placera", en: "Click on the map to place" },
   "safety.markerPlaced": { sv: "Markör placerad!", en: "Marker placed!" },
   "safety.markerDeleted": { sv: "Markör borttagen!", en: "Marker deleted!" },
