@@ -130,7 +130,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   };
 
   const updateSafetyMarkerDescription = async (markerId: string, desc: string) => {
-    const { error } = await supabase.from("safety_markers" as any).update({ description: desc } as any).eq("id", markerId);
+    const { error } = await supabase.from("safety_markers").update({ description: desc }).eq("id", markerId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
