@@ -1,4 +1,5 @@
 import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown } from "lucide-react";
+import EmergencyGuide from "@/components/EmergencyGuide";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,6 +60,8 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 <ChevronDown className="h-3 w-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-50" />
               </div>
             )}
+
+            <EmergencyGuide />
 
             <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
 
@@ -132,7 +135,8 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 ))}
               </select>
             )}
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
+              <EmergencyGuide />
               <button onClick={() => setLang(lang === "sv" ? "en" : "sv")} className="text-xs px-3 py-1.5 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5">
                 {lang === "sv" ? "English" : "Svenska"}
               </button>

@@ -111,7 +111,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
   const placeSafetyMarker = async (type: "first_aid" | "fire_extinguisher" | "defibrillator", x: number, y: number, desc: string) => {
     if (!activePlan || !user || !activeProjectId) return;
-    const { error } = await supabase.from("safety_markers" as any).insert({
+    const { error } = await supabase.from("safety_markers").insert({
       project_id: activeProjectId,
       site_plan_id: activePlan.id,
       marker_type: type,
@@ -119,7 +119,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       plan_y: y,
       description: desc,
       created_by: user.id,
-    } as any);
+    });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -130,7 +130,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   };
 
   const updateSafetyMarkerDescription = async (markerId: string, desc: string) => {
-    const { error } = await supabase.from("safety_markers" as any).update({ description: desc } as any).eq("id", markerId);
+    const { error } = await supabase.from("safety_markers").update({ description: desc }).eq("id", markerId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -140,7 +140,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   };
 
   const deleteSafetyMarker = async (markerId: string) => {
-    const { error } = await supabase.from("safety_markers" as any).delete().eq("id", markerId);
+    const { error } = await supabase.from("safety_markers").delete().eq("id", markerId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
@@ -152,10 +152,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const fetchSafetyMarkers = useCallback(async () => {
     if (!activeProjectId) return;
     const { data } = await supabase
-      .from("safety_markers" as any)
+      .from("safety_markers")
       .select("*")
       .eq("project_id", activeProjectId);
-    setSafetyMarkers((data as unknown as SafetyMarker[]) ?? []);
+    setSafetyMarkers((data as SafetyMarker[]) ?? []);
   }, [activeProjectId]);
 
   const fetchPlans = useCallback(async () => {
