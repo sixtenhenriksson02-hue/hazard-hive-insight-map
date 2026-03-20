@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RiskReport } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -7,7 +7,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, TrendingUp, Shield, CheckCircle2, AlertTriangle, Loader2, ArrowRight, Save } from "lucide-react";
+import { FileText, Loader2, Save, Download } from "lucide-react";
 
 interface ReportGeneratorProps {
   reports: RiskReport[];
@@ -15,20 +15,114 @@ interface ReportGeneratorProps {
 
 interface ReportData {
   summary: string;
-  key_risks: { risk: string; severity: string; count: number; recommendation: string }[];
-  trends: string[];
-  improvements: string[];
-  action_plan: { action: string; priority: string; responsible: string }[];
+  risk_analysis: string;
+  trends: string;
+  improvements: string;
+  action_plan: string;
+  conclusion: string;
 }
 
 type ReportType = "monthly" | "quarterly" | "yearly";
 
-const riskDotColor: Record<string, string> = {
-  low: "bg-risk-low",
-  medium: "bg-risk-medium",
-  high: "bg-risk-high",
-  critical: "bg-risk-critical",
-};
+function ProseReportView({ report, projectName, periodLabel, lang }: {
+  report: ReportData;
+  projectName: string;
+  periodLabel: string;
+  lang: string;
+}) {
+  const sectionTitle = (sv: string, en: string) => lang === "en" ? en : sv;
+
+  return (
+    <div className="prose-report space-y-6">
+      <div className="text-center border-b border-border pb-4 mb-6">
+        <h2 className="text-lg font-bold text-card-foreground">{projectName}</h2>
+        <p className="text-sm text-muted-foreground">{periodLabel}</p>
+      </div>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Sammanfattning", "Executive Summary")}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.summary}</p>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Riskanalys", "Risk Analysis")}</h3>
+        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.risk_analysis}</div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Trender och mönster", "Trends and Patterns")}</h3>
+        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.trends}</div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Positiva resultat", "Positive Results")}</h3>
+        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.improvements}</div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Åtgärdsplan", "Action Plan")}</h3>
+        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.action_plan}</div>
+      </section>
+
+      <section>
+        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Slutsats", "Conclusion")}</h3>
+        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.conclusion}</div>
+      </section>
+    </div>
+  );
+}
+
+function downloadPDF(report: ReportData, projectName: string, periodLabel: string, lang: string) {
+  const sectionTitle = (sv: string, en: string) => lang === "en" ? en : sv;
+  const title = `${projectName} — ${periodLabel}`;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    @page { margin: 2.5cm; size: A4; }
+    body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; max-width: 100%; }
+    h1 { font-size: 18pt; text-align: center; margin-bottom: 4pt; font-weight: 700; }
+    .subtitle { text-align: center; font-size: 11pt; color: #555; margin-bottom: 24pt; border-bottom: 1px solid #ccc; padding-bottom: 16pt; }
+    h2 { font-size: 13pt; font-weight: 700; margin-top: 24pt; margin-bottom: 8pt; color: #222; border-bottom: 1px solid #e0e0e0; padding-bottom: 4pt; }
+    p { margin: 0 0 10pt 0; text-align: justify; }
+    .footer { margin-top: 32pt; padding-top: 12pt; border-top: 1px solid #ccc; font-size: 9pt; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>${projectName}</h1>
+  <div class="subtitle">${periodLabel}</div>
+
+  <h2>${sectionTitle("Sammanfattning", "Executive Summary")}</h2>
+  ${report.summary.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <h2>${sectionTitle("Riskanalys", "Risk Analysis")}</h2>
+  ${report.risk_analysis.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <h2>${sectionTitle("Trender och mönster", "Trends and Patterns")}</h2>
+  ${report.trends.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <h2>${sectionTitle("Positiva resultat", "Positive Results")}</h2>
+  ${report.improvements.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <h2>${sectionTitle("Åtgärdsplan", "Action Plan")}</h2>
+  ${report.action_plan.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <h2>${sectionTitle("Slutsats", "Conclusion")}</h2>
+  ${report.conclusion.split("\n").filter(Boolean).map(p => `<p>${p}</p>`).join("")}
+
+  <div class="footer">${sectionTitle("Genererad av RiskRadar", "Generated by RiskRadar")} — ${new Date().toLocaleDateString(lang === "en" ? "en-US" : "sv-SE")}</div>
+</body>
+</html>`;
+
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => { printWindow.print(); }, 500);
+}
 
 export default function ReportGenerator({ reports }: ReportGeneratorProps) {
   const { lang, t } = useLanguage();
@@ -145,7 +239,6 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
     setSaving(false);
   };
 
-  // Generate period options
   const periodOptions = reportType === "yearly"
     ? Array.from({ length: 5 }, (_, i) => {
         const y = new Date().getFullYear() - i;
@@ -166,16 +259,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
         return { value: val, label: getPeriodLabel(val, "monthly") };
       });
 
-  const priorityLabel: Record<string, Record<string, string>> = {
-    high: { sv: "Hög", en: "High" },
-    medium: { sv: "Medel", en: "Medium" },
-    low: { sv: "Låg", en: "Low" },
-  };
-  const priorityColor: Record<string, string> = {
-    high: "text-risk-high",
-    medium: "text-risk-medium",
-    low: "text-risk-low",
-  };
+  const periodLabel = getPeriodLabel(selectedPeriod, reportType);
 
   return (
     <>
@@ -194,7 +278,6 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           </DialogHeader>
 
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            {/* Report type selector */}
             <div className="flex gap-1">
               {(["monthly", "quarterly", "yearly"] as ReportType[]).map(type => (
                 <button
@@ -234,105 +317,19 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           </div>
 
           {report && (
-            <div className="space-y-5 animate-fade-in">
-              {/* Save button */}
-              <div className="flex justify-end">
+            <div className="animate-fade-in">
+              <div className="flex justify-end gap-2 mb-4">
+                <Button onClick={() => downloadPDF(report, projectName, periodLabel, lang)} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-1.5" />
+                  {t("reportGen.downloadPdf")}
+                </Button>
                 <Button onClick={saveDocument} disabled={saving} variant="outline" size="sm">
                   <Save className="h-4 w-4 mr-1.5" />
                   {saving ? t("common.loading") : t("reportGen.saveDoc")}
                 </Button>
               </div>
 
-              {/* Header */}
-              <div className="rounded-lg border border-border bg-muted/30 p-4">
-                <h3 className="text-sm font-bold text-card-foreground mb-1">
-                  {projectName} — {getPeriodLabel(selectedPeriod, reportType)}
-                </h3>
-                <p className="text-sm text-muted-foreground">{report.summary}</p>
-              </div>
-
-              {/* Key Risks */}
-              <div>
-                <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 mb-3">
-                  <AlertTriangle className="h-4 w-4 text-risk-high" />
-                  {t("monthly.keyRisks")}
-                </h3>
-                <div className="space-y-2">
-                  {report.key_risks.map((risk, i) => (
-                    <div key={i} className="rounded-lg border border-border p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2.5 h-2.5 rounded-full ${riskDotColor[risk.severity]}`} />
-                        <span className="text-sm font-medium text-card-foreground">{risk.risk}</span>
-                        <span className="text-xs text-muted-foreground ml-auto">({risk.count})</span>
-                      </div>
-                      <div className="flex items-start gap-1.5 ml-4.5">
-                        <ArrowRight className="h-3 w-3 text-accent mt-0.5 shrink-0" />
-                        <span className="text-xs text-muted-foreground">{risk.recommendation}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Trends */}
-              <div>
-                <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 mb-3">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                  {t("monthly.trends")}
-                </h3>
-                <ul className="space-y-1.5">
-                  {report.trends.map((trend, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-accent/10 text-accent text-[10px] font-bold flex items-center justify-center mt-0.5">
-                        {i + 1}
-                      </span>
-                      {trend}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Improvements */}
-              <div>
-                <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 mb-3">
-                  <CheckCircle2 className="h-4 w-4 text-risk-low" />
-                  {t("monthly.improvements")}
-                </h3>
-                <ul className="space-y-1.5">
-                  {report.improvements.map((imp, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-risk-low shrink-0 mt-0.5" />
-                      {imp}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Action Plan */}
-              <div>
-                <h3 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 mb-3">
-                  <Shield className="h-4 w-4 text-primary" />
-                  {t("monthly.actionPlan")}
-                </h3>
-                <div className="space-y-2">
-                  {report.action_plan.map((action, i) => (
-                    <div key={i} className="flex items-start gap-3 rounded-lg border border-border p-3">
-                      <span className="shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
-                        {i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-card-foreground">{action.action}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs">
-                          <span className={`font-medium ${priorityColor[action.priority]}`}>
-                            {priorityLabel[action.priority]?.[lang] ?? action.priority}
-                          </span>
-                          <span className="text-muted-foreground">{action.responsible}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ProseReportView report={report} projectName={projectName} periodLabel={periodLabel} lang={lang} />
             </div>
           )}
         </DialogContent>

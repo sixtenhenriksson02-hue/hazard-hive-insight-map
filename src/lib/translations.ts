@@ -251,6 +251,7 @@ const translations: Record<string, Record<Language, string>> = {
   "reportGen.saveDoc": { sv: "Spara som dokument", en: "Save as document" },
   "reportGen.saved": { sv: "Rapport sparad som dokument!", en: "Report saved as document!" },
   "reportGen.saveError": { sv: "Kunde inte spara dokumentet", en: "Could not save document" },
+  "reportGen.downloadPdf": { sv: "Ladda ner PDF", en: "Download PDF" },
   "reportGen.error": { sv: "Kunde inte generera rapport", en: "Could not generate report" },
 
   // Documents
