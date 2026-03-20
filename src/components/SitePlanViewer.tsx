@@ -152,10 +152,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const fetchSafetyMarkers = useCallback(async () => {
     if (!activeProjectId) return;
     const { data } = await supabase
-      .from("safety_markers" as any)
+      .from("safety_markers")
       .select("*")
       .eq("project_id", activeProjectId);
-    setSafetyMarkers((data as unknown as SafetyMarker[]) ?? []);
+    setSafetyMarkers((data as SafetyMarker[]) ?? []);
   }, [activeProjectId]);
 
   const fetchPlans = useCallback(async () => {
