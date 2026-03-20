@@ -140,7 +140,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   };
 
   const deleteSafetyMarker = async (markerId: string) => {
-    const { error } = await supabase.from("safety_markers" as any).delete().eq("id", markerId);
+    const { error } = await supabase.from("safety_markers").delete().eq("id", markerId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
