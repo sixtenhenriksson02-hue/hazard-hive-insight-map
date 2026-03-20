@@ -24,20 +24,9 @@ serve(async (req) => {
     const medium = reports.filter((r: any) => r.risk_level === "medium").length;
     const low = reports.filter((r: any) => r.risk_level === "low").length;
 
-    // Injury statistics
     const injuryReports = reports.filter((r: any) => r.report_type === "injury");
     const totalAbsenceDays = injuryReports.reduce((sum: number, r: any) => sum + (r.absence_days || 0), 0);
     const medicalCareCount = injuryReports.filter((r: any) => r.medical_care_required).length;
-
-    // Resolution time analysis
-    const resolvedReports = reports.filter((r: any) => r.status === "resolved" && r.resolved_at);
-    const avgResolutionDays = resolvedReports.length > 0
-      ? Math.round(resolvedReports.reduce((sum: number, r: any) => {
-          const created = new Date(r.created_at).getTime();
-          const resolved = new Date(r.resolved_at).getTime();
-          return sum + (resolved - created) / (1000 * 60 * 60 * 24);
-        }, 0) / resolvedReports.length)
-      : null;
 
     const categories: Record<string, number> = {};
     reports.forEach((r: any) => {
@@ -59,138 +48,90 @@ serve(async (req) => {
       .map(([loc, count]) => `  - ${loc}: ${count}`)
       .join("\n");
 
-    // Group reports by risk level for better analysis
-    const criticalReports = reports.filter((r: any) => r.risk_level === "critical").map((r: any) => `  • ${r.title} (${r.category}, ${r.specific_location || r.building || '-'})`).join("\n");
-    const highReports = reports.filter((r: any) => r.risk_level === "high").map((r: any) => `  • ${r.title} (${r.category}, ${r.specific_location || r.building || '-'})`).join("\n");
-
     const reportDetails = reports.map((r: any) =>
-      `[${r.report_type}] ${r.title} | ${lang === "sv" ? "Kategori" : "Category"}: ${r.category} | Risk: ${r.risk_level} | ${lang === "sv" ? "Plats" : "Location"}: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI-bedömning: ${r.ai_explanation.substring(0, 200)}` : ""}${r.suggested_actions?.length ? ` | Åtgärder: ${r.suggested_actions.join("; ")}` : ""}`
+      `[${r.report_type}] ${r.title} | ${lang === "sv" ? "Kategori" : "Category"}: ${r.category} | Risk: ${r.risk_level} | ${lang === "sv" ? "Plats" : "Location"}: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI: ${r.ai_explanation.substring(0, 200)}` : ""}${r.suggested_actions?.length ? ` | ${lang === "sv" ? "Åtgärder" : "Actions"}: ${r.suggested_actions.join("; ")}` : ""}`
     ).join("\n");
 
     const typeLabels: Record<string, Record<string, string>> = {
-      monthly: { sv: "månadsrapport", en: "monthly report" },
-      quarterly: { sv: "kvartalsrapport", en: "quarterly report" },
-      yearly: { sv: "årsrapport", en: "yearly report" },
+      monthly: { sv: "Månadsrapport", en: "Monthly Report" },
+      quarterly: { sv: "Kvartalsrapport", en: "Quarterly Report" },
+      yearly: { sv: "Årsrapport", en: "Yearly Report" },
     };
     const reportTypeLabel = typeLabels[report_type]?.[lang] ?? typeLabels.monthly[lang];
 
     const prompt = lang === "sv"
-      ? `Du är en senior arbetsmiljöingenjör (SAM-certifierad) som skriver en professionell ${reportTypeLabel} för ledningen. Rapporten ska vara konkret, datadriven och handlingsinriktad.
+      ? `Du är en senior arbetsmiljöingenjör (SAM-certifierad) som skriver en formell ${reportTypeLabel.toLowerCase()} för ledningen. Rapporten ska vara formell, professionell och skriven i löpande text — INTE i punktform.
 
-═══════════════════════════════════════
-RAPPORTMETADATA
-═══════════════════════════════════════
-- Rapporttyp: ${reportTypeLabel.toUpperCase()}
+RAPPORTMETADATA:
+- Rapporttyp: ${reportTypeLabel}
 - Projekt: ${project_name || "Alla projekt"}
 - Period: ${period_label}
 
-═══════════════════════════════════════
-NYCKELTAL
-═══════════════════════════════════════
+NYCKELTAL:
 - Totalt antal rapporter: ${totalReports}
 - Riskobservationer: ${observations}
 - Skadeanmälningar: ${injuries}
 - Åtgärdade: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
-- Genomsnittlig åtgärdstid: ${avgResolutionDays !== null ? avgResolutionDays + " dagar" : "Ej tillräckligt data"}
 - Risknivåer: Kritisk: ${critical}, Hög: ${high}, Medel: ${medium}, Låg: ${low}
-
-SKADESTATISTIK:
 - Skadeanmälningar med sjukvård: ${medicalCareCount}
 - Total frånvaro p.g.a. skador: ${totalAbsenceDays} dagar
 
-═══════════════════════════════════════
-KATEGORIER (efter frekvens)
-═══════════════════════════════════════
+KATEGORIER:
 ${categoryList || "  Inga rapporter"}
 
-═══════════════════════════════════════
-PLATSER (topp 10)
-═══════════════════════════════════════
+PLATSER:
 ${locationList || "  Inga rapporter"}
 
-${criticalReports ? `═══════════════════════════════════════
-KRITISKA RISKER (kräver omedelbar uppmärksamhet)
-═══════════════════════════════════════
-${criticalReports}` : ""}
-
-${highReports ? `═══════════════════════════════════════
-HÖGA RISKER
-═══════════════════════════════════════
-${highReports}` : ""}
-
-═══════════════════════════════════════
-SAMTLIGA RAPPORTER
-═══════════════════════════════════════
+SAMTLIGA RAPPORTER:
 ${reportDetails || "Inga rapporter för perioden."}
 
-═══════════════════════════════════════
-INSTRUKTIONER
-═══════════════════════════════════════
-Skapa en professionell rapport med:
-1. SAMMANFATTNING: Koncis men informativ. Nämn antal rapporter, åtgärdsgrad, allvarligaste händelserna och övergripande trend.
-2. NYCKELRISKER: Identifiera 3-6 konkreta risker baserat på faktiska rapporter. Gruppera liknande risker. Ange korrekt severity baserat på data.
-3. TRENDER: 3-5 observerade mönster/trender baserat på data (t.ex. återkommande kategorier, platser med många incidenter, förbättring/försämring).
-4. FÖRBÄTTRINGAR: 2-4 positiva resultat (t.ex. hög åtgärdsgrad, minskade incidenter i viss kategori, snabb responstid).
-5. ÅTGÄRDSPLAN: 4-8 konkreta, prioriterade åtgärder med ansvarig roll. Varje åtgärd ska vara specifik och genomförbar.
+INSTRUKTIONER:
+Skriv en formell, professionell rapport i LÖPANDE TEXT. Undvik punktlistor helt. Varje sektion ska vara sammanhängande prosa med fullständiga meningar och stycken. Rapporten ska kunna presenteras direkt till ledningen som ett formellt dokument.
+
+Sektionerna:
+1. SAMMANFATTNING: Ett sammanhängande stycke (6-10 meningar) som ger en övergripande bild av periodens arbetsmiljöstatus. Inkludera nyckeltal naturligt i texten.
+2. RISKANALYS: 2-4 stycken som analyserar de viktigaste riskerna, deras allvarlighetsgrad och rekommenderade åtgärder. Skriv i löpande text, inte punktform.
+3. TRENDER OCH MÖNSTER: 1-3 stycken som beskriver observerade trender, återkommande mönster och utveckling över perioden.
+4. POSITIVA RESULTAT: 1-2 stycken som lyfter fram förbättringar, framsteg och positiva utvecklingar.
+5. ÅTGÄRDSPLAN: 2-3 stycken som beskriver rekommenderade åtgärder framåt, med prioritering och ansvarsfördelning integrerat i texten.
+6. SLUTSATS: Ett avslutande stycke som sammanfattar helhetsbilden och blickar framåt.
 
 Svara ALLTID med generate_report-verktyget.`
-      : `You are a senior occupational health and safety engineer (SAM-certified) writing a professional ${reportTypeLabel} for management. The report should be concrete, data-driven and action-oriented.
+      : `You are a senior occupational health and safety engineer (SAM-certified) writing a formal ${reportTypeLabel.toLowerCase()} for management. The report must be formal, professional and written in flowing prose — NOT bullet points.
 
-═══════════════════════════════════════
-REPORT METADATA
-═══════════════════════════════════════
-- Report type: ${reportTypeLabel.toUpperCase()}
+REPORT METADATA:
+- Report type: ${reportTypeLabel}
 - Project: ${project_name || "All projects"}
 - Period: ${period_label}
 
-═══════════════════════════════════════
-KEY METRICS
-═══════════════════════════════════════
+KEY METRICS:
 - Total reports: ${totalReports}
 - Risk observations: ${observations}
 - Injury reports: ${injuries}
 - Resolved: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
-- Average resolution time: ${avgResolutionDays !== null ? avgResolutionDays + " days" : "Insufficient data"}
 - Risk levels: Critical: ${critical}, High: ${high}, Medium: ${medium}, Low: ${low}
-
-INJURY STATISTICS:
 - Injuries requiring medical care: ${medicalCareCount}
 - Total absence due to injuries: ${totalAbsenceDays} days
 
-═══════════════════════════════════════
-CATEGORIES (by frequency)
-═══════════════════════════════════════
+CATEGORIES:
 ${categoryList || "  No reports"}
 
-═══════════════════════════════════════
-LOCATIONS (top 10)
-═══════════════════════════════════════
+LOCATIONS:
 ${locationList || "  No reports"}
 
-${criticalReports ? `═══════════════════════════════════════
-CRITICAL RISKS (immediate attention required)
-═══════════════════════════════════════
-${criticalReports}` : ""}
-
-${highReports ? `═══════════════════════════════════════
-HIGH RISKS
-═══════════════════════════════════════
-${highReports}` : ""}
-
-═══════════════════════════════════════
-ALL REPORTS
-═══════════════════════════════════════
+ALL REPORTS:
 ${reportDetails || "No reports for this period."}
 
-═══════════════════════════════════════
-INSTRUCTIONS
-═══════════════════════════════════════
-Create a professional report with:
-1. SUMMARY: Concise but informative. Mention report count, resolution rate, most serious incidents and overall trend.
-2. KEY RISKS: Identify 3-6 concrete risks based on actual reports. Group similar risks. Set correct severity based on data.
-3. TRENDS: 3-5 observed patterns based on data (recurring categories, locations with many incidents, improvement/deterioration).
-4. IMPROVEMENTS: 2-4 positive results (high resolution rate, reduced incidents in category, fast response time).
-5. ACTION PLAN: 4-8 concrete, prioritized actions with responsible role. Each action must be specific and actionable.
+INSTRUCTIONS:
+Write a formal, professional report in FLOWING PROSE. Avoid bullet points entirely. Each section should be coherent prose with complete sentences and paragraphs. The report should be presentable directly to management as a formal document.
+
+Sections:
+1. EXECUTIVE SUMMARY: A coherent paragraph (6-10 sentences) providing an overall picture of the period's safety status. Include key metrics naturally in the text.
+2. RISK ANALYSIS: 2-4 paragraphs analyzing the most important risks, their severity and recommended measures. Write in flowing prose, not bullet points.
+3. TRENDS AND PATTERNS: 1-3 paragraphs describing observed trends, recurring patterns and development over the period.
+4. POSITIVE RESULTS: 1-2 paragraphs highlighting improvements, progress and positive developments.
+5. ACTION PLAN: 2-3 paragraphs describing recommended actions going forward, with prioritization and responsibility integrated in the text.
+6. CONCLUSION: A closing paragraph summarizing the overall picture and looking ahead.
 
 ALWAYS respond with the generate_report tool.`;
 
@@ -206,8 +147,8 @@ ALWAYS respond with the generate_report tool.`;
           {
             role: "system",
             content: lang === "en"
-              ? "You are a senior occupational health and safety engineer writing professional, data-driven reports for construction industry management. Your reports are known for being specific, actionable and well-structured. Never use generic phrases – always reference actual data from the reports. Always respond using the generate_report tool."
-              : "Du är en senior arbetsmiljöingenjör som skriver professionella, datadrivna rapporter för ledningen inom bygg- och anläggningsbranschen. Dina rapporter är kända för att vara specifika, handlingsinriktade och välstrukturerade. Använd aldrig generiska formuleringar – referera alltid till faktisk data från rapporterna. Svara alltid med generate_report-verktyget.",
+              ? "You are a senior occupational health and safety engineer writing formal, professional reports in flowing prose for construction industry management. Your reports are known for their formal tone, complete sentences and professional language. Never use bullet points. Always respond using the generate_report tool."
+              : "Du är en senior arbetsmiljöingenjör som skriver formella, professionella rapporter i löpande text för ledningen inom bygg- och anläggningsbranschen. Dina rapporter är kända för sin formella ton, fullständiga meningar och professionella språk. Använd aldrig punktlistor. Svara alltid med generate_report-verktyget.",
           },
           { role: "user", content: prompt },
         ],
@@ -217,54 +158,49 @@ ALWAYS respond with the generate_report tool.`;
             function: {
               name: "generate_report",
               description: lang === "en"
-                ? "Generate a structured, professional occupational health and safety report"
-                : "Generera en strukturerad, professionell arbetsmiljörapport",
+                ? "Generate a formal, prose-style occupational health and safety report"
+                : "Generera en formell arbetsmiljörapport i löpande text",
               parameters: {
                 type: "object",
                 properties: {
                   summary: {
                     type: "string",
                     description: lang === "en"
-                      ? "Executive summary (4-6 sentences): Total reports, resolution rate, most critical findings, overall risk trend compared to expectations. Include specific numbers."
-                      : "Sammanfattning för ledningen (4-6 meningar): Antal rapporter, åtgärdsgrad, mest kritiska fynd, övergripande risktrend. Inkludera specifika siffror.",
+                      ? "Executive summary as a coherent paragraph (6-10 sentences) with key metrics woven into the prose. No bullet points."
+                      : "Sammanfattning som ett sammanhängande stycke (6-10 meningar) med nyckeltal invävda i texten. Inga punktlistor.",
                   },
-                  key_risks: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        risk: { type: "string", description: lang === "sv" ? "Kort, specifik riskbeskrivning som refererar till faktiska rapporter" : "Short, specific risk description referencing actual reports" },
-                        severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
-                        count: { type: "number", description: lang === "sv" ? "Antal rapporter relaterade till denna risk" : "Number of reports related to this risk" },
-                        recommendation: { type: "string", description: lang === "sv" ? "Konkret, genomförbar rekommendation med tidsram" : "Concrete, actionable recommendation with timeframe" },
-                      },
-                      required: ["risk", "severity", "count", "recommendation"],
-                    },
+                  risk_analysis: {
+                    type: "string",
+                    description: lang === "en"
+                      ? "2-4 paragraphs of flowing prose analyzing the most important risks, their severity, frequency and recommended countermeasures. No bullet points."
+                      : "2-4 stycken löpande text som analyserar de viktigaste riskerna, deras allvarlighetsgrad, frekvens och rekommenderade motåtgärder. Inga punktlistor.",
                   },
                   trends: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: lang === "sv" ? "3-5 datadrivna trender/mönster observerade i rapporterna" : "3-5 data-driven trends/patterns observed in the reports",
+                    type: "string",
+                    description: lang === "en"
+                      ? "1-3 paragraphs of flowing prose describing observed trends, recurring patterns and development over the period. No bullet points."
+                      : "1-3 stycken löpande text som beskriver observerade trender, återkommande mönster och utveckling. Inga punktlistor.",
                   },
                   improvements: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: lang === "sv" ? "2-4 positiva resultat eller förbättringar baserat på data" : "2-4 positive results or improvements based on data",
+                    type: "string",
+                    description: lang === "en"
+                      ? "1-2 paragraphs of flowing prose highlighting improvements, progress and positive developments. No bullet points."
+                      : "1-2 stycken löpande text som lyfter fram förbättringar, framsteg och positiva utvecklingar. Inga punktlistor.",
                   },
                   action_plan: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        action: { type: "string", description: lang === "sv" ? "Specifik, genomförbar åtgärd med tydligt mål" : "Specific, actionable measure with clear goal" },
-                        priority: { type: "string", enum: ["high", "medium", "low"] },
-                        responsible: { type: "string", description: lang === "sv" ? "Ansvarig roll (t.ex. Platschef, Skyddsombud, Arbetsledare)" : "Responsible role (e.g. Site Manager, Safety Officer, Supervisor)" },
-                      },
-                      required: ["action", "priority", "responsible"],
-                    },
+                    type: "string",
+                    description: lang === "en"
+                      ? "2-3 paragraphs of flowing prose describing recommended actions with prioritization and responsibility integrated naturally. No bullet points."
+                      : "2-3 stycken löpande text som beskriver rekommenderade åtgärder med prioritering och ansvar integrerat naturligt. Inga punktlistor.",
+                  },
+                  conclusion: {
+                    type: "string",
+                    description: lang === "en"
+                      ? "A closing paragraph summarizing the overall picture and looking ahead. No bullet points."
+                      : "Ett avslutande stycke som sammanfattar helhetsbilden och blickar framåt. Inga punktlistor.",
                   },
                 },
-                required: ["summary", "key_risks", "trends", "improvements", "action_plan"],
+                required: ["summary", "risk_analysis", "trends", "improvements", "action_plan", "conclusion"],
                 additionalProperties: false,
               },
             },
