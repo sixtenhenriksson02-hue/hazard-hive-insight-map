@@ -61,6 +61,8 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
               </div>
             )}
 
+            <EmergencyGuide />
+
             <div className="h-4 w-px bg-primary-foreground/15 mx-1" />
 
             <button
