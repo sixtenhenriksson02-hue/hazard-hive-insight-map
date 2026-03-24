@@ -76,7 +76,7 @@ export default function EmergencyGuide() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-400/40 bg-red-500/15 text-red-300 hover:bg-red-500/25 transition-colors font-semibold animate-pulse hover:animate-none"
+        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-400/40 bg-red-500/15 text-red-300 hover:bg-red-500/25 transition-colors font-semibold"
       >
         <Siren className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">{sv ? "Nödläge" : "Emergency"}</span>
