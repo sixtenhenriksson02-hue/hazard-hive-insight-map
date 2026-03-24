@@ -1,0 +1,2 @@
+ALTER TABLE public.safety_markers DROP CONSTRAINT safety_markers_marker_type_check;
+ALTER TABLE public.safety_markers ADD CONSTRAINT safety_markers_marker_type_check CHECK (marker_type = ANY (ARRAY['first_aid'::text, 'fire_extinguisher'::text, 'defibrillator'::text]));
