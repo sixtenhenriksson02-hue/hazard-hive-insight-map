@@ -540,16 +540,14 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {planReports.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                  className="absolute w-4 h-4 rounded-full border border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                   style={{
                     left: `${r.plan_x}%`,
                     top: `${r.plan_y}%`,
                     backgroundColor: riskDotColor[r.risk_level] ?? "#888",
                   }}
-                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
-                >
-                  <span className="text-[7px] font-bold text-white leading-none">{idx + 1}</span>
-                </div>
+                  title={`${r.title} (${r.risk_level})`}
+                />
               ))}
               {riskZones.map((zone, i) => (
                 <div
@@ -708,23 +706,18 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     </span>
                   </div>
                   <div className="ml-4 space-y-0.5">
-                    {levelReports.map(r => {
-                      const globalIdx = planReports.indexOf(r) + 1;
-                      return (
+                    {levelReports.map(r => (
                         <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
                           <span
-                            className="w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center text-[7px] font-bold text-white mt-0.5"
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5"
                             style={{ backgroundColor: riskDotColor[r.risk_level] }}
-                          >
-                            {globalIdx}
-                          </span>
+                          />
                           <div>
                             <span className="text-card-foreground font-medium">{r.title}</span>
                             <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
                           </div>
                         </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 </div>
               );
