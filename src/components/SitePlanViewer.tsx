@@ -540,16 +540,14 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {planReports.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border border-card shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                  className="absolute w-4 h-4 rounded-full border border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                   style={{
                     left: `${r.plan_x}%`,
                     top: `${r.plan_y}%`,
                     backgroundColor: riskDotColor[r.risk_level] ?? "#888",
                   }}
-                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
-                >
-                  <span className="text-[7px] font-bold text-white leading-none">{idx + 1}</span>
-                </div>
+                  title={`${r.title} (${r.risk_level})`}
+                />
               ))}
               {riskZones.map((zone, i) => (
                 <div
