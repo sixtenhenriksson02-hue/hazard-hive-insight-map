@@ -616,11 +616,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   onMouseLeave={() => setHoveredReport(null)}
                 >
                   <div
-                    className="w-4 h-4 rounded-full border border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
+                    className="w-4 h-4 rounded-full border border-white shadow-md transition-transform group-hover:scale-150"
                     style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  >
-                    <span className="text-[7px] font-bold text-white leading-none">{idx + 1}</span>
-                  </div>
+                  />
                   {hoveredReport === r.id && (
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
                       <p className="font-semibold text-card-foreground">{r.title}</p>
