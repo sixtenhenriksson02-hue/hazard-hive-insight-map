@@ -121,7 +121,7 @@ INSTRUKTIONER FÖR SVARET:
       suggested_actions: {
         type: "array",
         items: { type: "string" },
-        description: "2-4 konkreta, prioriterade åtgärder på svenska. Varje åtgärd ska vara en specifik instruktion (inte generisk) som en platschef kan genomföra omedelbart. Format: '[PRIO] Åtgärdsbeskrivning'. Sortera med viktigaste först.",
+        description: "2-4 konkreta, prioriterade åtgärder på svenska. Varje åtgärd ska vara en specifik instruktion (inte generisk) som en platschef kan genomföra omedelbart. Skriv bara åtgärden direkt utan prefix som [PRIO] eller numrering. Sortera med viktigaste först.",
       },
     };
 

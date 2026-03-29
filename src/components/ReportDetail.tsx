@@ -198,7 +198,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                     <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] mt-0.5">
                       {i + 1}
                     </span>
-                    <span>{action}</span>
+                    <span>{action.replace(/^\[PRIO\]\s*/i, "")}</span>
                   </li>
                 ))}
               </ul>
