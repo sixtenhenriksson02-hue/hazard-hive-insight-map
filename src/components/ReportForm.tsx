@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { getCategoryIcon } from "@/lib/categoryIcons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -277,12 +278,13 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
                     key={c}
                     type="button"
                     onClick={() => setCategory(c)}
-                    className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+                    className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors flex items-center gap-1 ${
                       category === c
                         ? "bg-accent text-accent-foreground border-accent"
                         : "bg-card text-muted-foreground border-border hover:border-accent/50"
                     }`}
                   >
+                    <span className="text-sm leading-none">{getCategoryIcon(c)}</span>
                     {c}
                   </button>
                 ))}
