@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 export type ReportStatus = "open" | "in-progress" | "resolved";
 export type ReportType = "observation" | "injury";
-export type SortOption = "newest" | "severity" | "oldest-open";
+export type SortOption = "newest" | "oldest" | "severity-high" | "severity-low";
 
 export interface RiskReport {
   id: string;
@@ -279,13 +279,12 @@ export function useReports() {
     switch (sort) {
       case "newest":
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      case "severity":
+      case "oldest":
+        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case "severity-high":
         return sorted.sort((a, b) => RISK_ORDER[a.risk_level] - RISK_ORDER[b.risk_level]);
-      case "oldest-open":
-        return sorted
-          .filter((r) => r.status !== "resolved")
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-          .concat(sorted.filter((r) => r.status === "resolved"));
+      case "severity-low":
+        return sorted.sort((a, b) => RISK_ORDER[b.risk_level] - RISK_ORDER[a.risk_level]);
     }
   };
 
