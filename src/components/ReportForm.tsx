@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
-import { getCategoryIcon } from "@/lib/categoryIcons";
+import { Button } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
