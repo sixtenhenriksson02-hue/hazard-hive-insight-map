@@ -310,7 +310,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
               </label>
               <Textarea
                 placeholder={t("form.descriptionPlaceholder")}
-                rows={2}
+                rows={expanded ? 6 : 2}
                 value={description}
                 onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }}
               />
