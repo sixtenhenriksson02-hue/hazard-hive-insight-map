@@ -75,6 +75,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [spellChecked, setSpellChecked] = useState(false);
   const [showSpellReview, setShowSpellReview] = useState(false);
   const [spellDiff, setSpellDiff] = useState<SpellCheckDiff | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
