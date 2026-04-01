@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,6 +75,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [spellChecked, setSpellChecked] = useState(false);
   const [showSpellReview, setShowSpellReview] = useState(false);
   const [spellDiff, setSpellDiff] = useState<SpellCheckDiff | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
@@ -216,19 +217,32 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-card p-4 md:p-5 animate-fade-in">
+      <div className={`rounded-lg border border-border bg-card animate-fade-in transition-all ${
+        expanded ? "fixed inset-4 z-50 overflow-y-auto p-5 md:p-6 shadow-xl" : "p-4 md:p-5"
+      }`}>
+        {expanded && <div className="fixed inset-0 bg-background/80 -z-10" onClick={() => setExpanded(false)} />}
         {/* Header with step indicator */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-card-foreground">{t("dashboard.newReport")}</h2>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalSteps }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === step ? "w-6 bg-accent" : i < step ? "w-4 bg-accent/40" : "w-4 bg-muted"
-                }`}
-              />
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === step ? "w-6 bg-accent" : i < step ? "w-4 bg-accent/40" : "w-4 bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setExpanded(e => !e)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              title={expanded ? (lang === "sv" ? "Förminska" : "Minimize") : (lang === "sv" ? "Förstora" : "Expand")}
+            >
+              {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
           </div>
         </div>
 
@@ -296,7 +310,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
               </label>
               <Textarea
                 placeholder={t("form.descriptionPlaceholder")}
-                rows={2}
+                rows={expanded ? 6 : 2}
                 value={description}
                 onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }}
               />
