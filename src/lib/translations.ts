@@ -56,8 +56,9 @@ const translations: Record<string, Record<Language, string>> = {
 
   // Sort
   "sort.newest": { sv: "Nyast först", en: "Newest first" },
-  "sort.severity": { sv: "Allvarligast", en: "Most severe" },
-  "sort.oldestOpen": { sv: "Längst kvar", en: "Longest open" },
+  "sort.oldest": { sv: "Äldst först", en: "Oldest first" },
+  "sort.severityHigh": { sv: "Allvarligast först", en: "Most severe first" },
+  "sort.severityLow": { sv: "Minst allvarlig först", en: "Least severe first" },
 
   // Status
   "status.open": { sv: "Öppen", en: "Open" },
