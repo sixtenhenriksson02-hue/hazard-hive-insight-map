@@ -1,7 +1,6 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
 import { AlertTriangle, ChevronRight } from "lucide-react";
-import { getCategoryIcon } from "@/lib/categoryIcons";
 
 interface ReportsListProps {
   reports: RiskReport[];
@@ -41,10 +40,6 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
           {/* Risk indicator dot */}
           <span className={`shrink-0 h-3 w-3 rounded-full ${riskColor[report.risk_level]}`} />
 
-          {/* Category icon */}
-          <span className="shrink-0 text-base leading-none" title={report.category}>
-            {report.report_type === "injury" ? "🤕" : getCategoryIcon(report.category)}
-          </span>
 
           {/* Title + location */}
           <div className="flex-1 min-w-0">
