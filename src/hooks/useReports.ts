@@ -279,13 +279,12 @@ export function useReports() {
     switch (sort) {
       case "newest":
         return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      case "severity":
+      case "oldest":
+        return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      case "severity-high":
         return sorted.sort((a, b) => RISK_ORDER[a.risk_level] - RISK_ORDER[b.risk_level]);
-      case "oldest-open":
-        return sorted
-          .filter((r) => r.status !== "resolved")
-          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-          .concat(sorted.filter((r) => r.status === "resolved"));
+      case "severity-low":
+        return sorted.sort((a, b) => RISK_ORDER[b.risk_level] - RISK_ORDER[a.risk_level]);
     }
   };
 

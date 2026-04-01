@@ -93,8 +93,9 @@ const Index = () => {
               onChange={(e) => setSortBy(e.target.value as SortOption)}
             >
               <option value="newest">{t("sort.newest")}</option>
-              <option value="severity">{t("sort.severity")}</option>
-              <option value="oldest-open">{t("sort.oldestOpen")}</option>
+              <option value="oldest">{t("sort.oldest")}</option>
+              <option value="severity-high">{t("sort.severityHigh")}</option>
+              <option value="severity-low">{t("sort.severityLow")}</option>
             </select>
           )}
           <Button onClick={() => setShowForm(!showForm)} className="bg-accent text-accent-foreground hover:bg-accent/90">
