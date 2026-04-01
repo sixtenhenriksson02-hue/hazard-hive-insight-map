@@ -284,7 +284,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
                         : "bg-card text-muted-foreground border-border hover:border-accent/50"
                     }`}
                   >
-                    <span className="text-sm leading-none">{getCategoryIcon(c)}</span>
                     {c}
                   </button>
                 ))}
