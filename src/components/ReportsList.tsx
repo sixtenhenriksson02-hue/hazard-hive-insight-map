@@ -1,7 +1,6 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
 import { AlertTriangle, ChevronRight } from "lucide-react";
-import { getCategoryIcon } from "@/lib/categoryIcons";
 
 interface ReportsListProps {
   reports: RiskReport[];
