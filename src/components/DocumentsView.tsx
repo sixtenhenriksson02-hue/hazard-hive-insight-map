@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, Trash2, Eye, Calendar, Download, Building2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { generateFormalPDF } from "@/lib/pdfTemplate";
 
 interface DocumentRecord {
   id: string;
