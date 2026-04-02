@@ -225,7 +225,7 @@ export default function DocumentsView() {
                 </div>
               </div>
               <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                <Button variant="outline" size="sm" onClick={() => downloadDocPDF(doc.content, doc.title, doc.language, doc.project_name)}>
+                <Button variant="outline" size="sm" onClick={() => generateFormalPDF(doc.content, doc.title, doc.language, doc.project_name, doc.period_label, doc.document_type)}>
                   <Download className="h-4 w-4" />
                 </Button>
                 {isAdmin && (
