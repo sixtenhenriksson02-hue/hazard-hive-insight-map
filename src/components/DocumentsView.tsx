@@ -256,7 +256,7 @@ export default function DocumentsView() {
           {selectedDoc?.content && (
             <div className="animate-fade-in">
               <div className="flex justify-end mb-4">
-                <Button variant="outline" size="sm" onClick={() => downloadDocPDF(selectedDoc.content, selectedDoc.title, selectedDoc.language, selectedDoc.project_name)}>
+                <Button variant="outline" size="sm" onClick={() => generateFormalPDF(selectedDoc.content, selectedDoc.title, selectedDoc.language, selectedDoc.project_name, selectedDoc.period_label, selectedDoc.document_type)}>
                   <Download className="h-4 w-4 mr-1.5" />
                   {t("reportGen.downloadPdf")}
                 </Button>
