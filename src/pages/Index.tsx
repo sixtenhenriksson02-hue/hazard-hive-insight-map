@@ -46,7 +46,12 @@ const Index = () => {
   
 
   return (
-    <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)}>
+    <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)} onSelectReport={(reportId) => {
+        const report = reports.find(r => r.id === reportId);
+        if (report) {
+          setSelectedReport(report);
+        }
+      }}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-foreground">{t("dashboard.welcome")}</h2>
