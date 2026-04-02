@@ -60,7 +60,7 @@ serve(async (req) => {
     const reportTypeLabel = typeLabels[report_type]?.[lang] ?? typeLabels.monthly[lang];
 
     const prompt = lang === "sv"
-      ? `Du är en senior arbetsmiljöingenjör (SAM-certifierad) som skriver en formell ${reportTypeLabel.toLowerCase()} för ledningen. Rapporten ska vara formell, professionell och skriven i löpande text — INTE i punktform.
+      ? `Du är en senior arbetsmiljöingenjör (SAM-certifierad) som skriver en formell ${reportTypeLabel.toLowerCase()} som ska kunna användas som en del av ett företags systematiska arbetsmiljöarbete (SAM) enligt AFS 2001:1. Rapporten ska hålla samma standard som professionella konsultrapporter inom arbetsmiljö.
 
 RAPPORTMETADATA:
 - Rapporttyp: ${reportTypeLabel}
@@ -86,18 +86,24 @@ SAMTLIGA RAPPORTER:
 ${reportDetails || "Inga rapporter för perioden."}
 
 INSTRUKTIONER:
-Skriv en formell, professionell rapport i LÖPANDE TEXT. Undvik punktlistor helt. Varje sektion ska vara sammanhängande prosa med fullständiga meningar och stycken. Rapporten ska kunna presenteras direkt till ledningen som ett formellt dokument.
+Skriv en formell, professionell rapport som håller konsultkvalitet. Rapporten ska:
+- Vara skriven helt i LÖPANDE TEXT utan punktlistor
+- Använda formellt språk som passar för ledningsgruppsmöten och myndighetsgranskning
+- Referera till relevanta föreskrifter (AFS) där det är tillämpligt
+- Inkludera nyckeltal och statistik naturligt invävt i texten
+- Kunna användas som formell dokumentation i SAM-arbetet
+- Ha en professionell och objektiv ton genomgående
 
-Sektionerna:
-1. SAMMANFATTNING: Ett sammanhängande stycke (6-10 meningar) som ger en övergripande bild av periodens arbetsmiljöstatus. Inkludera nyckeltal naturligt i texten.
-2. RISKANALYS: 2-4 stycken som analyserar de viktigaste riskerna, deras allvarlighetsgrad och rekommenderade åtgärder. Skriv i löpande text, inte punktform.
-3. TRENDER OCH MÖNSTER: 1-3 stycken som beskriver observerade trender, återkommande mönster och utveckling över perioden.
-4. POSITIVA RESULTAT: 1-2 stycken som lyfter fram förbättringar, framsteg och positiva utvecklingar.
-5. ÅTGÄRDSPLAN: 2-3 stycken som beskriver rekommenderade åtgärder framåt, med prioritering och ansvarsfördelning integrerat i texten.
-6. SLUTSATS: Ett avslutande stycke som sammanfattar helhetsbilden och blickar framåt.
+Sektionerna ska vara utförliga och substantiella:
+1. SAMMANFATTNING: 8-12 meningar. Övergripande bild av periodens arbetsmiljöstatus med nyckeltal, allvarligaste riskerna och åtgärdsgrad.
+2. RISKANALYS OCH BEDÖMNING: 3-5 stycken. Djupgående analys av identifierade risker, allvarlighetsgrad, bakomliggande orsaker och rekommenderade åtgärder. Referera till AFS-krav vid behov.
+3. TRENDER OCH MÖNSTER: 2-3 stycken. Analys av trender i rapporteringen, återkommande riskområden, geografiska mönster och utveckling jämfört med förväntningar.
+4. POSITIVA RESULTAT OCH FÖRBÄTTRINGAR: 1-3 stycken. Dokumentera framsteg, förbättringar och positiv utveckling som stärker säkerhetskulturen.
+5. ÅTGÄRDSPLAN OCH REKOMMENDATIONER: 2-4 stycken. Konkreta, prioriterade åtgärder med tidsramar och ansvarsfördelning integrerat i texten. Koppla till identifierade risker.
+6. SLUTSATS OCH FRAMÅTBLICK: 1-2 stycken. Sammanfattande bedömning och strategisk framåtblick.
 
 Svara ALLTID med generate_report-verktyget.`
-      : `You are a senior occupational health and safety engineer (SAM-certified) writing a formal ${reportTypeLabel.toLowerCase()} for management. The report must be formal, professional and written in flowing prose — NOT bullet points.
+      : `You are a senior occupational health and safety engineer (SAM-certified) writing a formal ${reportTypeLabel.toLowerCase()} that can serve as part of a company's systematic work environment management. The report must meet the standards of professional consulting reports.
 
 REPORT METADATA:
 - Report type: ${reportTypeLabel}
@@ -123,15 +129,21 @@ ALL REPORTS:
 ${reportDetails || "No reports for this period."}
 
 INSTRUCTIONS:
-Write a formal, professional report in FLOWING PROSE. Avoid bullet points entirely. Each section should be coherent prose with complete sentences and paragraphs. The report should be presentable directly to management as a formal document.
+Write a formal, professional report of consulting quality. The report must:
+- Be written entirely in FLOWING PROSE without bullet points
+- Use formal language suitable for board meetings and regulatory review
+- Reference relevant safety regulations where applicable
+- Include key metrics and statistics naturally woven into the prose
+- Serve as formal documentation in systematic safety management
+- Maintain a professional and objective tone throughout
 
-Sections:
-1. EXECUTIVE SUMMARY: A coherent paragraph (6-10 sentences) providing an overall picture of the period's safety status. Include key metrics naturally in the text.
-2. RISK ANALYSIS: 2-4 paragraphs analyzing the most important risks, their severity and recommended measures. Write in flowing prose, not bullet points.
-3. TRENDS AND PATTERNS: 1-3 paragraphs describing observed trends, recurring patterns and development over the period.
-4. POSITIVE RESULTS: 1-2 paragraphs highlighting improvements, progress and positive developments.
-5. ACTION PLAN: 2-3 paragraphs describing recommended actions going forward, with prioritization and responsibility integrated in the text.
-6. CONCLUSION: A closing paragraph summarizing the overall picture and looking ahead.
+Sections should be thorough and substantive:
+1. EXECUTIVE SUMMARY: 8-12 sentences. Overall picture of the period's safety status with key metrics, most critical risks and resolution rate.
+2. RISK ANALYSIS AND ASSESSMENT: 3-5 paragraphs. In-depth analysis of identified risks, severity, root causes and recommended countermeasures.
+3. TRENDS AND PATTERNS: 2-3 paragraphs. Trend analysis, recurring risk areas, geographical patterns and development.
+4. POSITIVE RESULTS AND IMPROVEMENTS: 1-3 paragraphs. Document progress and positive developments strengthening the safety culture.
+5. ACTION PLAN AND RECOMMENDATIONS: 2-4 paragraphs. Concrete, prioritized actions with timelines and responsibility integrated naturally.
+6. CONCLUSION AND OUTLOOK: 1-2 paragraphs. Summary assessment and strategic forward look.
 
 ALWAYS respond with the generate_report tool.`;
 
@@ -147,8 +159,8 @@ ALWAYS respond with the generate_report tool.`;
           {
             role: "system",
             content: lang === "en"
-              ? "You are a senior occupational health and safety engineer writing formal, professional reports in flowing prose for construction industry management. Your reports are known for their formal tone, complete sentences and professional language. Never use bullet points. Always respond using the generate_report tool."
-              : "Du är en senior arbetsmiljöingenjör som skriver formella, professionella rapporter i löpande text för ledningen inom bygg- och anläggningsbranschen. Dina rapporter är kända för sin formella ton, fullständiga meningar och professionella språk. Använd aldrig punktlistor. Svara alltid med generate_report-verktyget.",
+              ? "You are a senior occupational health and safety engineer producing formal reports of consulting quality for construction industry management. Your reports are distinguished by their rigorous analysis, formal academic tone, complete sentences and regulatory awareness. They serve as official documentation in systematic safety management. Never use bullet points or informal language. Always respond using the generate_report tool."
+              : "Du är en senior arbetsmiljöingenjör som producerar formella rapporter av konsultkvalitet för ledningen inom bygg- och anläggningsbranschen. Dina rapporter utmärker sig genom rigorös analys, formell akademisk ton, fullständiga meningar och medvetenhet om relevanta föreskrifter. De fungerar som officiell dokumentation i det systematiska arbetsmiljöarbetet (SAM). Använd aldrig punktlistor eller informellt språk. Svara alltid med generate_report-verktyget.",
           },
           { role: "user", content: prompt },
         ],
