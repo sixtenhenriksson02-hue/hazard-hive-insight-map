@@ -21,7 +21,6 @@ interface DocumentRecord {
 
 
 // PDF download now uses the shared formal template
-}
 
 export default function DocumentsView() {
   const { viewAs } = useAuth();
