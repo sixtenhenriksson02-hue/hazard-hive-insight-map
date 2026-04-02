@@ -264,7 +264,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           {report && (
             <div className="animate-fade-in">
               <div className="flex justify-end gap-2 mb-4">
-                <Button onClick={() => downloadPDF(report, projectName, periodLabel, lang)} variant="outline" size="sm">
+                <Button onClick={() => generateFormalPDF(report, `${projectName} — ${periodLabel}`, lang, projectName, periodLabel, reportType)} variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-1.5" />
                   {t("reportGen.downloadPdf")}
                 </Button>
