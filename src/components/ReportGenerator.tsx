@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, Loader2, Save, Download } from "lucide-react";
+import { generateFormalPDF } from "@/lib/pdfTemplate";
 
 interface ReportGeneratorProps {
   reports: RiskReport[];
