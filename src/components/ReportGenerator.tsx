@@ -39,35 +39,29 @@ function ProseReportView({ report, projectName, periodLabel, lang }: {
         <p className="text-sm text-muted-foreground">{periodLabel}</p>
       </div>
 
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Sammanfattning", "Executive Summary")}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.summary}</p>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Riskanalys", "Risk Analysis")}</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.risk_analysis}</div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Trender och mönster", "Trends and Patterns")}</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.trends}</div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Positiva resultat", "Positive Results")}</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.improvements}</div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Åtgärdsplan", "Action Plan")}</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.action_plan}</div>
-      </section>
-
-      <section>
-        <h3 className="text-sm font-bold text-card-foreground mb-2">{sectionTitle("Slutsats", "Conclusion")}</h3>
-        <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{report.conclusion}</div>
-      </section>
+      {[
+        { key: "summary", sv: "Sammanfattning", en: "Executive Summary" },
+        { key: "risk_analysis", sv: "Riskanalys", en: "Risk Analysis" },
+        { key: "trends", sv: "Trender och mönster", en: "Trends and Patterns" },
+        { key: "improvements", sv: "Positiva resultat", en: "Positive Results" },
+        { key: "action_plan", sv: "Åtgärdsplan", en: "Action Plan" },
+        { key: "conclusion", sv: "Slutsats", en: "Conclusion" },
+      ].map(s => {
+        const text = (report as any)[s.key];
+        if (!text) return null;
+        return (
+          <section key={s.key}>
+            <h3 className="text-sm font-bold text-card-foreground mb-3 border-b border-border pb-2 uppercase tracking-wide">
+              {sectionTitle(s.sv, s.en)}
+            </h3>
+            <div className="text-sm text-card-foreground/80 leading-relaxed">
+              {text.split("\n").filter(Boolean).map((p: string, i: number) => (
+                <p key={i} className="mb-3">{p}</p>
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
