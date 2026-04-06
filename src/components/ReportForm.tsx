@@ -56,7 +56,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [step, setStep] = useState(0);
 
   const [reportType, setReportType] = useState<ReportType>("observation");
-  const [title] = useState(""); // auto-generated, not user-editable
+  // title is auto-generated from description
   const [description, setDescription] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
   const [category, setCategory] = useState(CATEGORIES_I18N[lang][0]);
@@ -209,7 +209,8 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     if (!spellDiff) return;
     setShowSpellReview(false);
     setSpellChecked(true);
-    await doSubmit(spellDiff.originalTitle, spellDiff.originalDescription);
+    const autoTitle = generateTitle(spellDiff.originalDescription);
+    await doSubmit(autoTitle, spellDiff.originalDescription);
     setSpellDiff(null);
   };
 
