@@ -198,10 +198,10 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const handleAcceptSpellCheck = async () => {
     if (!spellDiff) return;
     setShowSpellReview(false);
-    setTitle(spellDiff.correctedTitle);
     setDescription(spellDiff.correctedDescription);
     setSpellChecked(true);
-    await doSubmit(spellDiff.correctedTitle, spellDiff.correctedDescription);
+    const autoTitle = generateTitle(spellDiff.correctedDescription);
+    await doSubmit(autoTitle, spellDiff.correctedDescription);
     setSpellDiff(null);
   };
 
