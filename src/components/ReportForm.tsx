@@ -56,7 +56,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [step, setStep] = useState(0);
 
   const [reportType, setReportType] = useState<ReportType>("observation");
-  const [title, setTitle] = useState("");
+  const [title] = useState(""); // auto-generated, not user-editable
   const [description, setDescription] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
   const [category, setCategory] = useState(CATEGORIES_I18N[lang][0]);
@@ -149,7 +149,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
     setSubmitting(false);
     setStep(0);
-    setTitle("");
     setDescription("");
     setSpecificLocation("");
     setCategory(categories[0]);
