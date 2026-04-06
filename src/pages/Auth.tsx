@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -177,6 +178,10 @@ export default function Auth() {
             </p>
           </form>
         )}
+
+        <Link to="/privacy" className="block text-center text-xs text-muted-foreground/60 hover:text-accent transition-colors mt-4">
+          {lang === "sv" ? "Integritetspolicy" : "Privacy Policy"}
+        </Link>
       </div>
     </div>
   );
