@@ -63,7 +63,7 @@ async function assessRiskWithAI(report: {
   absence_required?: boolean;
   absence_days?: number;
   comments?: string[];
-}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[] }> {
+}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[]; generated_title?: string }> {
   try {
     const { data, error } = await supabase.functions.invoke("assess-risk", {
       body: report,
@@ -186,8 +186,11 @@ export function useReports() {
 
     const targetProjectId = report.project_id || activeProjectId;
 
+    // Use AI-generated title if available, otherwise fall back to user title
+    const finalTitle = assessment.generated_title || report.title;
+
     const { error } = await supabase.from("risk_reports").insert({
-      title: report.title,
+      title: finalTitle,
       description: report.description,
       location: report.location,
       category: report.category,

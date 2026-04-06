@@ -56,7 +56,7 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [step, setStep] = useState(0);
 
   const [reportType, setReportType] = useState<ReportType>("observation");
-  const [title, setTitle] = useState("");
+  // title is auto-generated from description
   const [description, setDescription] = useState("");
   const [specificLocation, setSpecificLocation] = useState("");
   const [category, setCategory] = useState(CATEGORIES_I18N[lang][0]);
@@ -149,7 +149,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
 
     setSubmitting(false);
     setStep(0);
-    setTitle("");
     setDescription("");
     setSpecificLocation("");
     setCategory(categories[0]);
@@ -164,16 +163,25 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     setShowPlanPicker(false);
   };
 
+  // Auto-generate a title from the description (first ~60 chars)
+  const generateTitle = (text: string): string => {
+    const firstLine = text.split('\n')[0].trim();
+    if (firstLine.length <= 60) return firstLine;
+    return firstLine.substring(0, 57) + "...";
+  };
+
   const handleSubmit = async () => {
-    if (!title || !specificLocation) {
+    if (!description.trim() || !specificLocation) {
       toast({ title: t("form.fillAllFields"), variant: "destructive" });
       return;
     }
 
+    const autoTitle = generateTitle(description);
+
     // Auto spell-check before submitting
-    if (!spellChecked && (title.trim() || description.trim())) {
+    if (!spellChecked && description.trim()) {
       setSubmitting(true);
-      const result = await runSpellCheck(title, description);
+      const result = await runSpellCheck(autoTitle, description);
       setSubmitting(false);
 
       if (result && result.hadErrors &&
@@ -184,16 +192,16 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
       }
     }
 
-    await doSubmit(title, description);
+    await doSubmit(autoTitle, description);
   };
 
   const handleAcceptSpellCheck = async () => {
     if (!spellDiff) return;
     setShowSpellReview(false);
-    setTitle(spellDiff.correctedTitle);
     setDescription(spellDiff.correctedDescription);
     setSpellChecked(true);
-    await doSubmit(spellDiff.correctedTitle, spellDiff.correctedDescription);
+    const autoTitle = generateTitle(spellDiff.correctedDescription);
+    await doSubmit(autoTitle, spellDiff.correctedDescription);
     setSpellDiff(null);
   };
 
@@ -201,12 +209,13 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
     if (!spellDiff) return;
     setShowSpellReview(false);
     setSpellChecked(true);
-    await doSubmit(spellDiff.originalTitle, spellDiff.originalDescription);
+    const autoTitle = generateTitle(spellDiff.originalDescription);
+    await doSubmit(autoTitle, spellDiff.originalDescription);
     setSpellDiff(null);
   };
 
   const canGoNext = () => {
-    if (step === 0) return title.trim().length > 0;
+    if (step === 0) return description.trim().length > 5;
     if (step === 1) return specificLocation.trim().length > 0;
     return true;
   };
@@ -275,12 +284,23 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
               ))}
             </div>
 
-            <Input
-              placeholder={t("form.titlePlaceholder")}
-              value={title}
-              onChange={(e) => { setTitle(e.target.value); setSpellChecked(false); }}
-              autoFocus
-            />
+            {/* Main description field */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                {lang === "sv" ? "Beskriv händelsen" : "Describe the incident"}
+              </label>
+              <Textarea
+                placeholder={lang === "sv"
+                  ? "Beskriv så detaljerat som möjligt vad som hände eller vilken risk du observerat. Ju mer detaljer desto bättre bedömning får du."
+                  : "Describe in as much detail as possible what happened or what risk you observed. The more details, the better the assessment."
+                }
+                rows={expanded ? 8 : 4}
+                value={description}
+                onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }}
+                autoFocus
+              />
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t("form.aiNote")}</p>
+            </div>
 
             {/* Category as quick-select chips */}
             <div>
@@ -301,20 +321,6 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Description - optional, collapsible feel */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                {t("form.description")} <span className="text-muted-foreground/60">({lang === "sv" ? "valfritt" : "optional"})</span>
-              </label>
-              <Textarea
-                placeholder={t("form.descriptionPlaceholder")}
-                rows={expanded ? 6 : 2}
-                value={description}
-                onChange={(e) => { setDescription(e.target.value); setSpellChecked(false); }}
-              />
-              <p className="text-[10px] text-muted-foreground mt-0.5">{t("form.aiNote")}</p>
             </div>
           </div>
         )}
