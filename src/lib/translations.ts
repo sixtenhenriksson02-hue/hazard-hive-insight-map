@@ -337,6 +337,17 @@ const translations: Record<string, Record<Language, string>> = {
   "rules.saved": { sv: "Regel sparad!", en: "Rule saved!" },
   "rules.deleted": { sv: "Regel borttagen!", en: "Rule deleted!" },
   "rules.updatedAt": { sv: "Uppdaterad", en: "Updated" },
+  "rules.uploadFile": { sv: "Ladda upp fil", en: "Upload file" },
+  "rules.orWriteManually": { sv: "eller skriv manuellt", en: "or write manually" },
+  "rules.fileUploaded": { sv: "Fil uppladdad", en: "File uploaded" },
+  "rules.viewFile": { sv: "Visa fil", en: "View file" },
+
+  // Draft
+  "draft.saveTitle": { sv: "Spara som utkast?", en: "Save as draft?" },
+  "draft.saveMessage": { sv: "Du har börjat skriva en rapport. Vill du spara den som utkast?", en: "You've started writing a report. Do you want to save it as a draft?" },
+  "draft.save": { sv: "Spara utkast", en: "Save draft" },
+  "draft.discard": { sv: "Släng", en: "Discard" },
+  "draft.restored": { sv: "Utkast återställt", en: "Draft restored" },
 };
 
 // Categories
