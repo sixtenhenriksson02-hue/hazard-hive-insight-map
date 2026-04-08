@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle, Maximize2, Minimize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +34,7 @@ interface ReportFormProps {
     plan_x?: number;
     plan_y?: number;
   }) => void;
+  onClose?: () => void;
 }
 
 interface SpellCheckDiff {
@@ -44,7 +45,7 @@ interface SpellCheckDiff {
   hadErrors: boolean;
 }
 
-export default function ReportForm({ onSubmit }: ReportFormProps) {
+export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   const { toast } = useToast();
   const { lang, t } = useLanguage();
   const { role, activeProjectId, userProjects } = useAuth();
@@ -76,6 +77,48 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
   const [showSpellReview, setShowSpellReview] = useState(false);
   const [spellDiff, setSpellDiff] = useState<SpellCheckDiff | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = localStorage.getItem("report-draft");
+    if (draft) {
+      try {
+        const d = JSON.parse(draft);
+        if (d.description) setDescription(d.description);
+        if (d.reportType) setReportType(d.reportType);
+        if (d.category) setCategory(d.category);
+        if (d.specificLocation) setSpecificLocation(d.specificLocation);
+        if (d.step) setStep(d.step);
+        toast({ title: t("draft.restored") });
+      } catch {}
+      localStorage.removeItem("report-draft");
+    }
+  }, []);
+
+  const hasContent = description.trim().length > 0 || specificLocation.trim().length > 0;
+
+  const saveDraft = () => {
+    localStorage.setItem("report-draft", JSON.stringify({
+      description, reportType, category, specificLocation, step,
+    }));
+    setShowDraftDialog(false);
+    onClose?.();
+  };
+
+  const discardDraft = () => {
+    localStorage.removeItem("report-draft");
+    setShowDraftDialog(false);
+    onClose?.();
+  };
+
+  const handleClose = () => {
+    if (hasContent) {
+      setShowDraftDialog(true);
+    } else {
+      onClose?.();
+    }
+  };
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
@@ -252,6 +295,16 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
             >
               {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                title={lang === "sv" ? "Stäng" : "Close"}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -529,6 +582,24 @@ export default function ReportForm({ onSubmit }: ReportFormProps) {
             <Button onClick={handleAcceptSpellCheck} className="bg-accent text-accent-foreground hover:bg-accent/90">
               <CheckCircle2 className="h-4 w-4 mr-1" />
               {t("spellcheck.accept")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Draft save dialog */}
+      <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("draft.saveTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("draft.saveMessage")}</p>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={discardDraft}>
+              {t("draft.discard")}
+            </Button>
+            <Button onClick={saveDraft} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {t("draft.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

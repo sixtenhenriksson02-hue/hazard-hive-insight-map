@@ -137,7 +137,7 @@ const Index = () => {
 
         {showForm && (
           <div className="lg:col-span-1">
-            <ReportForm onSubmit={addReport} />
+            <ReportForm onSubmit={addReport} onClose={() => setShowForm(false)} />
           </div>
         )}
       </div>
