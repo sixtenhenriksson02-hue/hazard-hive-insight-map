@@ -1,4 +1,4 @@
-import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown } from "lucide-react";
+import { Shield, Menu, X, LogOut, Eye, Globe, FolderPlus, ChevronDown, User, FileText } from "lucide-react";
 import EmergencyGuide from "@/components/EmergencyGuide";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
