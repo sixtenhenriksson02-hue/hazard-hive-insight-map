@@ -295,6 +295,16 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
             >
               {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                title={lang === "sv" ? "Stäng" : "Close"}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
 
