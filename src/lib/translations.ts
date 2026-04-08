@@ -323,6 +323,20 @@ const translations: Record<string, Record<Language, string>> = {
   "account.username": { sv: "Användarnamn", en: "Username" },
   "account.role": { sv: "Roll", en: "Role" },
   "account.privacyPolicy": { sv: "Integritetspolicy", en: "Privacy Policy" },
+
+  // Project Rules
+  "rules.title": { sv: "Projektregler", en: "Project Rules" },
+  "rules.noProject": { sv: "Välj ett projekt för att se regler.", en: "Select a project to see rules." },
+  "rules.empty": { sv: "Inga regler har lagts till ännu.", en: "No rules have been added yet." },
+  "rules.addRule": { sv: "Lägg till regel", en: "Add Rule" },
+  "rules.editRule": { sv: "Redigera regel", en: "Edit Rule" },
+  "rules.deleteRule": { sv: "Ta bort regel", en: "Delete Rule" },
+  "rules.deleteConfirm": { sv: "Är du säker på att du vill ta bort denna regel?", en: "Are you sure you want to delete this rule?" },
+  "rules.titleLabel": { sv: "Rubrik", en: "Title" },
+  "rules.contentLabel": { sv: "Innehåll / Beskrivning", en: "Content / Description" },
+  "rules.saved": { sv: "Regel sparad!", en: "Rule saved!" },
+  "rules.deleted": { sv: "Regel borttagen!", en: "Rule deleted!" },
+  "rules.updatedAt": { sv: "Uppdaterad", en: "Updated" },
 };
 
 // Categories
