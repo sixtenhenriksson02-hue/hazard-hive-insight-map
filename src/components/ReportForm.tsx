@@ -586,6 +586,24 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Draft save dialog */}
+      <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("draft.saveTitle")}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{t("draft.saveMessage")}</p>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={discardDraft}>
+              {t("draft.discard")}
+            </Button>
+            <Button onClick={saveDraft} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {t("draft.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
