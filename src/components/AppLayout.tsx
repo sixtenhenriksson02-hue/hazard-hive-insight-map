@@ -16,9 +16,11 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children, onManageProjects, onJoinProject, onSelectReport }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
+  const { user, role, viewAs, setViewAs, displayName, projectName, signOut, activeProjectId, setActiveProjectId, userProjects } = useAuth();
   const { lang, setLang, t } = useLanguage();
   const { projects } = useProjects();
   const isActualAdmin = role === "admin";
