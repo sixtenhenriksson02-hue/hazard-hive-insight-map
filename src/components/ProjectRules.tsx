@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, Pencil, Trash2, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pencil, Trash2, BookOpen, ChevronDown, ChevronUp, Upload, FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ interface ProjectRule {
   project_id: string;
   title: string;
   content: string;
+  file_url: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -22,6 +23,7 @@ export default function ProjectRules() {
   const { activeProjectId, viewAs, user } = useAuth();
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [rules, setRules] = useState<ProjectRule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,8 @@ export default function ProjectRules() {
   const [editingRule, setEditingRule] = useState<ProjectRule | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
 
   const loadRules = useCallback(async () => {
@@ -47,19 +51,38 @@ export default function ProjectRules() {
     loadRules();
   }, [loadRules]);
 
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop();
+    const path = `${activeProjectId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("rule-files").upload(path, file);
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    const { data } = supabase.storage.from("rule-files").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const handleSave = async () => {
     if (!activeProjectId || !user || !title.trim()) return;
+    setUploading(true);
+
+    let fileUrl: string | null = editingRule?.file_url ?? null;
+    if (selectedFile) {
+      fileUrl = await uploadFile(selectedFile);
+    }
 
     if (editingRule) {
       await supabase
         .from("project_rules")
-        .update({ title: title.trim(), content: content.trim() })
+        .update({ title: title.trim(), content: content.trim(), file_url: fileUrl })
         .eq("id", editingRule.id);
     } else {
       await supabase.from("project_rules").insert({
         project_id: activeProjectId,
         title: title.trim(),
         content: content.trim(),
+        file_url: fileUrl,
         created_by: user.id,
       });
     }
@@ -67,8 +90,10 @@ export default function ProjectRules() {
     toast.success(t("rules.saved"));
     setTitle("");
     setContent("");
+    setSelectedFile(null);
     setShowForm(false);
     setEditingRule(null);
+    setUploading(false);
     loadRules();
   };
 
@@ -83,6 +108,7 @@ export default function ProjectRules() {
     setEditingRule(rule);
     setTitle(rule.title);
     setContent(rule.content);
+    setSelectedFile(null);
     setShowForm(true);
   };
 
@@ -91,6 +117,7 @@ export default function ProjectRules() {
     setEditingRule(null);
     setTitle("");
     setContent("");
+    setSelectedFile(null);
   };
 
   const toggleExpand = (id: string) => {
@@ -134,15 +161,52 @@ export default function ProjectRules() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
-          <Textarea
-            placeholder={t("rules.contentLabel")}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={5}
-          />
+
+          {/* File upload area */}
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setSelectedFile(file);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-3 text-xs text-muted-foreground hover:border-accent hover:text-accent transition-colors w-full justify-center"
+            >
+              <Upload className="h-4 w-4" />
+              {selectedFile ? selectedFile.name : t("rules.uploadFile")}
+            </button>
+            {(editingRule?.file_url && !selectedFile) && (
+              <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                {t("rules.fileUploaded")}
+              </p>
+            )}
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-x-0 top-0 flex items-center justify-center">
+              <span className="bg-card px-2 text-[10px] text-muted-foreground -translate-y-1/2">{t("rules.orWriteManually")}</span>
+            </div>
+            <div className="border-t border-border pt-3 mt-1">
+              <Textarea
+                placeholder={t("rules.contentLabel")}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={5}
+              />
+            </div>
+          </div>
+
           <div className="flex gap-2">
-            <Button size="sm" onClick={handleSave} disabled={!title.trim()} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              {t("common.save")}
+            <Button size="sm" onClick={handleSave} disabled={!title.trim() || uploading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              {uploading ? t("common.loading") : t("common.save")}
             </Button>
             <Button size="sm" variant="outline" onClick={cancelForm}>
               {t("common.cancel")}
@@ -172,6 +236,7 @@ export default function ProjectRules() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="h-2 w-2 rounded-full bg-accent shrink-0" />
                     <span className="font-medium text-sm text-foreground truncate">{rule.title}</span>
+                    {rule.file_url && <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] text-muted-foreground hidden sm:inline">
@@ -183,9 +248,25 @@ export default function ProjectRules() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-border">
-                    <div className="pt-3 text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                      {rule.content || <span className="italic opacity-50">—</span>}
-                    </div>
+                    {rule.file_url && (
+                      <a
+                        href={rule.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-3 text-xs text-accent hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {t("rules.viewFile")}
+                      </a>
+                    )}
+                    {rule.content && (
+                      <div className="pt-3 text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                        {rule.content}
+                      </div>
+                    )}
+                    {!rule.content && !rule.file_url && (
+                      <div className="pt-3 text-sm text-muted-foreground italic opacity-50">—</div>
+                    )}
                     {isAdmin && (
                       <div className="flex gap-2 mt-4 pt-3 border-t border-border/50">
                         <Button size="sm" variant="outline" className="text-xs" onClick={() => startEdit(rule)}>
