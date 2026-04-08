@@ -31,6 +31,17 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
     ? projects.filter(p => !(p as any).archived)
     : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
 
+  // Close user menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b border-border/50 bg-primary text-primary-foreground shadow-lg">
