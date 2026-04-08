@@ -317,6 +317,12 @@ const translations: Record<string, Record<Language, string>> = {
   "help.worker.viewReportsDesc": { sv: "Klicka på en rapport i listan för att se detaljer, AI-bedömning och föreslagna åtgärder. Lägg till kommentarer för att uppdatera status.", en: "Click on a report in the list to see details, AI assessment and suggested actions. Add comments to update status." },
   "help.worker.translate": { sv: "Översätt rapporter", en: "Translate reports" },
   "help.worker.translateDesc": { sv: "Öppna en rapport och klicka 'Översätt' för att se all text på engelska eller svenska.", en: "Open a report and click 'Translate' to see all text in English or Swedish." },
+  // Account menu
+  "account.myAccount": { sv: "Mitt konto", en: "My Account" },
+  "account.email": { sv: "E-post", en: "Email" },
+  "account.username": { sv: "Användarnamn", en: "Username" },
+  "account.role": { sv: "Roll", en: "Role" },
+  "account.privacyPolicy": { sv: "Integritetspolicy", en: "Privacy Policy" },
 };
 
 // Categories
