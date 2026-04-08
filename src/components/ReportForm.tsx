@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Camera, Send, MapPin, Building2, SpellCheck, Loader2, CheckCircle2, ChevronLeft, ChevronRight, AlertTriangle, Maximize2, Minimize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,6 +34,7 @@ interface ReportFormProps {
     plan_x?: number;
     plan_y?: number;
   }) => void;
+  onClose?: () => void;
 }
 
 interface SpellCheckDiff {
@@ -44,7 +45,7 @@ interface SpellCheckDiff {
   hadErrors: boolean;
 }
 
-export default function ReportForm({ onSubmit }: ReportFormProps) {
+export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   const { toast } = useToast();
   const { lang, t } = useLanguage();
   const { role, activeProjectId, userProjects } = useAuth();
