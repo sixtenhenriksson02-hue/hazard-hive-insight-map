@@ -11,10 +11,11 @@ import SitePlanViewer from "@/components/SitePlanViewer";
 import ReportGenerator from "@/components/ReportGenerator";
 import DocumentsView from "@/components/DocumentsView";
 import HelpGuide from "@/components/HelpGuide";
+import ProjectRules from "@/components/ProjectRules";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText } from "lucide-react";
+import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -26,7 +27,7 @@ const Index = () => {
   const [showForm, setShowForm] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
   const [showWorkerProjects, setShowWorkerProjects] = useState(false);
-  const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats" | "documents">("reports");
+  const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats" | "documents" | "rules">("reports");
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
@@ -88,6 +89,9 @@ const Index = () => {
           <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("documents")}>
             <FileText className="h-3.5 w-3.5 mr-1.5" />{t("nav.documents")}
           </Button>
+          <Button variant={activeTab === "rules" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("rules")}>
+            <BookOpen className="h-3.5 w-3.5 mr-1.5" />{t("rules.title")}
+          </Button>
         </div>
 
         <div className="flex gap-2">
@@ -128,6 +132,7 @@ const Index = () => {
           {activeTab === "matrix" && <RiskMatrix />}
           {activeTab === "stats" && isAdmin && <AdminStats reports={reports} />}
           {activeTab === "documents" && <DocumentsView />}
+          {activeTab === "rules" && <ProjectRules />}
         </div>
 
         {showForm && (
