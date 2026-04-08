@@ -177,9 +177,12 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
 
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-primary-foreground/10 p-4 space-y-3">
-            <p className="text-sm text-primary-foreground/70">
-              {displayName} · <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span>
-            </p>
+            {/* Account info in mobile */}
+            <div className="bg-primary-foreground/5 rounded-lg p-3 space-y-1.5 text-xs">
+              <p className="text-primary-foreground/50">{t("account.username")}: <span className="text-primary-foreground font-medium">{displayName}</span></p>
+              <p className="text-primary-foreground/50">{t("account.email")}: <span className="text-primary-foreground font-medium">{user?.email ?? "—"}</span></p>
+              <p className="text-primary-foreground/50">{t("account.role")}: <span className="font-semibold text-accent">{showAdminUI ? t("auth.admin") : t("auth.worker")}</span></p>
+            </div>
             {availableProjects.length > 0 && (
               <select
                 value={activeProjectId ?? ""}
@@ -213,6 +216,9 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 </button>
               )}
             </div>
+            <button onClick={() => navigate("/privacy")} className="flex items-center gap-2 text-xs text-primary-foreground/50">
+              <FileText className="h-3.5 w-3.5" /> {t("account.privacyPolicy")}
+            </button>
             <button onClick={signOut} className="flex items-center gap-2 text-sm text-primary-foreground/50">
               <LogOut className="h-4 w-4" /> {t("auth.logout")}
             </button>
