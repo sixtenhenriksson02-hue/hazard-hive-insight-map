@@ -77,6 +77,48 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   const [showSpellReview, setShowSpellReview] = useState(false);
   const [spellDiff, setSpellDiff] = useState<SpellCheckDiff | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
+
+  // Load draft on mount
+  useEffect(() => {
+    const draft = localStorage.getItem("report-draft");
+    if (draft) {
+      try {
+        const d = JSON.parse(draft);
+        if (d.description) setDescription(d.description);
+        if (d.reportType) setReportType(d.reportType);
+        if (d.category) setCategory(d.category);
+        if (d.specificLocation) setSpecificLocation(d.specificLocation);
+        if (d.step) setStep(d.step);
+        toast({ title: t("draft.restored") });
+      } catch {}
+      localStorage.removeItem("report-draft");
+    }
+  }, []);
+
+  const hasContent = description.trim().length > 0 || specificLocation.trim().length > 0;
+
+  const saveDraft = () => {
+    localStorage.setItem("report-draft", JSON.stringify({
+      description, reportType, category, specificLocation, step,
+    }));
+    setShowDraftDialog(false);
+    onClose?.();
+  };
+
+  const discardDraft = () => {
+    localStorage.removeItem("report-draft");
+    setShowDraftDialog(false);
+    onClose?.();
+  };
+
+  const handleClose = () => {
+    if (hasContent) {
+      setShowDraftDialog(true);
+    } else {
+      onClose?.();
+    }
+  };
 
   const categories = CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
