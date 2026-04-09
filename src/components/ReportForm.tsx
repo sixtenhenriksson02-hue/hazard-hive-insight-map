@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
-import { CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
+import { CATEGORIES_I18N, INJURY_CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
 import SitePlanViewer from "@/components/SitePlanViewer";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,7 +120,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
     }
   };
 
-  const categories = CATEGORIES_I18N[lang];
+  const categories = reportType === "injury" ? INJURY_CATEGORIES_I18N[lang] : CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
   const injuryTypes = INJURY_TYPES_I18N[lang];
 
