@@ -69,25 +69,31 @@ INSTRUKTIONER:
     const toolProperties: Record<string, unknown> = {
       generated_title: {
         type: "string",
-        description: "En kort, tydlig titel på max 8 ord som sammanfattar risken eller händelsen. Exempelvis: 'Lös kabel vid byggställning plan 3'",
+        description: isImprovement
+          ? "En kort, tydlig titel på max 8 ord som sammanfattar förbättringsförslaget"
+          : "En kort, tydlig titel på max 8 ord som sammanfattar risken eller händelsen. Exempelvis: 'Lös kabel vid byggställning plan 3'",
       },
       risk_level: {
         type: "string",
-        enum: ["low", "medium", "high", "critical"],
-        description: "Bedömd risknivå",
+        enum: isImprovement ? ["low"] : ["low", "medium", "high", "critical"],
+        description: isImprovement ? "Alltid 'low' för förbättringsförslag" : "Bedömd risknivå",
       },
       explanation: {
         type: "string",
-        description: "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån och beskriver konsekvenser",
+        description: isImprovement
+          ? "Förklaring på svenska (3-5 meningar) som beskriver varför förslaget är värdefullt och vilka risker det kan förebygga"
+          : "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån och beskriver konsekvenser",
       },
       severity_rating: {
         type: "number",
-        description: "Allvarlighetsgrad 1-5",
+        description: isImprovement ? "Alltid 1 för förbättringsförslag" : "Allvarlighetsgrad 1-5",
       },
       suggested_actions: {
         type: "array",
         items: { type: "string" },
-        description: "2-4 konkreta åtgärder på svenska. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
+        description: isImprovement
+          ? "2-4 konkreta steg för att implementera förslaget. Skriv direkt utan prefix eller numrering."
+          : "2-4 konkreta åtgärder på svenska. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
       },
     };
 
