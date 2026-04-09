@@ -349,12 +349,18 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
             {/* Main description field */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                {lang === "sv" ? "Beskriv händelsen" : "Describe the incident"}
+                {reportType === "improvement"
+                  ? (lang === "sv" ? "Beskriv ditt förbättringsförslag" : "Describe your improvement suggestion")
+                  : (lang === "sv" ? "Beskriv händelsen" : "Describe the incident")}
               </label>
               <Textarea
-                placeholder={lang === "sv"
-                  ? "Beskriv så detaljerat som möjligt vad som hände eller vilken risk du observerat. Ju mer detaljer desto bättre bedömning får du."
-                  : "Describe in as much detail as possible what happened or what risk you observed. The more details, the better the assessment."
+                placeholder={reportType === "improvement"
+                  ? (lang === "sv"
+                    ? "Beskriv ditt förslag så detaljerat som möjligt. Vad kan förbättras och varför? Hur skulle det minska risker eller förbättra arbetsmiljön?"
+                    : "Describe your suggestion in as much detail as possible. What can be improved and why? How would it reduce risks or improve the work environment?")
+                  : (lang === "sv"
+                    ? "Beskriv så detaljerat som möjligt vad som hände eller vilken risk du observerat. Ju mer detaljer desto bättre bedömning får du."
+                    : "Describe in as much detail as possible what happened or what risk you observed. The more details, the better the assessment.")
                 }
                 rows={expanded ? 8 : 4}
                 value={description}
