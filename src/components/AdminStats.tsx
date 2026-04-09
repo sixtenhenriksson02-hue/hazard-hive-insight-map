@@ -22,7 +22,7 @@ const riskBadgeClass: Record<string, string> = {
   critical: "bg-risk-critical/15 text-risk-critical",
 };
 
-const TYPE_COLORS = ["hsl(217, 91%, 60%)", "hsl(0, 72%, 51%)"];
+const TYPE_COLORS = ["hsl(217, 91%, 60%)", "hsl(0, 72%, 51%)", "hsl(142, 71%, 45%)"];
 
 export default function AdminStats({ reports }: AdminStatsProps) {
   const { t } = useLanguage();
