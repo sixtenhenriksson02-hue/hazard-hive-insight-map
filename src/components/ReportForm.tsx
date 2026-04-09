@@ -264,8 +264,8 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   };
 
   const stepLabels = lang === "sv"
-    ? ["Vad hände?", "Var?", "Skadedetaljer"]
-    : ["What happened?", "Where?", "Injury details"];
+    ? [reportType === "improvement" ? "Ditt förslag" : "Vad hände?", "Var?", "Skadedetaljer"]
+    : [reportType === "improvement" ? "Your suggestion" : "What happened?", "Where?", "Injury details"];
 
   return (
     <>
