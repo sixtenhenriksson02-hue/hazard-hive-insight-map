@@ -373,6 +373,23 @@ export const CATEGORIES_I18N: Record<Language, string[]> = {
   ],
 };
 
+export const INJURY_CATEGORIES_I18N: Record<Language, string[]> = {
+  sv: [
+    "Halkskada", "Snubbelskada", "Fallskada (höjd)", "Brännskada (brand/explosion)",
+    "Skada pga bristande skyddsutrustning", "Belastningsskada/Ergonomi", "Kemikalieskada",
+    "Elskada", "Fordon-/Truckskada", "Buller-/Vibrationsskada", "Damm-/Partikelskada",
+    "Ras-/Kollapsskada", "Klämskada", "Lyft-/Kranskada", "Skada i trångt utrymme",
+    "Brännskada (heta arbeten)", "Skärskada/Stickskada", "Ögonskada", "Psykosocial skada", "Övrigt"
+  ],
+  en: [
+    "Slip injury", "Trip injury", "Fall injury (height)", "Burn (fire/explosion)",
+    "Injury due to lacking PPE", "Strain/Ergonomic injury", "Chemical injury",
+    "Electrical injury", "Vehicle/Forklift injury", "Noise/Vibration injury", "Dust/Particle injury",
+    "Collapse injury", "Crush injury", "Lifting/Crane injury", "Confined space injury",
+    "Burn (hot work)", "Cut/Puncture injury", "Eye injury", "Psychosocial injury", "Other"
+  ],
+};
+
 export const BODY_PARTS_I18N: Record<Language, string[]> = {
   sv: ["Huvud", "Ansikte", "Öga", "Nacke", "Axel", "Arm", "Hand/Fingrar", "Rygg", "Bröst/Mage", "Höft", "Ben", "Knä", "Fot/Tår"],
   en: ["Head", "Face", "Eye", "Neck", "Shoulder", "Arm", "Hand/Fingers", "Back", "Chest/Abdomen", "Hip", "Leg", "Knee", "Foot/Toes"],
