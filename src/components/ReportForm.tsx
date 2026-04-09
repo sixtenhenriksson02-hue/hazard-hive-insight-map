@@ -322,7 +322,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
                 <button
                   key={rt}
                   type="button"
-                  onClick={() => setReportType(rt)}
+                  onClick={() => { setReportType(rt); setCategory(rt === "injury" ? INJURY_CATEGORIES_I18N[lang][0] : CATEGORIES_I18N[lang][0]); }}
                   className={`flex-1 text-xs font-medium px-3 py-2 rounded-md border transition-colors ${
                     reportType === rt
                       ? rt === "injury"
