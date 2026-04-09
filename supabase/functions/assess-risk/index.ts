@@ -116,7 +116,7 @@ INSTRUKTIONER:
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "Du är Sveriges mest erfarna arbetsmiljöingenjör. Gör motiverade riskbedömningar baserade på AFS-standarder. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
+          { role: "system", content: isImprovement ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag och ge konstruktiv feedback. Svara ALLTID med assess_risk-verktyget." : "Du är Sveriges mest erfarne arbetsmiljöingenjör. Gör motiverade riskbedömningar baserade på AFS-standarder. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
           { role: "user", content: prompt },
         ],
         tools: [
