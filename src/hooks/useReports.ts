@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 export type ReportStatus = "open" | "in-progress" | "resolved";
-export type ReportType = "observation" | "injury";
+export type ReportType = "observation" | "injury" | "improvement";
 export type SortOption = "newest" | "oldest" | "severity-high" | "severity-low";
 
 export interface RiskReport {
@@ -169,20 +169,39 @@ export function useReports() {
       }
     }
 
-    // AI assessment
-    const assessment = await assessRiskWithAI({
-      title: report.title,
-      description: report.description,
-      category: report.category,
-      report_type: report.report_type,
-      building: report.building,
-      specific_location: report.specific_location,
-      body_part: report.body_part,
-      injury_type: report.injury_type,
-      medical_care_required: report.medical_care_required,
-      absence_required: report.absence_required,
-      absence_days: report.absence_days,
-    });
+    // AI assessment — skip heavy risk assessment for improvement suggestions
+    let assessment: { risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[]; generated_title?: string };
+    if (report.report_type === "improvement") {
+      assessment = {
+        risk_level: "low",
+        explanation: "Förbättringsförslag – ingen direkt risk identifierad.",
+        severity_rating: 1,
+        generated_title: undefined,
+      };
+      // Still call AI for a good title
+      try {
+        const { data } = await supabase.functions.invoke("assess-risk", {
+          body: { ...report, title: report.title, description: report.description, category: report.category, report_type: "improvement" },
+        });
+        if (data?.generated_title) assessment.generated_title = data.generated_title;
+        if (data?.explanation) assessment.explanation = data.explanation;
+        if (data?.suggested_actions) assessment.suggested_actions = data.suggested_actions;
+      } catch {}
+    } else {
+      assessment = await assessRiskWithAI({
+        title: report.title,
+        description: report.description,
+        category: report.category,
+        report_type: report.report_type,
+        building: report.building,
+        specific_location: report.specific_location,
+        body_part: report.body_part,
+        injury_type: report.injury_type,
+        medical_care_required: report.medical_care_required,
+        absence_required: report.absence_required,
+        absence_days: report.absence_days,
+      });
+    }
 
     const targetProjectId = report.project_id || activeProjectId;
 
