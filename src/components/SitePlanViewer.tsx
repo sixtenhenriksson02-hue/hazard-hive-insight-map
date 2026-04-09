@@ -540,14 +540,16 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {planReports.map((r, idx) => (
                 <div
                   key={r.id}
-                  className="absolute w-4 h-4 rounded-full border border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                  className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                   style={{
                     left: `${r.plan_x}%`,
                     top: `${r.plan_y}%`,
                     backgroundColor: riskDotColor[r.risk_level] ?? "#888",
                   }}
-                  title={`${r.title} (${r.risk_level})`}
-                />
+                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
+                >
+                  <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
+                </div>
               ))}
               {riskZones.map((zone, i) => (
                 <div
@@ -614,12 +616,14 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   onMouseLeave={() => setHoveredReport(null)}
                 >
                   <div
-                    className="w-4 h-4 rounded-full border border-white shadow-md transition-transform group-hover:scale-150"
+                    className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
                     style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  />
+                  >
+                    <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
+                  </div>
                   {hoveredReport === r.id && (
                     <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
-                      <p className="font-semibold text-card-foreground">{r.title}</p>
+                      <p className="font-semibold text-card-foreground">#{idx + 1} – {r.title}</p>
                       <p className="text-muted-foreground">{r.category} • {r.location}</p>
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
@@ -691,37 +695,26 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3">
           <h3 className="text-xs font-semibold text-card-foreground mb-2 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5 text-accent" />
-            {t("apd.activeRisks")}
+            {t("apd.activeRisks")} ({planReports.length})
           </h3>
-          <div className="space-y-2">
-            {(["critical", "high", "medium", "low"] as const).map(level => {
-              const levelReports = planReports.filter(r => r.risk_level === level);
-              if (levelReports.length === 0) return null;
-              return (
-                <div key={level} className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: riskDotColor[level] }} />
-                    <span className="text-xs font-semibold" style={{ color: riskDotColor[level] }}>
-                      {t(`risk.${level}`)} ({levelReports.length})
-                    </span>
-                  </div>
-                  <div className="ml-4 space-y-0.5">
-                    {levelReports.map(r => (
-                        <div key={r.id} className="flex items-start gap-1.5 text-[11px]">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5"
-                            style={{ backgroundColor: riskDotColor[r.risk_level] }}
-                          />
-                          <div>
-                            <span className="text-card-foreground font-medium">{r.title}</span>
-                            <span className="text-muted-foreground ml-1">– {r.category}, {r.location}</span>
-                          </div>
-                        </div>
-                    ))}
-                  </div>
+          <div className="space-y-1">
+            {planReports.map((r, idx) => (
+              <div key={r.id} className="flex items-center gap-2 text-[11px] py-1 border-b border-border/50 last:border-0">
+                <span
+                  className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border border-white shadow-sm"
+                  style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
+                >
+                  <span className="text-[8px] font-bold text-white">{idx + 1}</span>
+                </span>
+                <div className="flex-1 min-w-0">
+                  <span className="text-card-foreground font-medium">{r.title}</span>
+                  <span className="text-muted-foreground ml-1.5">{r.category} · {r.location}</span>
                 </div>
-              );
-            })}
+                <span className="text-[10px] font-semibold flex-shrink-0" style={{ color: riskDotColor[r.risk_level] }}>
+                  {t(`risk.${r.risk_level}`)}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
