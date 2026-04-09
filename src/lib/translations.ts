@@ -247,6 +247,7 @@ const translations: Record<string, Record<Language, string>> = {
   "adminStats.noResolved": { sv: "Inga åtgärdade rapporter i perioden.", en: "No resolved reports in this period." },
   "adminStats.injuryReports": { sv: "Skadeanmälningar", en: "Injury reports" },
   "adminStats.observations": { sv: "Riskobservationer", en: "Risk observations" },
+  "adminStats.improvements": { sv: "Förbättringsförslag", en: "Improvement suggestions" },
 
   // Report Generator
   "reportGen.title": { sv: "Generera rapport", en: "Generate Report" },
