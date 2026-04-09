@@ -68,6 +68,7 @@ export default function AdminStats({ reports }: AdminStatsProps) {
   const byType = useMemo(() => [
     { name: t("adminStats.observations"), value: filtered.filter((r) => r.report_type === "observation").length },
     { name: t("adminStats.injuryReports"), value: filtered.filter((r) => r.report_type === "injury").length },
+    { name: t("adminStats.improvements"), value: filtered.filter((r) => r.report_type === "improvement").length },
   ], [filtered, t]);
 
   const byCategory = useMemo(() => {
