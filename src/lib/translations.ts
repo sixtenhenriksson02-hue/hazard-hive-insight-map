@@ -87,6 +87,8 @@ const translations: Record<string, Record<Language, string>> = {
   "form.reportType": { sv: "Typ av rapport", en: "Report type" },
   "form.observation": { sv: "Riskobservation", en: "Risk Observation" },
   "form.injury": { sv: "Skadeanmälan", en: "Injury Report" },
+  "form.improvement": { sv: "Förbättringsförslag", en: "Improvement Suggestion" },
+  "form.improvementDesc": { sv: "Beskriv ditt förslag så detaljerat som möjligt", en: "Describe your suggestion in as much detail as possible" },
   "form.building": { sv: "Projekt", en: "Project" },
   "form.specificLocation": { sv: "Specifik plats", en: "Specific location" },
   "form.specificLocationPlaceholder": { sv: "T.ex. Gång 3, våning 2", en: "E.g. Aisle 3, floor 2" },
@@ -245,6 +247,7 @@ const translations: Record<string, Record<Language, string>> = {
   "adminStats.noResolved": { sv: "Inga åtgärdade rapporter i perioden.", en: "No resolved reports in this period." },
   "adminStats.injuryReports": { sv: "Skadeanmälningar", en: "Injury reports" },
   "adminStats.observations": { sv: "Riskobservationer", en: "Risk observations" },
+  "adminStats.improvements": { sv: "Förbättringsförslag", en: "Improvement suggestions" },
 
   // Report Generator
   "reportGen.title": { sv: "Generera rapport", en: "Generate Report" },
@@ -387,6 +390,19 @@ export const INJURY_CATEGORIES_I18N: Record<Language, string[]> = {
     "Electrical injury", "Vehicle/Forklift injury", "Noise/Vibration injury", "Dust/Particle injury",
     "Collapse injury", "Crush injury", "Lifting/Crane injury", "Confined space injury",
     "Burn (hot work)", "Cut/Puncture injury", "Eye injury", "Psychosocial injury", "Other"
+  ],
+};
+
+export const IMPROVEMENT_CATEGORIES_I18N: Record<Language, string[]> = {
+  sv: [
+    "Skyddsutrustning", "Arbetsrutiner", "Belysning & sikt", "Ordning & reda",
+    "Skyltning & markering", "Kommunikation", "Utbildning & kompetens", "Verktyg & maskiner",
+    "Ergonomi & arbetssätt", "Tillgänglighet & utrymning", "Psykosocial arbetsmiljö", "Övrigt"
+  ],
+  en: [
+    "Protective equipment", "Work procedures", "Lighting & visibility", "Housekeeping",
+    "Signage & marking", "Communication", "Training & competence", "Tools & machinery",
+    "Ergonomics & work methods", "Accessibility & evacuation", "Psychosocial work environment", "Other"
   ],
 };
 

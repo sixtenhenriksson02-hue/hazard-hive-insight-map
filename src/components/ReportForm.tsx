@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useLanguage } from "@/hooks/useLanguage";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
-import { CATEGORIES_I18N, INJURY_CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
+import { CATEGORIES_I18N, INJURY_CATEGORIES_I18N, IMPROVEMENT_CATEGORIES_I18N, BODY_PARTS_I18N, INJURY_TYPES_I18N } from "@/lib/translations";
 import { ReportType } from "@/hooks/useReports";
 import SitePlanViewer from "@/components/SitePlanViewer";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,7 +120,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
     }
   };
 
-  const categories = reportType === "injury" ? INJURY_CATEGORIES_I18N[lang] : CATEGORIES_I18N[lang];
+  const categories = reportType === "injury" ? INJURY_CATEGORIES_I18N[lang] : reportType === "improvement" ? IMPROVEMENT_CATEGORIES_I18N[lang] : CATEGORIES_I18N[lang];
   const bodyParts = BODY_PARTS_I18N[lang];
   const injuryTypes = INJURY_TYPES_I18N[lang];
 
@@ -264,8 +264,8 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   };
 
   const stepLabels = lang === "sv"
-    ? ["Vad hände?", "Var?", "Skadedetaljer"]
-    : ["What happened?", "Where?", "Injury details"];
+    ? [reportType === "improvement" ? "Ditt förslag" : "Vad hände?", "Var?", "Skadedetaljer"]
+    : [reportType === "improvement" ? "Your suggestion" : "What happened?", "Where?", "Injury details"];
 
   return (
     <>
@@ -318,21 +318,30 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
           <div className="space-y-3">
             {/* Report type toggle - compact */}
             <div className="flex gap-1.5">
-              {(["observation", "injury"] as const).map((rt) => (
+              {(["observation", "injury", "improvement"] as const).map((rt) => (
                 <button
                   key={rt}
                   type="button"
-                  onClick={() => { setReportType(rt); setCategory(rt === "injury" ? INJURY_CATEGORIES_I18N[lang][0] : CATEGORIES_I18N[lang][0]); }}
-                  className={`flex-1 text-xs font-medium px-3 py-2 rounded-md border transition-colors ${
+                  onClick={() => {
+                    setReportType(rt);
+                    setCategory(
+                      rt === "injury" ? INJURY_CATEGORIES_I18N[lang][0] :
+                      rt === "improvement" ? IMPROVEMENT_CATEGORIES_I18N[lang][0] :
+                      CATEGORIES_I18N[lang][0]
+                    );
+                  }}
+                  className={`flex-1 text-xs font-medium px-2 py-2 rounded-md border transition-colors ${
                     reportType === rt
                       ? rt === "injury"
                         ? "bg-destructive text-destructive-foreground border-destructive"
-                        : "bg-primary text-primary-foreground border-primary"
+                        : rt === "improvement"
+                          ? "bg-status-resolved text-white border-status-resolved"
+                          : "bg-primary text-primary-foreground border-primary"
                       : "bg-card text-muted-foreground border-border hover:border-accent"
                   }`}
                 >
                   {rt === "injury" && <AlertTriangle className="h-3 w-3 inline mr-1" />}
-                  {rt === "observation" ? t("form.observation") : t("form.injury")}
+                  {rt === "observation" ? t("form.observation") : rt === "injury" ? t("form.injury") : t("form.improvement")}
                 </button>
               ))}
             </div>
@@ -340,12 +349,18 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
             {/* Main description field */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                {lang === "sv" ? "Beskriv händelsen" : "Describe the incident"}
+                {reportType === "improvement"
+                  ? (lang === "sv" ? "Beskriv ditt förbättringsförslag" : "Describe your improvement suggestion")
+                  : (lang === "sv" ? "Beskriv händelsen" : "Describe the incident")}
               </label>
               <Textarea
-                placeholder={lang === "sv"
-                  ? "Beskriv så detaljerat som möjligt vad som hände eller vilken risk du observerat. Ju mer detaljer desto bättre bedömning får du."
-                  : "Describe in as much detail as possible what happened or what risk you observed. The more details, the better the assessment."
+                placeholder={reportType === "improvement"
+                  ? (lang === "sv"
+                    ? "Beskriv ditt förslag så detaljerat som möjligt. Vad kan förbättras och varför? Hur skulle det minska risker eller förbättra arbetsmiljön?"
+                    : "Describe your suggestion in as much detail as possible. What can be improved and why? How would it reduce risks or improve the work environment?")
+                  : (lang === "sv"
+                    ? "Beskriv så detaljerat som möjligt vad som hände eller vilken risk du observerat. Ju mer detaljer desto bättre bedömning får du."
+                    : "Describe in as much detail as possible what happened or what risk you observed. The more details, the better the assessment.")
                 }
                 rows={expanded ? 8 : 4}
                 value={description}

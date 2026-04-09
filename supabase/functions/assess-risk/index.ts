@@ -19,7 +19,22 @@ serve(async (req) => {
       ? `\nKommentarer på rapporten:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
       : "";
 
-    const prompt = `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch.
+    const isImprovement = report_type === "improvement";
+
+    const prompt = isImprovement
+      ? `Du är en erfaren arbetsmiljöingenjör. En medarbetare har lämnat ett förbättringsförslag för arbetsplatsen.
+
+FÖRSLAG:
+- Beskrivning: ${description}
+- Kategori: ${category}
+- Byggnad/Projekt: ${building || "Ej angivet"}
+- Specifik plats: ${specific_location || "Ej angivet"}
+
+INSTRUKTIONER:
+1. Ge en kort, tydlig titel (max 8 ord) som sammanfattar förslaget
+2. Förklara varför detta är ett bra förslag och vilka risker det kan förebygga (3-5 meningar)
+3. Ge 2-4 konkreta steg för att implementera förslaget, sorterade efter prioritet, utan prefix eller numrering`
+      : `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch.
 
 RAPPORT ATT BEDÖMA:
 - Typ: ${report_type === "injury" ? "SKADERAPPORT (inträffad olycka)" : "RISKOBSERVATION (potentiell risk)"}
@@ -54,25 +69,31 @@ INSTRUKTIONER:
     const toolProperties: Record<string, unknown> = {
       generated_title: {
         type: "string",
-        description: "En kort, tydlig titel på max 8 ord som sammanfattar risken eller händelsen. Exempelvis: 'Lös kabel vid byggställning plan 3'",
+        description: isImprovement
+          ? "En kort, tydlig titel på max 8 ord som sammanfattar förbättringsförslaget"
+          : "En kort, tydlig titel på max 8 ord som sammanfattar risken eller händelsen. Exempelvis: 'Lös kabel vid byggställning plan 3'",
       },
       risk_level: {
         type: "string",
-        enum: ["low", "medium", "high", "critical"],
-        description: "Bedömd risknivå",
+        enum: isImprovement ? ["low"] : ["low", "medium", "high", "critical"],
+        description: isImprovement ? "Alltid 'low' för förbättringsförslag" : "Bedömd risknivå",
       },
       explanation: {
         type: "string",
-        description: "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån och beskriver konsekvenser",
+        description: isImprovement
+          ? "Förklaring på svenska (3-5 meningar) som beskriver varför förslaget är värdefullt och vilka risker det kan förebygga"
+          : "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån och beskriver konsekvenser",
       },
       severity_rating: {
         type: "number",
-        description: "Allvarlighetsgrad 1-5",
+        description: isImprovement ? "Alltid 1 för förbättringsförslag" : "Allvarlighetsgrad 1-5",
       },
       suggested_actions: {
         type: "array",
         items: { type: "string" },
-        description: "2-4 konkreta åtgärder på svenska. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
+        description: isImprovement
+          ? "2-4 konkreta steg för att implementera förslaget. Skriv direkt utan prefix eller numrering."
+          : "2-4 konkreta åtgärder på svenska. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
       },
     };
 
@@ -95,7 +116,7 @@ INSTRUKTIONER:
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "Du är Sveriges mest erfarna arbetsmiljöingenjör. Gör motiverade riskbedömningar baserade på AFS-standarder. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
+          { role: "system", content: isImprovement ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag och ge konstruktiv feedback. Svara ALLTID med assess_risk-verktyget." : "Du är Sveriges mest erfarne arbetsmiljöingenjör. Gör motiverade riskbedömningar baserade på AFS-standarder. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
           { role: "user", content: prompt },
         ],
         tools: [
