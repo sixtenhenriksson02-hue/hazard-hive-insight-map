@@ -87,6 +87,8 @@ const translations: Record<string, Record<Language, string>> = {
   "form.reportType": { sv: "Typ av rapport", en: "Report type" },
   "form.observation": { sv: "Riskobservation", en: "Risk Observation" },
   "form.injury": { sv: "Skadeanmälan", en: "Injury Report" },
+  "form.improvement": { sv: "Förbättringsförslag", en: "Improvement Suggestion" },
+  "form.improvementDesc": { sv: "Beskriv ditt förslag så detaljerat som möjligt", en: "Describe your suggestion in as much detail as possible" },
   "form.building": { sv: "Projekt", en: "Project" },
   "form.specificLocation": { sv: "Specifik plats", en: "Specific location" },
   "form.specificLocationPlaceholder": { sv: "T.ex. Gång 3, våning 2", en: "E.g. Aisle 3, floor 2" },
