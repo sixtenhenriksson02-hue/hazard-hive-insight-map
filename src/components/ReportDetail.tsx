@@ -143,6 +143,11 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                 <AlertTriangle className="h-3 w-3" />{t("form.injury")}
               </span>
             )}
+            {report.report_type === "improvement" && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-status-resolved/10 text-status-resolved flex items-center gap-1">
+                💡 {t("form.improvement")}
+              </span>
+            )}
             {editing ? (
               <Input value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} />
             ) : (
