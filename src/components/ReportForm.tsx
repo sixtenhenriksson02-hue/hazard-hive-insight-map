@@ -318,21 +318,30 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
           <div className="space-y-3">
             {/* Report type toggle - compact */}
             <div className="flex gap-1.5">
-              {(["observation", "injury"] as const).map((rt) => (
+              {(["observation", "injury", "improvement"] as const).map((rt) => (
                 <button
                   key={rt}
                   type="button"
-                  onClick={() => { setReportType(rt); setCategory(rt === "injury" ? INJURY_CATEGORIES_I18N[lang][0] : CATEGORIES_I18N[lang][0]); }}
-                  className={`flex-1 text-xs font-medium px-3 py-2 rounded-md border transition-colors ${
+                  onClick={() => {
+                    setReportType(rt);
+                    setCategory(
+                      rt === "injury" ? INJURY_CATEGORIES_I18N[lang][0] :
+                      rt === "improvement" ? IMPROVEMENT_CATEGORIES_I18N[lang][0] :
+                      CATEGORIES_I18N[lang][0]
+                    );
+                  }}
+                  className={`flex-1 text-xs font-medium px-2 py-2 rounded-md border transition-colors ${
                     reportType === rt
                       ? rt === "injury"
                         ? "bg-destructive text-destructive-foreground border-destructive"
-                        : "bg-primary text-primary-foreground border-primary"
+                        : rt === "improvement"
+                          ? "bg-status-resolved text-white border-status-resolved"
+                          : "bg-primary text-primary-foreground border-primary"
                       : "bg-card text-muted-foreground border-border hover:border-accent"
                   }`}
                 >
                   {rt === "injury" && <AlertTriangle className="h-3 w-3 inline mr-1" />}
-                  {rt === "observation" ? t("form.observation") : t("form.injury")}
+                  {rt === "observation" ? t("form.observation") : rt === "injury" ? t("form.injury") : t("form.improvement")}
                 </button>
               ))}
             </div>
