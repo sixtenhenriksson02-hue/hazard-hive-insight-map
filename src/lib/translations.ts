@@ -190,6 +190,11 @@ const translations: Record<string, Record<Language, string>> = {
   "matrix.aiTip3": { sv: "Välj rätt kategori – det hjälper AI:n att bedöma konsekvenserna", en: "Choose the right category – it helps the AI assess consequences" },
   "matrix.aiTip4": { sv: "Vid skadeanmälan: fyll i alla skadedetaljer noggrant", en: "For injury reports: fill in all injury details carefully" },
 
+  "matrix.apdInfoTitle": { sv: "Så fungerar riskerna på APD-planen", en: "How risks work on the site plan" },
+  "matrix.apdInfoText1": { sv: "Varje aktiv risk som har placerats på APD-ritningen visas som en numrerad markör. Numret matchar listan under ritningen så att du enkelt kan se vilken risk som finns var.", en: "Each active risk placed on the site plan is shown as a numbered marker. The number matches the list below the drawing so you can easily see which risk is where." },
+  "matrix.apdInfoText2": { sv: "Färgen på markören visar risknivån: grön (låg), gul (medel), orange (hög) och röd (kritisk). Om två eller fler risker ligger nära varandra visas en pulserande zon som markerar ett riskområde.", en: "The marker color shows the risk level: green (low), yellow (medium), orange (high) and red (critical). If two or more risks are close together, a pulsing zone marks a risk area." },
+  "matrix.apdInfoText3": { sv: "Håll muspekaren över en markör för att se detaljer, eller scrolla ner till listan under ritningen för en komplett översikt med nummer, titel, kategori och risknivå.", en: "Hover over a marker to see details, or scroll down to the list below the drawing for a complete overview with number, title, category and risk level." },
+
   // Notifications
   "notifications.title": { sv: "Notifikationer", en: "Notifications" },
   "notifications.empty": { sv: "Inga notifikationer", en: "No notifications" },

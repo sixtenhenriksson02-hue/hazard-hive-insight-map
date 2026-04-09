@@ -1,5 +1,5 @@
 import { useLanguage } from "@/hooks/useLanguage";
-import { Bot } from "lucide-react";
+import { Bot, MapPin } from "lucide-react";
 
 const matrix = (t: (k: string) => string) => [
   { probability: t("matrix.veryLikely"), consequences: ["medium", "high", "critical", "critical"] as const },
@@ -70,6 +70,18 @@ export default function RiskMatrix() {
             <li>{t("matrix.aiTip3")}</li>
             <li>{t("matrix.aiTip4")}</li>
           </ul>
+        </div>
+      </div>
+
+      {/* APD plan explanation */}
+      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 md:p-5">
+        <h3 className="text-sm font-semibold text-accent flex items-center gap-1.5 mb-2">
+          <MapPin className="h-4 w-4" /> {t("matrix.apdInfoTitle")}
+        </h3>
+        <div className="text-xs text-muted-foreground space-y-2">
+          <p>{t("matrix.apdInfoText1")}</p>
+          <p>{t("matrix.apdInfoText2")}</p>
+          <p>{t("matrix.apdInfoText3")}</p>
         </div>
       </div>
     </div>
