@@ -19,7 +19,22 @@ serve(async (req) => {
       ? `\nKommentarer på rapporten:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
       : "";
 
-    const prompt = `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch.
+    const isImprovement = report_type === "improvement";
+
+    const prompt = isImprovement
+      ? `Du är en erfaren arbetsmiljöingenjör. En medarbetare har lämnat ett förbättringsförslag för arbetsplatsen.
+
+FÖRSLAG:
+- Beskrivning: ${description}
+- Kategori: ${category}
+- Byggnad/Projekt: ${building || "Ej angivet"}
+- Specifik plats: ${specific_location || "Ej angivet"}
+
+INSTRUKTIONER:
+1. Ge en kort, tydlig titel (max 8 ord) som sammanfattar förslaget
+2. Förklara varför detta är ett bra förslag och vilka risker det kan förebygga (3-5 meningar)
+3. Ge 2-4 konkreta steg för att implementera förslaget, sorterade efter prioritet, utan prefix eller numrering`
+      : `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch.
 
 RAPPORT ATT BEDÖMA:
 - Typ: ${report_type === "injury" ? "SKADERAPPORT (inträffad olycka)" : "RISKOBSERVATION (potentiell risk)"}
