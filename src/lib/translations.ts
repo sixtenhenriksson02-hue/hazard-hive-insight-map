@@ -392,6 +392,19 @@ export const INJURY_CATEGORIES_I18N: Record<Language, string[]> = {
   ],
 };
 
+export const IMPROVEMENT_CATEGORIES_I18N: Record<Language, string[]> = {
+  sv: [
+    "Skyddsutrustning", "Arbetsrutiner", "Belysning & sikt", "Ordning & reda",
+    "Skyltning & markering", "Kommunikation", "Utbildning & kompetens", "Verktyg & maskiner",
+    "Ergonomi & arbetssätt", "Tillgänglighet & utrymning", "Psykosocial arbetsmiljö", "Övrigt"
+  ],
+  en: [
+    "Protective equipment", "Work procedures", "Lighting & visibility", "Housekeeping",
+    "Signage & marking", "Communication", "Training & competence", "Tools & machinery",
+    "Ergonomics & work methods", "Accessibility & evacuation", "Psychosocial work environment", "Other"
+  ],
+};
+
 export const BODY_PARTS_I18N: Record<Language, string[]> = {
   sv: ["Huvud", "Ansikte", "Öga", "Nacke", "Axel", "Arm", "Hand/Fingrar", "Rygg", "Bröst/Mage", "Höft", "Ben", "Knä", "Fot/Tår"],
   en: ["Head", "Face", "Eye", "Neck", "Shoulder", "Arm", "Hand/Fingers", "Back", "Chest/Abdomen", "Hip", "Leg", "Knee", "Foot/Toes"],
