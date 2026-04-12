@@ -502,6 +502,16 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
         </h2>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {planReports.length > 5 && (
+            <Button
+              variant={clusteringEnabled ? "default" : "outline"}
+              size="sm"
+              className="text-[10px] h-6 px-2"
+              onClick={() => { setClusteringEnabled(e => !e); setExpandedClusterId(null); }}
+            >
+              <Layers className="h-2.5 w-2.5 mr-0.5" /> {t("apd.clusterToggle")}
+            </Button>
+          )}
           {plans.length > 1 && (
             <select
               className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
