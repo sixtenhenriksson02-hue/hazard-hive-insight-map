@@ -270,7 +270,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   return (
     <>
       <div className={`rounded-lg border border-border bg-card animate-fade-in transition-all ${
-        expanded ? "fixed inset-4 z-50 overflow-y-auto p-5 md:p-6 shadow-xl" : "p-4 md:p-5"
+        expanded ? "fixed inset-4 z-50 overflow-y-auto p-5 md:p-6 shadow-xl" : "p-4 md:p-5 max-h-[calc(100vh-12rem)] overflow-y-auto"
       }`}>
         {expanded && <div className="fixed inset-0 bg-background/80 -z-10" onClick={() => setExpanded(false)} />}
         {/* Header with step indicator */}
