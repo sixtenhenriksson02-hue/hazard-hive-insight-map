@@ -359,6 +359,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
                 {reportType === "improvement"
                   ? (lang === "sv" ? "Beskriv ditt förbättringsförslag" : "Describe your improvement suggestion")
                   : (lang === "sv" ? "Beskriv händelsen" : "Describe the incident")}
+                <span className="text-destructive ml-0.5">*</span>
               </label>
               <Textarea
                 placeholder={reportType === "improvement"
@@ -379,7 +380,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
 
             {/* Category as quick-select chips */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("form.category")}</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("form.category")} <span className="text-destructive">*</span></label>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map((c) => (
                   <button
@@ -418,7 +419,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
 
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                <MapPin className="h-3 w-3" />{t("form.specificLocation")}
+                <MapPin className="h-3 w-3" />{t("form.specificLocation")} <span className="text-destructive">*</span>
               </label>
               <Input
                 placeholder={t("form.specificLocationPlaceholder")}
@@ -484,15 +485,15 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
             <h3 className="text-xs font-semibold text-destructive">{t("detail.injuryDetails")}</h3>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("injury.bodyPart")}</label>
-                <select className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs" value={bodyPart} onChange={(e) => setBodyPart(e.target.value)}>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("injury.bodyPart")} <span className="text-destructive">*</span></label>
+                <select className={`flex h-9 w-full rounded-md border px-2 py-1.5 text-xs ${!bodyPart ? "border-destructive/50 bg-destructive/5" : "border-input bg-background"}`} value={bodyPart} onChange={(e) => setBodyPart(e.target.value)}>
                   <option value="">--</option>
                   {bodyParts.map((bp) => <option key={bp} value={bp}>{bp}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("injury.type")}</label>
-                <select className="flex h-9 w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs" value={injuryType} onChange={(e) => setInjuryType(e.target.value)}>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">{t("injury.type")} <span className="text-destructive">*</span></label>
+                <select className={`flex h-9 w-full rounded-md border px-2 py-1.5 text-xs ${!injuryType ? "border-destructive/50 bg-destructive/5" : "border-input bg-background"}`} value={injuryType} onChange={(e) => setInjuryType(e.target.value)}>
                   <option value="">--</option>
                   {injuryTypes.map((it) => <option key={it} value={it}>{it}</option>)}
                 </select>
