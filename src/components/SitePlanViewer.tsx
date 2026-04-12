@@ -311,6 +311,64 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     ? safetyMarkers.filter(m => m.site_plan_id === activePlan.id)
     : [];
 
+  // Clustering logic
+  interface Cluster {
+    id: string;
+    cx: number;
+    cy: number;
+    reports: (RiskReport & { originalIndex: number })[];
+    maxRisk: string;
+  }
+
+  const CLUSTER_RADIUS = 8; // % distance to merge
+
+  const clusteredReports = useMemo((): Cluster[] => {
+    if (!clusteringEnabled || planReports.length <= 5) {
+      // No clustering needed, each report is its own "cluster"
+      return planReports.map((r, idx) => ({
+        id: r.id,
+        cx: r.plan_x ?? 0,
+        cy: r.plan_y ?? 0,
+        reports: [{ ...r, originalIndex: idx }],
+        maxRisk: r.risk_level,
+      }));
+    }
+
+    const riskOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+    const clusters: Cluster[] = [];
+    const indexed = planReports.map((r, idx) => ({ ...r, originalIndex: idx }));
+
+    for (const r of indexed) {
+      const rx = r.plan_x ?? 0;
+      const ry = r.plan_y ?? 0;
+      let merged = false;
+      for (const c of clusters) {
+        const dist = Math.sqrt((c.cx - rx) ** 2 + (c.cy - ry) ** 2);
+        if (dist < CLUSTER_RADIUS) {
+          c.reports.push(r);
+          // Recalculate center
+          c.cx = c.reports.reduce((s, rr) => s + (rr.plan_x ?? 0), 0) / c.reports.length;
+          c.cy = c.reports.reduce((s, rr) => s + (rr.plan_y ?? 0), 0) / c.reports.length;
+          if ((riskOrder[r.risk_level] ?? 0) > (riskOrder[c.maxRisk] ?? 0)) {
+            c.maxRisk = r.risk_level;
+          }
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        clusters.push({
+          id: `cluster-${r.id}`,
+          cx: rx,
+          cy: ry,
+          reports: [r],
+          maxRisk: r.risk_level,
+        });
+      }
+    }
+    return clusters;
+  }, [planReports, clusteringEnabled]);
+
   const getRiskZones = () => {
     if (planReports.length < 2) return [];
     const zones: { x: number; y: number; count: number; maxRisk: string }[] = [];
