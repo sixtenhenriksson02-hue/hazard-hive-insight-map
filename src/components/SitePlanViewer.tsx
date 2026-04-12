@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -6,7 +6,7 @@ import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SitePlan {
@@ -64,6 +64,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [selectedSafetyMarker, setSelectedSafetyMarker] = useState<SafetyMarker | null>(null);
   const [editingDescription, setEditingDescription] = useState("");
   const [isEditingMarker, setIsEditingMarker] = useState(false);
+  const [clusteringEnabled, setClusteringEnabled] = useState(true);
+  const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -309,6 +311,64 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
     ? safetyMarkers.filter(m => m.site_plan_id === activePlan.id)
     : [];
 
+  // Clustering logic
+  interface Cluster {
+    id: string;
+    cx: number;
+    cy: number;
+    reports: (RiskReport & { originalIndex: number })[];
+    maxRisk: string;
+  }
+
+  const CLUSTER_RADIUS = 8; // % distance to merge
+
+  const clusteredReports = useMemo((): Cluster[] => {
+    if (!clusteringEnabled || planReports.length <= 5) {
+      // No clustering needed, each report is its own "cluster"
+      return planReports.map((r, idx) => ({
+        id: r.id,
+        cx: r.plan_x ?? 0,
+        cy: r.plan_y ?? 0,
+        reports: [{ ...r, originalIndex: idx }],
+        maxRisk: r.risk_level,
+      }));
+    }
+
+    const riskOrder: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+    const clusters: Cluster[] = [];
+    const indexed = planReports.map((r, idx) => ({ ...r, originalIndex: idx }));
+
+    for (const r of indexed) {
+      const rx = r.plan_x ?? 0;
+      const ry = r.plan_y ?? 0;
+      let merged = false;
+      for (const c of clusters) {
+        const dist = Math.sqrt((c.cx - rx) ** 2 + (c.cy - ry) ** 2);
+        if (dist < CLUSTER_RADIUS) {
+          c.reports.push(r);
+          // Recalculate center
+          c.cx = c.reports.reduce((s, rr) => s + (rr.plan_x ?? 0), 0) / c.reports.length;
+          c.cy = c.reports.reduce((s, rr) => s + (rr.plan_y ?? 0), 0) / c.reports.length;
+          if ((riskOrder[r.risk_level] ?? 0) > (riskOrder[c.maxRisk] ?? 0)) {
+            c.maxRisk = r.risk_level;
+          }
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        clusters.push({
+          id: `cluster-${r.id}`,
+          cx: rx,
+          cy: ry,
+          reports: [r],
+          maxRisk: r.risk_level,
+        });
+      }
+    }
+    return clusters;
+  }, [planReports, clusteringEnabled]);
+
   const getRiskZones = () => {
     if (planReports.length < 2) return [];
     const zones: { x: number; y: number; count: number; maxRisk: string }[] = [];
@@ -442,6 +502,16 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
         </h2>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {planReports.length > 5 && (
+            <Button
+              variant={clusteringEnabled ? "default" : "outline"}
+              size="sm"
+              className="text-[10px] h-6 px-2"
+              onClick={() => { setClusteringEnabled(e => !e); setExpandedClusterId(null); }}
+            >
+              <Layers className="h-2.5 w-2.5 mr-0.5" /> {t("apd.clusterToggle")}
+            </Button>
+          )}
           {plans.length > 1 && (
             <select
               className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
@@ -537,20 +607,40 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {planSafetyMarkers.map(m => (
                 <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
               ))}
-              {planReports.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
-                  style={{
-                    left: `${r.plan_x}%`,
-                    top: `${r.plan_y}%`,
-                    backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-                  }}
-                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
-                >
-                  <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
-                </div>
-              ))}
+              {clusteredReports.map((cluster) => {
+                const isCluster = cluster.reports.length > 1;
+                if (isCluster) {
+                  return (
+                    <div
+                      key={cluster.id}
+                      className="absolute w-8 h-8 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                      style={{
+                        left: `${cluster.cx}%`,
+                        top: `${cluster.cy}%`,
+                        backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888",
+                      }}
+                      title={`${cluster.reports.length} ${t("apd.clusterCount")}`}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                    </div>
+                  );
+                }
+                const r = cluster.reports[0];
+                return (
+                  <div
+                    key={r.id}
+                    className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    style={{
+                      left: `${r.plan_x}%`,
+                      top: `${r.plan_y}%`,
+                      backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                    }}
+                    title={`#${r.originalIndex + 1} ${r.title} (${r.risk_level})`}
+                  >
+                    <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                  </div>
+                );
+              })}
               {riskZones.map((zone, i) => (
                 <div
                   key={`zone-${i}`}
@@ -607,33 +697,69 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
               ))}
 
-              {planReports.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
-                  style={{ left: `${r.plan_x}%`, top: `${r.plan_y}%` }}
-                  onMouseEnter={() => setHoveredReport(r.id)}
-                  onMouseLeave={() => setHoveredReport(null)}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
-                    style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  >
-                    <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
-                  </div>
-                  {hoveredReport === r.id && (
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
-                      <p className="font-semibold text-card-foreground">#{idx + 1} – {r.title}</p>
-                      <p className="text-muted-foreground">{r.category} • {r.location}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
-                        <span className="font-medium" style={{ color: riskDotColor[r.risk_level] }}>{t(`risk.${r.risk_level}`)}</span>
+              {clusteredReports.map((cluster) => {
+                const isCluster = cluster.reports.length > 1;
+                const isExpanded = expandedClusterId === cluster.id;
+
+                if (isCluster && !isExpanded) {
+                  // Render cluster bubble
+                  return (
+                    <div
+                      key={cluster.id}
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10"
+                      style={{ left: `${cluster.cx}%`, top: `${cluster.cy}%` }}
+                      onClick={(e) => { e.stopPropagation(); setExpandedClusterId(cluster.id); }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
+                        style={{ backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888" }}
+                      >
+                        <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
                       </div>
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 whitespace-nowrap bg-card border border-border rounded-md px-2 py-0.5 shadow-lg z-20 text-[10px] text-muted-foreground opacity-0 hover:opacity-100 pointer-events-none">
+                        {cluster.reports.length} {t("apd.clusterCount")}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                }
+
+                // Render individual markers (single or expanded cluster)
+                return cluster.reports.map((r) => (
+                  <div
+                    key={r.id}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                    style={{ left: `${r.plan_x}%`, top: `${r.plan_y}%` }}
+                    onMouseEnter={() => setHoveredReport(r.id)}
+                    onMouseLeave={() => setHoveredReport(null)}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
+                      style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
+                    >
+                      <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                    </div>
+                    {hoveredReport === r.id && (
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
+                        <p className="font-semibold text-card-foreground">#{r.originalIndex + 1} – {r.title}</p>
+                        <p className="text-muted-foreground">{r.category} • {r.location}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
+                          <span className="font-medium" style={{ color: riskDotColor[r.risk_level] }}>{t(`risk.${r.risk_level}`)}</span>
+                        </div>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+                      </div>
+                    )}
+                    {isExpanded && isCluster && (
+                      <button
+                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-muted border border-border flex items-center justify-center text-[7px] text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        onClick={(e) => { e.stopPropagation(); setExpandedClusterId(null); }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ));
+              })}
 
               {selectionMode && selectedPoint && (
                 <div
