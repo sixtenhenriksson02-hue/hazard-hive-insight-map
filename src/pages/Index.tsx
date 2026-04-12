@@ -1,22 +1,35 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import AppLayout from "@/components/AppLayout";
 import ReportForm from "@/components/ReportForm";
 import ReportsList from "@/components/ReportsList";
 import ReportDetail from "@/components/ReportDetail";
-import RiskMatrix from "@/components/RiskMatrix";
-import AdminStats from "@/components/AdminStats";
+import HelpGuide from "@/components/HelpGuide";
 import ProjectManager from "@/components/ProjectManager";
 import WorkerProjectManager from "@/components/WorkerProjectManager";
-import SitePlanViewer from "@/components/SitePlanViewer";
-import ReportGenerator from "@/components/ReportGenerator";
-import DocumentsView from "@/components/DocumentsView";
-import HelpGuide from "@/components/HelpGuide";
-import ProjectRules from "@/components/ProjectRules";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Lazy load heavy tab components
+const RiskMatrix = lazy(() => import("@/components/RiskMatrix"));
+const AdminStats = lazy(() => import("@/components/AdminStats"));
+const SitePlanViewer = lazy(() => import("@/components/SitePlanViewer"));
+const ReportGenerator = lazy(() => import("@/components/ReportGenerator"));
+const DocumentsView = lazy(() => import("@/components/DocumentsView"));
+const ProjectRules = lazy(() => import("@/components/ProjectRules"));
+
+function TabLoader() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <p className="text-xs text-muted-foreground">Laddar...</p>
+      </div>
+    </div>
+  );
+}
 
 const Index = () => {
   const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
@@ -44,8 +57,6 @@ const Index = () => {
     updateReport(id, { status });
   };
 
-  
-
   return (
     <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)} onSelectReport={(reportId) => {
         const report = reports.find(r => r.id === reportId);
@@ -61,12 +72,12 @@ const Index = () => {
         <HelpGuide isAdmin={isAdmin} />
       </div>
 
-      {/* Removed StatsCards */}
-
       {/* APD Plan on dashboard - only show when a project is selected */}
       {activeProjectId && (
         <div className="mt-6">
-          <SitePlanViewer reports={reports} />
+          <Suspense fallback={<TabLoader />}>
+            <SitePlanViewer reports={reports} />
+          </Suspense>
         </div>
       )}
 
@@ -83,7 +94,9 @@ const Index = () => {
               <Button variant={activeTab === "stats" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("stats")}>
                 <BarChart3 className="h-3.5 w-3.5 mr-1.5" />{t("dashboard.stats")}
               </Button>
-              <ReportGenerator reports={reports} />
+              <Suspense fallback={null}>
+                <ReportGenerator reports={reports} />
+              </Suspense>
             </>
           )}
           <Button variant={activeTab === "documents" ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setActiveTab("documents")}>
@@ -118,7 +131,20 @@ const Index = () => {
           {activeTab === "reports" && (
             <>
               {loading ? (
-                <div className="text-center py-12 text-muted-foreground">{t("dashboard.loadingReports")}</div>
+                <div className="space-y-3">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="rounded-lg border border-border bg-card p-4 animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-muted" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-muted rounded w-1/3" />
+                          <div className="h-3 bg-muted rounded w-2/3" />
+                        </div>
+                        <div className="h-5 w-16 bg-muted rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <ReportsList
                   reports={visibleReports}
@@ -129,10 +155,12 @@ const Index = () => {
               )}
             </>
           )}
-          {activeTab === "matrix" && <RiskMatrix />}
-          {activeTab === "stats" && isAdmin && <AdminStats reports={reports} />}
-          {activeTab === "documents" && <DocumentsView />}
-          {activeTab === "rules" && <ProjectRules />}
+          <Suspense fallback={<TabLoader />}>
+            {activeTab === "matrix" && <RiskMatrix />}
+            {activeTab === "stats" && isAdmin && <AdminStats reports={reports} />}
+            {activeTab === "documents" && <DocumentsView />}
+            {activeTab === "rules" && <ProjectRules />}
+          </Suspense>
         </div>
 
         {showForm && (
