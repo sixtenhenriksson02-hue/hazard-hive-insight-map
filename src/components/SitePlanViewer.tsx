@@ -64,6 +64,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [selectedSafetyMarker, setSelectedSafetyMarker] = useState<SafetyMarker | null>(null);
   const [editingDescription, setEditingDescription] = useState("");
   const [isEditingMarker, setIsEditingMarker] = useState(false);
+  const [clusteringEnabled, setClusteringEnabled] = useState(true);
+  const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
