@@ -677,33 +677,69 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
               ))}
 
-              {planReports.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
-                  style={{ left: `${r.plan_x}%`, top: `${r.plan_y}%` }}
-                  onMouseEnter={() => setHoveredReport(r.id)}
-                  onMouseLeave={() => setHoveredReport(null)}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
-                    style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
-                  >
-                    <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
-                  </div>
-                  {hoveredReport === r.id && (
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
-                      <p className="font-semibold text-card-foreground">#{idx + 1} – {r.title}</p>
-                      <p className="text-muted-foreground">{r.category} • {r.location}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
-                        <span className="font-medium" style={{ color: riskDotColor[r.risk_level] }}>{t(`risk.${r.risk_level}`)}</span>
+              {clusteredReports.map((cluster) => {
+                const isCluster = cluster.reports.length > 1;
+                const isExpanded = expandedClusterId === cluster.id;
+
+                if (isCluster && !isExpanded) {
+                  // Render cluster bubble
+                  return (
+                    <div
+                      key={cluster.id}
+                      className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10"
+                      style={{ left: `${cluster.cx}%`, top: `${cluster.cy}%` }}
+                      onClick={(e) => { e.stopPropagation(); setExpandedClusterId(cluster.id); }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
+                        style={{ backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888" }}
+                      >
+                        <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
                       </div>
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 whitespace-nowrap bg-card border border-border rounded-md px-2 py-0.5 shadow-lg z-20 text-[10px] text-muted-foreground opacity-0 hover:opacity-100 pointer-events-none">
+                        {cluster.reports.length} {t("apd.clusterCount")}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                }
+
+                // Render individual markers (single or expanded cluster)
+                return cluster.reports.map((r) => (
+                  <div
+                    key={r.id}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
+                    style={{ left: `${r.plan_x}%`, top: `${r.plan_y}%` }}
+                    onMouseEnter={() => setHoveredReport(r.id)}
+                    onMouseLeave={() => setHoveredReport(null)}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
+                      style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
+                    >
+                      <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                    </div>
+                    {hoveredReport === r.id && (
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
+                        <p className="font-semibold text-card-foreground">#{r.originalIndex + 1} – {r.title}</p>
+                        <p className="text-muted-foreground">{r.category} • {r.location}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: riskDotColor[r.risk_level] }} />
+                          <span className="font-medium" style={{ color: riskDotColor[r.risk_level] }}>{t(`risk.${r.risk_level}`)}</span>
+                        </div>
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-border" />
+                      </div>
+                    )}
+                    {isExpanded && isCluster && (
+                      <button
+                        className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-muted border border-border flex items-center justify-center text-[7px] text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        onClick={(e) => { e.stopPropagation(); setExpandedClusterId(null); }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ));
+              })}
 
               {selectionMode && selectedPoint && (
                 <div
