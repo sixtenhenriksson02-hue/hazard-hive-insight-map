@@ -17,13 +17,17 @@ serve(async (req) => {
     const totalReports = reports.length;
     const observations = reports.filter((r: any) => r.report_type === "observation").length;
     const injuries = reports.filter((r: any) => r.report_type === "injury").length;
+    const improvements = reports.filter((r: any) => r.report_type === "improvement").length;
     const resolved = reports.filter((r: any) => r.status === "resolved").length;
     const critical = reports.filter((r: any) => r.risk_level === "critical").length;
     const high = reports.filter((r: any) => r.risk_level === "high").length;
     const medium = reports.filter((r: any) => r.risk_level === "medium").length;
     const low = reports.filter((r: any) => r.risk_level === "low").length;
 
-    // Build category breakdown
+    const injuryReports = reports.filter((r: any) => r.report_type === "injury");
+    const totalAbsenceDays = injuryReports.reduce((sum: number, r: any) => sum + (r.absence_days || 0), 0);
+    const medicalCareCount = injuryReports.filter((r: any) => r.medical_care_required).length;
+
     const categories: Record<string, number> = {};
     reports.forEach((r: any) => {
       categories[r.category] = (categories[r.category] || 0) + 1;
@@ -33,7 +37,6 @@ serve(async (req) => {
       .map(([cat, count]) => `  - ${cat}: ${count} st`)
       .join("\n");
 
-    // Build location breakdown
     const locations: Record<string, number> = {};
     reports.forEach((r: any) => {
       const loc = r.specific_location || r.building || "Okänt";
@@ -45,12 +48,11 @@ serve(async (req) => {
       .map(([loc, count]) => `  - ${loc}: ${count} st`)
       .join("\n");
 
-    // Report details for AI
     const reportDetails = reports.map((r: any) =>
-      `[${r.report_type}] ${r.title} | Kategori: ${r.category} | Risk: ${r.risk_level} | Plats: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI: ${r.ai_explanation}` : ""}`
+      `[${r.report_type}] ${r.title} | Kategori: ${r.category} | Risk: ${r.risk_level} | Plats: ${r.specific_location || r.building || "-"} | Status: ${r.status}${r.ai_explanation ? ` | AI: ${r.ai_explanation.substring(0, 150)}` : ""}`
     ).join("\n");
 
-    const prompt = `Du är en senior arbetsmiljöexpert. Skapa en professionell månadsrapport för arbetsmiljörisker.
+    const prompt = `Du är en senior arbetsmiljöexpert (SAM-certifierad). Skapa en professionell månadsrapport.
 
 PROJEKT: ${project_name || "Alla projekt"}
 PERIOD: ${month_label}
@@ -59,8 +61,11 @@ STATISTIK:
 - Totalt antal rapporter: ${totalReports}
 - Riskobservationer: ${observations}
 - Skadeanmälningar: ${injuries}
+- Förbättringsförslag: ${improvements}
 - Åtgärdade: ${resolved} (${totalReports > 0 ? Math.round((resolved / totalReports) * 100) : 0}%)
 - Risknivåer: Kritisk: ${critical}, Hög: ${high}, Medel: ${medium}, Låg: ${low}
+- Sjukvårdskrävande skador: ${medicalCareCount}
+- Total frånvaro: ${totalAbsenceDays} dagar
 
 KATEGORIER:
 ${categoryList || "  Inga rapporter"}
@@ -71,7 +76,7 @@ ${locationList || "  Inga rapporter"}
 ALLA RAPPORTER:
 ${reportDetails || "Inga rapporter för perioden."}
 
-Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med tool-anropet.`;
+Analysera noggrant och skapa en strukturerad månadsrapport. Svara ALLTID med tool-anropet.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -80,11 +85,11 @@ Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med t
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           {
             role: "system",
-            content: "Du är en senior arbetsmiljöingenjör som skriver professionella månadsrapporter. Svara alltid på svenska med generate_monthly_report-verktyget.",
+            content: "Du är en senior arbetsmiljöingenjör som skriver professionella månadsrapporter för svensk bygg- och anläggningsbransch. Dina rapporter ska vara konkreta, referera till AFS-standarder och ge handlingsbara rekommendationer. Svara alltid på svenska med generate_monthly_report-verktyget.",
           },
           { role: "user", content: prompt },
         ],
@@ -99,7 +104,7 @@ Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med t
                 properties: {
                   summary: {
                     type: "string",
-                    description: "En kort sammanfattning (3-5 meningar) av månadens viktigaste händelser och övergripande riskbild.",
+                    description: "En sammanfattning (4-6 meningar) av månadens viktigaste händelser, övergripande riskbild och nyckeltal.",
                   },
                   key_risks: {
                     type: "array",
@@ -109,7 +114,7 @@ Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med t
                         risk: { type: "string", description: "Kort beskrivning av risken" },
                         severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
                         count: { type: "number", description: "Antal relaterade incidenter" },
-                        recommendation: { type: "string", description: "Konkret rekommenderad åtgärd" },
+                        recommendation: { type: "string", description: "Konkret rekommenderad åtgärd med tidsram" },
                       },
                       required: ["risk", "severity", "count", "recommendation"],
                     },
@@ -118,12 +123,12 @@ Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med t
                   trends: {
                     type: "array",
                     items: { type: "string" },
-                    description: "3-5 identifierade trender baserat på rapporterna (t.ex. ökande risker i visst område, återkommande kategorier)",
+                    description: "3-5 identifierade trender baserat på rapporterna",
                   },
                   improvements: {
                     type: "array",
                     items: { type: "string" },
-                    description: "2-4 positiva förbättringar eller framsteg som noterats (t.ex. hög åtgärdsgrad, snabb respons)",
+                    description: "2-4 positiva förbättringar eller framsteg som noterats",
                   },
                   action_plan: {
                     type: "array",
@@ -132,7 +137,7 @@ Skapa en strukturerad månadsrapport med följande sektioner. Svara ALLTID med t
                       properties: {
                         action: { type: "string", description: "Konkret åtgärd att genomföra" },
                         priority: { type: "string", enum: ["high", "medium", "low"] },
-                        responsible: { type: "string", description: "Föreslaget ansvar (t.ex. Platschef, Skyddsombud, Arbetsledare)" },
+                        responsible: { type: "string", description: "Föreslaget ansvar (t.ex. Platschef, Skyddsombud)" },
                       },
                       required: ["action", "priority", "responsible"],
                     },

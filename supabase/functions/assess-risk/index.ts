@@ -48,13 +48,21 @@ ${report_type === "injury" ? `- Skadad kroppsdel: ${body_part || "Ej angivet"}
 - Frånvaro: ${absence_required ? `Ja, ${absence_days || 0} dagar` : "Nej"}` : ""}
 ${commentsText}
 
-RISKNIVÅER:
-• critical – Livsfara, fallrisk >2m, ras/kollaps, elolycka >230V, akutsjukvård
-• high – Allvarlig skaderisk, bristande skyddsutrustning, upprepade incidenter, frånvaro >3 dagar
-• medium – Lättare skaderisk, brister i ordning/skyltning, 1-3 dagars frånvaro
-• low – Minimal skaderisk, enkelt åtgärdat, ingen frånvaro
+RISKNIVÅER (var noggrann och konsekvent):
+• critical – Livsfara, fallrisk >2m, ras/kollaps, elolycka >230V, akutsjukvård, risk för permanent skada
+• high – Allvarlig skaderisk, bristande skyddsutrustning, upprepade incidenter, frånvaro >3 dagar, risk för frakturer/stickskador
+• medium – Lättare skaderisk, brister i ordning/skyltning, 1-3 dagars frånvaro, halkrisker, ergonomiska brister
+• low – Minimal skaderisk, enkelt åtgärdat, ingen frånvaro, mindre ordningsbrister
 
 ALLVARLIGHETSGRAD (1-5): 1=Obetydlig, 2=Lindrig, 3=Måttlig, 4=Allvarlig, 5=Livsfara/permanent skada
+
+VIKTIGA BEDÖMNINGSREGLER:
+- Skaderapporter med sjukvård = minst "high"
+- Skaderapporter med frånvaro >3 dagar = "critical" eller "high"
+- Fallrisker från höjd >2m = alltid "critical"
+- El-relaterade risker >230V = alltid "critical"
+- Bristande fallskydd/skyddsräcken = minst "high"
+- Klämrisker vid tunga maskiner = minst "high"
 
 ${hasComments ? `KOMMENTARSBEDÖMNING:
 - Om kommentarer bekräftar att risken är åtgärdad ("fixat", "reparerat", "bytt ut") → sänk till "low", should_resolve=true
@@ -63,7 +71,7 @@ ${hasComments ? `KOMMENTARSBEDÖMNING:
 
 INSTRUKTIONER:
 1. Ge en kort, tydlig titel (max 8 ord) som sammanfattar risken/händelsen
-2. Förklara specifikt vad risken är och varför du valt den risknivån (3-5 meningar)
+2. Förklara specifikt vad risken är och varför du valt den risknivån (3-5 meningar). Referera till AFS-föreskrifter vid allvarliga risker.
 3. Ge 2-4 konkreta åtgärder som en platschef kan genomföra direkt, sorterade efter prioritet, utan prefix eller numrering`;
 
     const toolProperties: Record<string, unknown> = {
@@ -76,24 +84,24 @@ INSTRUKTIONER:
       risk_level: {
         type: "string",
         enum: isImprovement ? ["low"] : ["low", "medium", "high", "critical"],
-        description: isImprovement ? "Alltid 'low' för förbättringsförslag" : "Bedömd risknivå",
+        description: isImprovement ? "Alltid 'low' för förbättringsförslag" : "Bedömd risknivå baserad på bedömningsreglerna ovan",
       },
       explanation: {
         type: "string",
         description: isImprovement
           ? "Förklaring på svenska (3-5 meningar) som beskriver varför förslaget är värdefullt och vilka risker det kan förebygga"
-          : "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån och beskriver konsekvenser",
+          : "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån med hänvisning till AFS-krav, och beskriver potentiella konsekvenser",
       },
       severity_rating: {
         type: "number",
-        description: isImprovement ? "Alltid 1 för förbättringsförslag" : "Allvarlighetsgrad 1-5",
+        description: isImprovement ? "Alltid 1 för förbättringsförslag" : "Allvarlighetsgrad 1-5 baserad på konsekvensanalys",
       },
       suggested_actions: {
         type: "array",
         items: { type: "string" },
         description: isImprovement
           ? "2-4 konkreta steg för att implementera förslaget. Skriv direkt utan prefix eller numrering."
-          : "2-4 konkreta åtgärder på svenska. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
+          : "2-4 konkreta åtgärder på svenska som en platschef kan genomföra omedelbart. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
       },
     };
 
@@ -116,7 +124,7 @@ INSTRUKTIONER:
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: isImprovement ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag och ge konstruktiv feedback. Svara ALLTID med assess_risk-verktyget." : "Du är Sveriges mest erfarne arbetsmiljöingenjör. Gör motiverade riskbedömningar baserade på AFS-standarder. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
+          { role: "system", content: isImprovement ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag och ge konstruktiv feedback. Svara ALLTID med assess_risk-verktyget." : "Du är Sveriges mest erfarne arbetsmiljöingenjör med djup kunskap om AFS-standarder och svensk byggindustri. Gör konsekventa, motiverade riskbedömningar. Var särskilt uppmärksam på allvarliga risker som fall från höjd, el, klämrisker och bristande skyddsutrustning. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
           { role: "user", content: prompt },
         ],
         tools: [
