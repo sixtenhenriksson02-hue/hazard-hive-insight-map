@@ -227,6 +227,8 @@ const translations: Record<string, Record<Language, string>> = {
   "apd.legendTitle": { sv: "Risker på kartan", en: "Risks on map" },
   "apd.activeRisks": { sv: "Aktiva risker på kartan", en: "Active risks on map" },
   "apd.enhance": { sv: "Förbättra bild", en: "Enhance image" },
+  "apd.clusterToggle": { sv: "Gruppera", en: "Cluster" },
+  "apd.clusterCount": { sv: "risker", en: "risks" },
 
   // Admin stats
   "adminStats.title": { sv: "Statistik", en: "Statistics" },
