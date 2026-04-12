@@ -258,8 +258,15 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   };
 
   const canGoNext = () => {
-    if (step === 0) return description.trim().length > 5;
-    if (step === 1) return specificLocation.trim().length > 0;
+    if (step === 0) return description.trim().length > 5 && category.trim().length > 0;
+    if (step === 1) {
+      const hasLocation = specificLocation.trim().length > 0;
+      const hasProject = !!(selectedProjectId || activeProjectId);
+      return hasLocation && hasProject;
+    }
+    if (step === 2 && reportType === "injury") {
+      return bodyPart.trim().length > 0 && injuryType.trim().length > 0;
+    }
     return true;
   };
 
