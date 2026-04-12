@@ -607,20 +607,40 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               {planSafetyMarkers.map(m => (
                 <SafetyMarkerIcon key={m.id} marker={m} showDelete={isAdmin} />
               ))}
-              {planReports.map((r, idx) => (
-                <div
-                  key={r.id}
-                  className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
-                  style={{
-                    left: `${r.plan_x}%`,
-                    top: `${r.plan_y}%`,
-                    backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-                  }}
-                  title={`#${idx + 1} ${r.title} (${r.risk_level})`}
-                >
-                  <span className="text-[8px] font-bold text-white leading-none">{idx + 1}</span>
-                </div>
-              ))}
+              {clusteredReports.map((cluster) => {
+                const isCluster = cluster.reports.length > 1;
+                if (isCluster) {
+                  return (
+                    <div
+                      key={cluster.id}
+                      className="absolute w-8 h-8 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                      style={{
+                        left: `${cluster.cx}%`,
+                        top: `${cluster.cy}%`,
+                        backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888",
+                      }}
+                      title={`${cluster.reports.length} ${t("apd.clusterCount")}`}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                    </div>
+                  );
+                }
+                const r = cluster.reports[0];
+                return (
+                  <div
+                    key={r.id}
+                    className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    style={{
+                      left: `${r.plan_x}%`,
+                      top: `${r.plan_y}%`,
+                      backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                    }}
+                    title={`#${r.originalIndex + 1} ${r.title} (${r.risk_level})`}
+                  >
+                    <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                  </div>
+                );
+              })}
               {riskZones.map((zone, i) => (
                 <div
                   key={`zone-${i}`}
