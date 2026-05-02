@@ -496,87 +496,94 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const cursorClass = safetyPlacingMode ? "cursor-crosshair" : selectionMode ? "cursor-crosshair" : "";
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 animate-fade-in">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <h2 className="text-sm font-bold text-card-foreground flex items-center gap-1.5">
-          <MapPin className="h-4 w-4 text-accent" /> {t("apd.title")}
+    <div className="rounded-lg border border-border bg-card p-3 sm:p-4 animate-fade-in">
+      {/* Header row – kompakt på mobil */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h2 className="text-sm font-bold text-card-foreground flex items-center gap-1.5 min-w-0">
+          <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+          <span className="truncate">{t("apd.title")}</span>
         </h2>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {planReports.length > 5 && (
-            <Button
-              variant={clusteringEnabled ? "default" : "outline"}
-              size="sm"
-              className="text-[10px] h-6 px-2"
-              onClick={() => { setClusteringEnabled(e => !e); setExpandedClusterId(null); }}
-            >
-              <Layers className="h-2.5 w-2.5 mr-0.5" /> {t("apd.clusterToggle")}
-            </Button>
-          )}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {plans.length > 1 && (
             <select
-              className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground"
+              className="text-xs border border-border rounded-md px-2 py-1 bg-card text-card-foreground max-w-[140px] sm:max-w-none truncate"
               value={activePlan?.id ?? ""}
               onChange={(e) => setActivePlan(plans.find(p => p.id === e.target.value) ?? null)}
             >
               {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           )}
-          {isAdmin && (
-            <>
-              <Button
-                variant={safetyPlacingMode === "first_aid" ? "default" : "outline"}
-                size="sm"
-                className={`text-[10px] h-6 px-2 ${safetyPlacingMode === "first_aid" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
-                onClick={() => setSafetyPlacingMode(safetyPlacingMode === "first_aid" ? null : "first_aid")}
-              >
-                <Cross className="h-2.5 w-2.5 mr-0.5" strokeWidth={3} /> {t("safety.placeFirstAid")}
-              </Button>
-              <Button
-                variant={safetyPlacingMode === "fire_extinguisher" ? "default" : "outline"}
-                size="sm"
-                className={`text-[10px] h-6 px-2 ${safetyPlacingMode === "fire_extinguisher" ? "bg-red-600 hover:bg-red-700 text-white" : ""}`}
-                onClick={() => setSafetyPlacingMode(safetyPlacingMode === "fire_extinguisher" ? null : "fire_extinguisher")}
-              >
-                <Flame className="h-2.5 w-2.5 mr-0.5" strokeWidth={2.5} /> {t("safety.placeFireExtinguisher")}
-              </Button>
-              <Button
-                variant={safetyPlacingMode === "defibrillator" ? "default" : "outline"}
-                size="sm"
-                className={`text-[10px] h-6 px-2 ${safetyPlacingMode === "defibrillator" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-                onClick={() => setSafetyPlacingMode(safetyPlacingMode === "defibrillator" ? null : "defibrillator")}
-              >
-                <Heart className="h-2.5 w-2.5 mr-0.5" strokeWidth={2.5} /> {t("safety.placeDefibrillator")}
-              </Button>
-
-              <Button variant="outline" size="sm" className="text-[10px] h-6 px-2" onClick={() => setShowUpload(true)}>
-                <Upload className="h-2.5 w-2.5 mr-0.5" /> {t("apd.upload")}
-              </Button>
-              {activePlan && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-[10px] h-6 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={async () => {
-                    if (!activePlan) return;
-                    const confirmed = window.confirm(t("apd.confirmDelete"));
-                    if (!confirmed) return;
-                    const storagePath = activePlan.image_url.split("/site-plans/")[1];
-                    if (storagePath) {
-                      await supabase.storage.from("site-plans").remove([storagePath]);
-                    }
-                    await supabase.from("site_plans").delete().eq("id", activePlan.id);
-                    setActivePlan(null);
-                    await fetchPlans();
-                    toast({ title: t("apd.deleted") });
-                  }}
-                >
-                  <X className="h-2.5 w-2.5" />
-                </Button>
-              )}
-            </>
+          {planReports.length > 5 && (
+            <Button
+              variant={clusteringEnabled ? "default" : "outline"}
+              size="sm"
+              className="text-[10px] h-7 px-2"
+              onClick={() => { setClusteringEnabled(e => !e); setExpandedClusterId(null); }}
+              title={t("apd.clusterToggle")}
+            >
+              <Layers className="h-3 w-3" />
+            </Button>
           )}
         </div>
       </div>
+
+      {/* Säkerhets-verktygsrad – horisontell scroll på mobil */}
+      {isAdmin && (
+        <div className="mb-2 -mx-1 px-1 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-1.5 min-w-max pb-1">
+            <Button
+              variant={safetyPlacingMode === "first_aid" ? "default" : "outline"}
+              size="sm"
+              className={`text-[11px] h-8 px-2.5 flex-shrink-0 ${safetyPlacingMode === "first_aid" ? "bg-green-600 hover:bg-green-700 text-white" : ""}`}
+              onClick={() => setSafetyPlacingMode(safetyPlacingMode === "first_aid" ? null : "first_aid")}
+            >
+              <Cross className="h-3 w-3 mr-1" strokeWidth={3} /> {t("safety.placeFirstAid")}
+            </Button>
+            <Button
+              variant={safetyPlacingMode === "fire_extinguisher" ? "default" : "outline"}
+              size="sm"
+              className={`text-[11px] h-8 px-2.5 flex-shrink-0 ${safetyPlacingMode === "fire_extinguisher" ? "bg-red-600 hover:bg-red-700 text-white" : ""}`}
+              onClick={() => setSafetyPlacingMode(safetyPlacingMode === "fire_extinguisher" ? null : "fire_extinguisher")}
+            >
+              <Flame className="h-3 w-3 mr-1" strokeWidth={2.5} /> {t("safety.placeFireExtinguisher")}
+            </Button>
+            <Button
+              variant={safetyPlacingMode === "defibrillator" ? "default" : "outline"}
+              size="sm"
+              className={`text-[11px] h-8 px-2.5 flex-shrink-0 ${safetyPlacingMode === "defibrillator" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+              onClick={() => setSafetyPlacingMode(safetyPlacingMode === "defibrillator" ? null : "defibrillator")}
+            >
+              <Heart className="h-3 w-3 mr-1" strokeWidth={2.5} /> {t("safety.placeDefibrillator")}
+            </Button>
+            <div className="w-px h-5 bg-border mx-0.5 flex-shrink-0" />
+            <Button variant="outline" size="sm" className="text-[11px] h-8 px-2.5 flex-shrink-0" onClick={() => setShowUpload(true)}>
+              <Upload className="h-3 w-3 mr-1" /> {t("apd.upload")}
+            </Button>
+            {activePlan && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[11px] h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                onClick={async () => {
+                  if (!activePlan) return;
+                  const confirmed = window.confirm(t("apd.confirmDelete"));
+                  if (!confirmed) return;
+                  const storagePath = activePlan.image_url.split("/site-plans/")[1];
+                  if (storagePath) {
+                    await supabase.storage.from("site-plans").remove([storagePath]);
+                  }
+                  await supabase.from("site_plans").delete().eq("id", activePlan.id);
+                  setActivePlan(null);
+                  await fetchPlans();
+                  toast({ title: t("apd.deleted") });
+                }}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {safetyPlacingMode && (
         <div className={`mb-3 text-xs text-center py-2 rounded-md font-medium ${
@@ -591,12 +598,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       {activePlan ? (
         <div ref={containerRef} className="relative rounded-md overflow-hidden border border-border">
           {isPdf(activePlan.image_url) ? (
-            <div className="relative" style={{ minHeight: selectionMode ? 500 : 400 }}>
+            <div className="relative w-full" style={{ height: selectionMode ? "70vh" : "60vh", minHeight: 360, maxHeight: 700 }}>
               <iframe
                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
                 title={activePlan.name}
-                className="w-full border-0 bg-muted"
-                style={{ height: selectionMode ? 500 : 400 }}
+                className="w-full h-full border-0 bg-muted"
                 sandbox="allow-scripts allow-same-origin"
               />
               <div
@@ -771,7 +777,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           )}
 
           {(planReports.length > 0 || planSafetyMarkers.length > 0) && (
-            <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2 py-1.5 text-[9px] z-10 max-w-[180px]">
+            <div className="hidden sm:block absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2 py-1.5 text-[9px] z-10 max-w-[180px]">
               <p className="font-semibold text-card-foreground mb-0.5 flex items-center gap-1">
                 <AlertTriangle className="h-2.5 w-2.5 text-accent" />
                 {t("apd.legendTitle")}
@@ -810,6 +816,34 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               <Upload className="h-3.5 w-3.5 mr-1" /> {t("apd.uploadFirst")}
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Mobil-legend under kartan */}
+      {activePlan && (planReports.length > 0 || planSafetyMarkers.length > 0) && (
+        <div className="sm:hidden mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] px-1">
+          {(["critical", "high", "medium", "low"] as const).map(level => {
+            const count = planReports.filter(r => r.risk_level === level).length;
+            if (count === 0) return null;
+            return (
+              <div key={level} className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: riskDotColor[level] }} />
+                <span className="text-card-foreground font-medium">{t(`risk.${level}`)}</span>
+                <span className="text-muted-foreground">({count})</span>
+              </div>
+            );
+          })}
+          {(["first_aid", "fire_extinguisher", "defibrillator"] as const).map(type => {
+            if (!planSafetyMarkers.some(m => m.marker_type === type)) return null;
+            return (
+              <div key={type} className="flex items-center gap-1">
+                <span className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${getMarkerColor(type)} flex items-center justify-center`}>
+                  {getMarkerIcon(type, "h-1.5 w-1.5")}
+                </span>
+                <span className="text-card-foreground font-medium">{getMarkerLabel(type)}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
