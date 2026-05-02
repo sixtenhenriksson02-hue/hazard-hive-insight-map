@@ -598,12 +598,11 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
       {activePlan ? (
         <div ref={containerRef} className="relative rounded-md overflow-hidden border border-border">
           {isPdf(activePlan.image_url) ? (
-            <div className="relative" style={{ minHeight: selectionMode ? 500 : 400 }}>
+            <div className="relative w-full" style={{ height: selectionMode ? "70vh" : "60vh", minHeight: 360, maxHeight: 700 }}>
               <iframe
                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
                 title={activePlan.name}
-                className="w-full border-0 bg-muted"
-                style={{ height: selectionMode ? 500 : 400 }}
+                className="w-full h-full border-0 bg-muted"
                 sandbox="allow-scripts allow-same-origin"
               />
               <div
