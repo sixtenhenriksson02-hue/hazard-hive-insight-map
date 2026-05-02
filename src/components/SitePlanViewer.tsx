@@ -777,7 +777,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           )}
 
           {(planReports.length > 0 || planSafetyMarkers.length > 0) && (
-            <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2 py-1.5 text-[9px] z-10 max-w-[180px]">
+            <div className="hidden sm:block absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm border border-border rounded-md px-2 py-1.5 text-[9px] z-10 max-w-[180px]">
               <p className="font-semibold text-card-foreground mb-0.5 flex items-center gap-1">
                 <AlertTriangle className="h-2.5 w-2.5 text-accent" />
                 {t("apd.legendTitle")}
