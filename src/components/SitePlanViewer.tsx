@@ -807,6 +807,33 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             </div>
           )}
         </div>
+        {/* Mobil-legend under kartan */}
+        {activePlan && (planReports.length > 0 || planSafetyMarkers.length > 0) && (
+          <div className="sm:hidden mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] px-1">
+            {(["critical", "high", "medium", "low"] as const).map(level => {
+              const count = planReports.filter(r => r.risk_level === level).length;
+              if (count === 0) return null;
+              return (
+                <div key={level} className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: riskDotColor[level] }} />
+                  <span className="text-card-foreground font-medium">{t(`risk.${level}`)}</span>
+                  <span className="text-muted-foreground">({count})</span>
+                </div>
+              );
+            })}
+            {(["first_aid", "fire_extinguisher", "defibrillator"] as const).map(type => {
+              if (!planSafetyMarkers.some(m => m.marker_type === type)) return null;
+              return (
+                <div key={type} className="flex items-center gap-1">
+                  <span className={`w-2.5 h-2.5 rounded-sm flex-shrink-0 ${getMarkerColor(type)} flex items-center justify-center`}>
+                    {getMarkerIcon(type, "h-1.5 w-1.5")}
+                  </span>
+                  <span className="text-card-foreground font-medium">{getMarkerLabel(type)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       ) : (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm gap-2">
           <MapPin className="h-8 w-8 opacity-30" />
