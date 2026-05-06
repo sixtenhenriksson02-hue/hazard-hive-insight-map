@@ -952,6 +952,75 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen plan viewer */}
+      <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+        <DialogContent className="max-w-[100vw] w-screen h-[100dvh] sm:max-w-[95vw] sm:h-[95vh] p-0 overflow-hidden gap-0">
+          <DialogHeader className="px-3 py-2 border-b border-border flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-sm flex items-center gap-1.5 truncate">
+              <MapPin className="h-4 w-4 text-accent" />
+              <span className="truncate">{activePlan?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {activePlan && (
+            <div className="relative flex-1 overflow-auto bg-muted">
+              {isPdf(activePlan.image_url) ? (
+                <div className="relative w-full h-full" style={{ minHeight: "calc(100dvh - 50px)" }}>
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
+                    title={activePlan.name}
+                    className="w-full h-full border-0 bg-muted"
+                    sandbox="allow-scripts allow-same-origin"
+                  />
+                  {planSafetyMarkers.map(m => (
+                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
+                  ))}
+                  {planReports.map((r, idx) => (
+                    <div
+                      key={r.id}
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                      style={{
+                        left: `${r.plan_x}%`,
+                        top: `${r.plan_y}%`,
+                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                      }}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="relative w-full min-h-full">
+                  <img
+                    src={activePlan.image_url}
+                    alt={activePlan.name}
+                    className="w-full h-auto block bg-white"
+                    style={{ filter: "contrast(1.35) brightness(1.08) saturate(0.15)" }}
+                    draggable={false}
+                  />
+                  {planSafetyMarkers.map(m => (
+                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
+                  ))}
+                  {planReports.map((r, idx) => (
+                    <div
+                      key={r.id}
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                      style={{
+                        left: `${r.plan_x}%`,
+                        top: `${r.plan_y}%`,
+                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                      }}
+                      title={`#${idx + 1} ${r.title}`}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
