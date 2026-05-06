@@ -326,8 +326,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const CLUSTER_RADIUS = 8; // % distance to merge
 
   const clusteredReports = useMemo((): Cluster[] => {
-    if (!clusteringEnabled || planReports.length <= 5) {
-      // No clustering needed, each report is its own "cluster"
+    if (!clusteringEnabled) {
+      // No clustering – each report is its own marker so all are visible at once
       return planReports.map((r, idx) => ({
         id: r.id,
         cx: r.plan_x ?? 0,
