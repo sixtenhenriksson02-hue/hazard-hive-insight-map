@@ -6,8 +6,9 @@ import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart, Layers } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart, Layers, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SitePlan {
   id: string;
@@ -64,8 +65,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [selectedSafetyMarker, setSelectedSafetyMarker] = useState<SafetyMarker | null>(null);
   const [editingDescription, setEditingDescription] = useState("");
   const [isEditingMarker, setIsEditingMarker] = useState(false);
-  const [clusteringEnabled, setClusteringEnabled] = useState(true);
+  const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -323,8 +326,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const CLUSTER_RADIUS = 8; // % distance to merge
 
   const clusteredReports = useMemo((): Cluster[] => {
-    if (!clusteringEnabled || planReports.length <= 5) {
-      // No clustering needed, each report is its own "cluster"
+    if (!clusteringEnabled) {
+      // No clustering – each report is its own marker so all are visible at once
       return planReports.map((r, idx) => ({
         id: r.id,
         cx: r.plan_x ?? 0,
@@ -524,6 +527,17 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               <Layers className="h-3 w-3" />
             </Button>
           )}
+          {activePlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-7 px-2"
+              onClick={() => setFullscreenOpen(true)}
+              title="Förstora"
+            >
+              <Maximize2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -635,7 +649,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 return (
                   <div
                     key={r.id}
-                    className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    className="absolute w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                     style={{
                       left: `${r.plan_x}%`,
                       top: `${r.plan_y}%`,
@@ -643,7 +657,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     }}
                     title={`#${r.originalIndex + 1} ${r.title} (${r.risk_level})`}
                   >
-                    <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                    <span className="text-[7px] sm:text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
                   </div>
                 );
               })}
@@ -739,10 +753,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     onMouseLeave={() => setHoveredReport(null)}
                   >
                     <div
-                      className="w-5 h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
+                      className="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
                       style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
                     >
-                      <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                      <span className="text-[7px] sm:text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
                     </div>
                     {hoveredReport === r.id && (
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
@@ -936,6 +950,75 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fullscreen plan viewer */}
+      <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+        <DialogContent className="max-w-[100vw] w-screen h-[100dvh] sm:max-w-[95vw] sm:h-[95vh] p-0 overflow-hidden gap-0">
+          <DialogHeader className="px-3 py-2 border-b border-border flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-sm flex items-center gap-1.5 truncate">
+              <MapPin className="h-4 w-4 text-accent" />
+              <span className="truncate">{activePlan?.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+          {activePlan && (
+            <div className="relative flex-1 overflow-auto bg-muted">
+              {isPdf(activePlan.image_url) ? (
+                <div className="relative w-full h-full" style={{ minHeight: "calc(100dvh - 50px)" }}>
+                  <iframe
+                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
+                    title={activePlan.name}
+                    className="w-full h-full border-0 bg-muted"
+                    sandbox="allow-scripts allow-same-origin"
+                  />
+                  {planSafetyMarkers.map(m => (
+                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
+                  ))}
+                  {planReports.map((r, idx) => (
+                    <div
+                      key={r.id}
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                      style={{
+                        left: `${r.plan_x}%`,
+                        top: `${r.plan_y}%`,
+                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                      }}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="relative w-full min-h-full">
+                  <img
+                    src={activePlan.image_url}
+                    alt={activePlan.name}
+                    className="w-full h-auto block bg-white"
+                    style={{ filter: "contrast(1.35) brightness(1.08) saturate(0.15)" }}
+                    draggable={false}
+                  />
+                  {planSafetyMarkers.map(m => (
+                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
+                  ))}
+                  {planReports.map((r, idx) => (
+                    <div
+                      key={r.id}
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                      style={{
+                        left: `${r.plan_x}%`,
+                        top: `${r.plan_y}%`,
+                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                      }}
+                      title={`#${idx + 1} ${r.title}`}
+                    >
+                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
