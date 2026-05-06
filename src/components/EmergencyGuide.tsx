@@ -1,11 +1,26 @@
 import { useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjectLocations } from "@/hooks/useProjectLocations";
+import ProjectLocationsManager from "@/components/ProjectLocationsManager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Siren, Phone, ShieldAlert, Heart, Flame, AlertTriangle, ArrowRight } from "lucide-react";
+import { Siren, Phone, ShieldAlert, Heart, Flame, AlertTriangle, ArrowRight, MapPin, Settings, DoorOpen, Building2, Flag, ShieldCheck } from "lucide-react";
+
+const LOCATION_ICONS: Record<string, any> = {
+  gate: DoorOpen,
+  office: Building2,
+  assembly: Flag,
+  first_aid: ShieldCheck,
+  other: MapPin,
+};
 
 export default function EmergencyGuide() {
   const [open, setOpen] = useState(false);
+  const [locOpen, setLocOpen] = useState(false);
   const { lang } = useLanguage();
+  const { activeProjectId, viewAs } = useAuth();
+  const isAdmin = viewAs === "admin";
+  const { locations } = useProjectLocations(activeProjectId);
 
   const sv = lang === "sv";
 
