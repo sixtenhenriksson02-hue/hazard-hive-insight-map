@@ -527,6 +527,17 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               <Layers className="h-3 w-3" />
             </Button>
           )}
+          {activePlan && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-[10px] h-7 px-2"
+              onClick={() => setFullscreenOpen(true)}
+              title="Förstora"
+            >
+              <Maximize2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </div>
 
