@@ -649,7 +649,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 return (
                   <div
                     key={r.id}
-                    className="absolute w-5 h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    className="absolute w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                     style={{
                       left: `${r.plan_x}%`,
                       top: `${r.plan_y}%`,
@@ -657,7 +657,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     }}
                     title={`#${r.originalIndex + 1} ${r.title} (${r.risk_level})`}
                   >
-                    <span className="text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                    <span className="text-[7px] sm:text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
                   </div>
                 );
               })}
