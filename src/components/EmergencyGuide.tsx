@@ -1,11 +1,26 @@
 import { useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjectLocations } from "@/hooks/useProjectLocations";
+import ProjectLocationsManager from "@/components/ProjectLocationsManager";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Siren, Phone, ShieldAlert, Heart, Flame, AlertTriangle, ArrowRight } from "lucide-react";
+import { Siren, Phone, ShieldAlert, Heart, Flame, AlertTriangle, ArrowRight, MapPin, Settings, DoorOpen, Building2, Flag, ShieldCheck } from "lucide-react";
+
+const LOCATION_ICONS: Record<string, any> = {
+  gate: DoorOpen,
+  office: Building2,
+  assembly: Flag,
+  first_aid: ShieldCheck,
+  other: MapPin,
+};
 
 export default function EmergencyGuide() {
   const [open, setOpen] = useState(false);
+  const [locOpen, setLocOpen] = useState(false);
   const { lang } = useLanguage();
+  const { activeProjectId, viewAs } = useAuth();
+  const isAdmin = viewAs === "admin";
+  const { locations } = useProjectLocations(activeProjectId);
 
   const sv = lang === "sv";
 
@@ -132,8 +147,56 @@ export default function EmergencyGuide() {
                 : "Tip: Check the site plan to see where first aid kits, fire extinguishers and defibrillators are located."}
             </p>
           </div>
+
+          {/* Project addresses for emergency services */}
+          {activeProjectId && (
+            <div className="rounded-lg border border-accent/30 bg-accent/5 p-3 mt-2">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-accent" />
+                  {sv ? "Adresser & viktiga platser" : "Addresses & key locations"}
+                </p>
+                {isAdmin && (
+                  <button
+                    onClick={() => setLocOpen(true)}
+                    className="text-[11px] text-accent hover:underline flex items-center gap-1"
+                  >
+                    <Settings className="h-3 w-3" />{sv ? "Hantera" : "Manage"}
+                  </button>
+                )}
+              </div>
+              {locations.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">
+                  {sv
+                    ? "Inga adresser tillagda. Lägg till portar, platskontor och återsamlingsplatser så de syns vid nödläge."
+                    : "No addresses added. Add gates, site offices and assembly points so they appear during emergencies."}
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {locations.map((loc) => {
+                    const Icon = LOCATION_ICONS[loc.location_type] ?? MapPin;
+                    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`;
+                    return (
+                      <div key={loc.id} className="flex items-start gap-2 text-xs">
+                        <Icon className="h-3.5 w-3.5 text-accent mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground">{loc.label}</p>
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline break-words">
+                            {loc.address}
+                          </a>
+                          {loc.notes && <p className="text-muted-foreground text-[11px]">{loc.notes}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+
+      <ProjectLocationsManager open={locOpen} onClose={() => setLocOpen(false)} />
     </>
   );
 }
