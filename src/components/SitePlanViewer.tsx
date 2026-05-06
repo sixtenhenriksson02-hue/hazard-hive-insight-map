@@ -6,8 +6,9 @@ import { RiskReport } from "@/hooks/useReports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart, Layers } from "lucide-react";
+import { Upload, MapPin, AlertTriangle, X, Cross, Flame, Heart, Layers, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SitePlan {
   id: string;
