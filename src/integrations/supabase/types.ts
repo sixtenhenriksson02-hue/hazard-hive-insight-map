@@ -134,6 +134,42 @@ export type Database = {
           },
         ]
       }
+      project_locations: {
+        Row: {
+          address: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string
+          location_type: string
+          notes: string | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          created_by: string
+          id?: string
+          label: string
+          location_type?: string
+          notes?: string | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string
+          location_type?: string
+          notes?: string | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_rules: {
         Row: {
           content: string
