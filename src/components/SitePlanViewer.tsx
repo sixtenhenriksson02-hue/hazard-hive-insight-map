@@ -68,11 +68,28 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [planAspect, setPlanAspect] = useState<number | null>(null);
   const isMobile = useIsMobile();
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Mät aspect-ratio på förhandsvisningens plan-container så fullskärm kan använda samma
+  // koordinatsystem (förhindrar att markörer hamnar fel när bilden förstoras).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) setPlanAspect(r.width / r.height);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [activePlan]);
+
 
   const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
 
