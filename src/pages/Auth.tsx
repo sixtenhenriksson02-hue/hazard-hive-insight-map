@@ -42,31 +42,57 @@ export default function Auth() {
     }
   };
 
+  // Försöker en async-operation upp till N gånger om det blir nätverksfel ("Load failed" / "Failed to fetch")
+  const withRetry = async <T,>(fn: () => Promise<T>, attempts = 3): Promise<T> => {
+    let lastErr: any;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        lastErr = err;
+        const msg = (err?.message || "").toLowerCase();
+        const isNetwork = msg.includes("load failed") || msg.includes("failed to fetch") || msg.includes("networkerror");
+        if (!isNetwork || i === attempts - 1) throw err;
+        await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+      }
+    }
+    throw lastErr;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
     try {
+      if (!navigator.onLine) {
+        throw new Error(lang === "sv" ? "Ingen internetanslutning. Kontrollera ditt nätverk och försök igen." : "No internet connection. Check your network and try again.");
+      }
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await withRetry(() => supabase.auth.signInWithPassword({ email, password }));
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { error } = await withRetry(() => supabase.auth.signUp({
           email,
           password,
           options: {
             data: { display_name: displayName, role, project_id: selectedProject || null },
           },
-        });
+        }));
         if (error) throw error;
         toast({ title: t("auth.accountCreated"), description: t("auth.loggedIn") });
       }
     } catch (err: any) {
-      toast({ title: "Fel", description: err.message, variant: "destructive" });
+      const raw = err?.message || "";
+      const friendly = /load failed|failed to fetch|networkerror/i.test(raw)
+        ? (lang === "sv" ? "Nätverksfel – kontrollera anslutningen och försök igen." : "Network error – check your connection and try again.")
+        : raw;
+      toast({ title: "Fel", description: friendly, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
