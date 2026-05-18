@@ -68,11 +68,28 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [expandedClusterId, setExpandedClusterId] = useState<string | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [planAspect, setPlanAspect] = useState<number | null>(null);
   const isMobile = useIsMobile();
 
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Mät aspect-ratio på förhandsvisningens plan-container så fullskärm kan använda samma
+  // koordinatsystem (förhindrar att markörer hamnar fel när bilden förstoras).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) setPlanAspect(r.width / r.height);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [activePlan]);
+
 
   const isPdf = (url: string) => url.toLowerCase().endsWith(".pdf");
 
@@ -963,62 +980,54 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
             </DialogTitle>
           </DialogHeader>
           {activePlan && (
-            <div className="relative flex-1 overflow-auto bg-muted">
-              {isPdf(activePlan.image_url) ? (
-                <div className="relative w-full h-full" style={{ minHeight: "calc(100dvh - 50px)" }}>
+            <div className="relative flex-1 overflow-auto bg-muted flex items-center justify-center p-2">
+              {/* Inre wrapper med SAMMA aspect-ratio som förhandsvisningen → markörerna ligger rätt */}
+              <div
+                className="relative bg-white shadow-lg"
+                style={{
+                  aspectRatio: planAspect ?? 4 / 3,
+                  width: "100%",
+                  maxWidth: planAspect ? `calc((100dvh - 70px) * ${planAspect})` : "100%",
+                  maxHeight: "calc(100dvh - 70px)",
+                }}
+              >
+                {isPdf(activePlan.image_url) ? (
                   <iframe
                     src={`https://docs.google.com/viewer?url=${encodeURIComponent(activePlan.image_url)}&embedded=true`}
                     title={activePlan.name}
-                    className="w-full h-full border-0 bg-muted"
+                    className="absolute inset-0 w-full h-full border-0 bg-muted"
                     sandbox="allow-scripts allow-same-origin"
                   />
-                  {planSafetyMarkers.map(m => (
-                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
-                  ))}
-                  {planReports.map((r, idx) => (
-                    <div
-                      key={r.id}
-                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
-                      style={{
-                        left: `${r.plan_x}%`,
-                        top: `${r.plan_y}%`,
-                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-                      }}
-                    >
-                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="relative w-full min-h-full">
+                ) : (
                   <img
                     src={activePlan.image_url}
                     alt={activePlan.name}
-                    className="w-full h-auto block bg-white"
+                    className="absolute inset-0 w-full h-full object-fill bg-white"
                     style={{ filter: "contrast(1.35) brightness(1.08) saturate(0.15)" }}
                     draggable={false}
                   />
-                  {planSafetyMarkers.map(m => (
-                    <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
-                  ))}
-                  {planReports.map((r, idx) => (
-                    <div
-                      key={r.id}
-                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
-                      style={{
-                        left: `${r.plan_x}%`,
-                        top: `${r.plan_y}%`,
-                        backgroundColor: riskDotColor[r.risk_level] ?? "#888",
-                      }}
-                      title={`#${idx + 1} ${r.title}`}
-                    >
-                      <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                )}
+                {planSafetyMarkers.map(m => (
+                  <SafetyMarkerIcon key={m.id} marker={m} showDelete={false} />
+                ))}
+                {planReports.map((r, idx) => (
+                  <div
+                    key={r.id}
+                    className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    style={{
+                      left: `${r.plan_x}%`,
+                      top: `${r.plan_y}%`,
+                      backgroundColor: riskDotColor[r.risk_level] ?? "#888",
+                    }}
+                    title={`#${idx + 1} ${r.title}`}
+                  >
+                    <span className="text-[10px] font-bold text-white leading-none">{idx + 1}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
         </DialogContent>
       </Dialog>
     </div>
