@@ -223,6 +223,9 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                 </button>
               )}
             </div>
+            <button onClick={() => navigate("/profile")} className="flex items-center gap-2 text-xs text-primary-foreground/80">
+              <User className="h-3.5 w-3.5" /> {lang === "sv" ? "Redigera profil" : "Edit profile"}
+            </button>
             <button onClick={() => navigate("/privacy")} className="flex items-center gap-2 text-xs text-primary-foreground/50">
               <FileText className="h-3.5 w-3.5" /> {t("account.privacyPolicy")}
             </button>
