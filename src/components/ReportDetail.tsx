@@ -80,10 +80,15 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   };
 
   const handleOverrideRisk = (newLevel: RiskLevel) => {
+    if (newLevel === report.risk_level && report.risk_locked) return;
     onUpdate(report.id, {
       risk_level: newLevel,
-      ai_explanation: `${report.ai_explanation ?? ""}\n\n[${t("detail.adminOverride")}]`,
+      risk_locked: true,
     });
+  };
+
+  const handleUnlockRisk = () => {
+    onUpdate(report.id, { risk_locked: false });
   };
 
   const handleReassess = async () => {
