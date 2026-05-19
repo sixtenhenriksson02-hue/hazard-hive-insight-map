@@ -34,6 +34,7 @@ export interface RiskReport {
   severity_rating?: number;
   ai_explanation?: string | null;
   suggested_actions?: string[] | null;
+  risk_locked?: boolean;
   site_plan_id?: string | null;
   plan_x?: number | null;
   plan_y?: number | null;
@@ -241,7 +242,7 @@ export function useReports() {
     }
   };
 
-  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation">>) => {
+  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation" | "risk_locked">>) => {
     const finalUpdates: any = { ...updates };
     if (updates.status === "resolved") {
       finalUpdates.resolved_at = new Date().toISOString();
@@ -254,8 +255,18 @@ export function useReports() {
   };
 
   const reassessReport = async (id: string) => {
-    const report = reports.find(r => r.id === id);
-    if (!report) return;
+    // Always fetch fresh data from DB so latest edits are included
+    const { data: freshReport, error: fetchError } = await supabase
+      .from("risk_reports")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !freshReport) {
+      toast({ title: "Kunde inte hämta rapport", variant: "destructive" });
+      return;
+    }
+    const report = freshReport as RiskReport;
 
     // Fetch comments for this report to give AI context
     const { data: commentData } = await supabase
@@ -281,11 +292,19 @@ export function useReports() {
       comments,
     });
 
+    const previousLevel = report.risk_level;
+    const newLevel = assessment.risk_level as RiskLevel;
+    const isLocked = report.risk_locked === true;
+
     const updates: any = {
-      risk_level: assessment.risk_level as RiskLevel,
       ai_explanation: assessment.explanation,
       suggested_actions: assessment.suggested_actions ?? [],
     };
+
+    // Respect admin manual override: only update risk_level if not locked
+    if (!isLocked) {
+      updates.risk_level = newLevel;
+    }
 
     // If AI suggests resolving, auto-resolve
     if (assessment.should_resolve && report.status !== "resolved") {
@@ -294,6 +313,16 @@ export function useReports() {
     }
 
     await updateReport(id, updates);
+
+    // Clear toast feedback
+    const RISK_LABELS: Record<RiskLevel, string> = { low: "Låg", medium: "Medel", high: "Hög", critical: "Kritisk" };
+    if (isLocked) {
+      toast({ title: "Bedömning uppdaterad", description: "Risknivån är låst av admin — endast förklaring och åtgärder uppdaterades." });
+    } else if (previousLevel !== newLevel) {
+      toast({ title: "Ny risknivå", description: `Ändrad från ${RISK_LABELS[previousLevel]} till ${RISK_LABELS[newLevel]}.` });
+    } else {
+      toast({ title: "Bedömning uppdaterad", description: `Risknivå kvar på ${RISK_LABELS[newLevel]}. Förklaring och åtgärder uppdaterade.` });
+    }
   };
 
   const sortReports = (list: RiskReport[], sort: SortOption): RiskReport[] => {

@@ -1,0 +1,1 @@
+ALTER TABLE public.risk_reports ADD COLUMN IF NOT EXISTS risk_locked boolean NOT NULL DEFAULT false;
