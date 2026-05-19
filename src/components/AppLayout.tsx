@@ -151,6 +151,13 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
                   </div>
                   <div className="border-t border-border">
                     <button
+                      onClick={() => { setUserMenuOpen(false); navigate("/profile"); }}
+                      className="flex items-center gap-2 w-full px-4 py-3 text-xs text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      {lang === "sv" ? "Redigera profil" : "Edit profile"}
+                    </button>
+                    <button
                       onClick={() => { setUserMenuOpen(false); navigate("/privacy"); }}
                       className="flex items-center gap-2 w-full px-4 py-3 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
                     >
