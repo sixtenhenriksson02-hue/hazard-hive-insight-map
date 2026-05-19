@@ -292,6 +292,7 @@ export type Database = {
           reported_by: string | null
           resolved_at: string | null
           risk_level: string
+          risk_locked: boolean
           severity_rating: number | null
           site_plan_id: string | null
           specific_location: string | null
@@ -321,6 +322,7 @@ export type Database = {
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
+          risk_locked?: boolean
           severity_rating?: number | null
           site_plan_id?: string | null
           specific_location?: string | null
@@ -350,6 +352,7 @@ export type Database = {
           reported_by?: string | null
           resolved_at?: string | null
           risk_level?: string
+          risk_locked?: boolean
           severity_rating?: number | null
           site_plan_id?: string | null
           specific_location?: string | null
