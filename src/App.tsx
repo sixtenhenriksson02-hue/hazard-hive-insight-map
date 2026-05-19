@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 // Lazy load heavy pages
 const Index = lazy(() => import("./pages/Index"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="/auth" element={<AuthRoute />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
