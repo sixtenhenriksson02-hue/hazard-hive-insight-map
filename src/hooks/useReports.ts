@@ -34,6 +34,7 @@ export interface RiskReport {
   severity_rating?: number;
   ai_explanation?: string | null;
   suggested_actions?: string[] | null;
+  risk_locked?: boolean;
   site_plan_id?: string | null;
   plan_x?: number | null;
   plan_y?: number | null;
