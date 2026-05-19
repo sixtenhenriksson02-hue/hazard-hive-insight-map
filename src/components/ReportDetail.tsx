@@ -217,21 +217,33 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
 
           {/* Admin risk override */}
           {isAdmin && !editing && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-muted-foreground">{t("detail.overrideRisk")}:</span>
-              {RISK_LEVELS.map((level) => (
-                <button
-                  key={level}
-                  onClick={() => handleOverrideRisk(level)}
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full transition-all ${
-                    report.risk_level === level
-                      ? `${riskBadgeClass[level]} ring-2 ring-offset-1 ring-current`
-                      : `${riskBadgeClass[level]} opacity-50 hover:opacity-100`
-                  }`}
-                >
-                  {t(`risk.${level}`)}
-                </button>
-              ))}
+            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-medium">{t("detail.overrideRisk") ?? "Ändra risknivå"}:</span>
+                {report.risk_locked && (
+                  <button onClick={handleUnlockRisk} className="text-[10px] text-muted-foreground underline hover:text-foreground">
+                    Lås upp (låt AI bedöma igen)
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {RISK_LEVELS.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => handleOverrideRisk(level)}
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
+                      report.risk_level === level
+                        ? `${riskBadgeClass[level]} ring-2 ring-offset-1 ring-current`
+                        : `${riskBadgeClass[level]} opacity-40 hover:opacity-100`
+                    }`}
+                  >
+                    {t(`risk.${level}`)}
+                  </button>
+                ))}
+              </div>
+              {report.risk_locked && (
+                <p className="text-[10px] text-muted-foreground">🔒 Risknivån är låst av admin. AI kan inte ändra den vid omvärdering.</p>
+              )}
             </div>
           )}
 
