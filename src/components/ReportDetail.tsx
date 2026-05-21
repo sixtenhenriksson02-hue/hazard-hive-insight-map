@@ -4,7 +4,7 @@ import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -159,6 +159,9 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
               <span className="truncate">{showTranslated && translatedTitle ? translatedTitle.charAt(0).toUpperCase() + translatedTitle.slice(1) : report.title ? report.title.charAt(0).toUpperCase() + report.title.slice(1) : report.title}</span>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Detaljerad vy för rapport med riskbedömning, AI-stöd, kommentarer och adminåtgärder.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
