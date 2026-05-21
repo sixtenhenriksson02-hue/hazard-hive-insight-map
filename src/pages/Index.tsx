@@ -43,7 +43,12 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"reports" | "matrix" | "stats" | "documents" | "rules">("reports");
   const [statusFilter, setStatusFilter] = useState<ReportStatus | "all">("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [selectedReport, setSelectedReport] = useState<RiskReport | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+
+  const selectedReport = useMemo(
+    () => reports.find((report) => report.id === selectedReportId) ?? null,
+    [reports, selectedReportId],
+  );
 
   const visibleReports = useMemo(() => {
     let filtered = reports.filter((r) => r.status !== "resolved");
@@ -59,10 +64,7 @@ const Index = () => {
 
   return (
     <AppLayout onManageProjects={() => setShowProjects(true)} onJoinProject={() => setShowWorkerProjects(true)} onSelectReport={(reportId) => {
-        const report = reports.find(r => r.id === reportId);
-        if (report) {
-          setSelectedReport(report);
-        }
+        setSelectedReportId(reportId);
       }}>
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -150,7 +152,7 @@ const Index = () => {
                   reports={visibleReports}
                   isAdmin={isAdmin}
                   onUpdateStatus={isAdmin ? handleUpdateStatus : undefined}
-                  onSelect={setSelectedReport}
+                  onSelect={(report) => setSelectedReportId(report.id)}
                 />
               )}
             </>
@@ -173,7 +175,7 @@ const Index = () => {
       <ReportDetail
         report={selectedReport}
         open={!!selectedReport}
-        onClose={() => setSelectedReport(null)}
+        onClose={() => setSelectedReportId(null)}
         onUpdate={updateReport}
         onReassess={reassessReport}
       />
