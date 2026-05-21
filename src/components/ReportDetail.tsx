@@ -177,9 +177,10 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
           {/* AI Explanation */}
           {report.ai_explanation && (
             <div className="rounded-md border border-accent/20 bg-accent/5 p-3">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
                 <h4 className="text-xs font-semibold text-accent flex items-center gap-1">
                   <Bot className="h-3.5 w-3.5" /> {t("detail.aiAssessment")}
+                  <span className="ml-1 text-[10px] font-normal text-muted-foreground">(stödfunktion)</span>
                 </h4>
                 <div className="flex items-center gap-1">
                   {isAdmin && (
@@ -193,6 +194,11 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
               <p className="text-xs text-muted-foreground">
                 {showTranslated && translatedExplanation ? translatedExplanation : report.ai_explanation}
               </p>
+              {isAdmin && (
+                <p className="text-[10px] text-muted-foreground/80 italic mt-2">
+                  AI:n är endast ett hjälpmedel. Du som admin gör den slutgiltiga bedömningen nedan.
+                </p>
+              )}
             </div>
           )}
 
@@ -215,34 +221,51 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
             </div>
           )}
 
-          {/* Admin risk override */}
+          {/* Admin risk override — admin gör slutgiltig bedömning */}
           {isAdmin && !editing && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-xs font-medium">{t("detail.overrideRisk") ?? "Ändra risknivå"}:</span>
+            <div className="rounded-lg border-2 border-accent/40 bg-card p-4 space-y-3 shadow-sm">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div>
+                  <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                    <User className="h-4 w-4 text-accent" />
+                    Din bedömning som admin
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Klicka för att sätta risknivån själv. Detta åsidosätter AI:s förslag.
+                  </p>
+                </div>
                 {report.risk_locked && (
-                  <button onClick={handleUnlockRisk} className="text-[10px] text-muted-foreground underline hover:text-foreground">
-                    Lås upp (låt AI bedöma igen)
-                  </button>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium whitespace-nowrap">
+                    🔒 Manuellt satt
+                  </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {RISK_LEVELS.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => handleOverrideRisk(level)}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
-                      report.risk_level === level
-                        ? `${riskBadgeClass[level]} ring-2 ring-offset-1 ring-current`
-                        : `${riskBadgeClass[level]} opacity-40 hover:opacity-100`
-                    }`}
-                  >
-                    {t(`risk.${level}`)}
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {RISK_LEVELS.map((level) => {
+                  const isActive = report.risk_level === level;
+                  return (
+                    <button
+                      key={level}
+                      onClick={() => handleOverrideRisk(level)}
+                      className={`text-xs font-semibold px-3 py-2 rounded-md border-2 transition-all ${
+                        isActive
+                          ? `${riskBadgeClass[level]} border-current shadow-md scale-[1.02]`
+                          : `${riskBadgeClass[level]} border-transparent opacity-50 hover:opacity-100 hover:border-current`
+                      }`}
+                    >
+                      {t(`risk.${level}`)}
+                    </button>
+                  );
+                })}
               </div>
-              {report.risk_locked && (
-                <p className="text-[10px] text-muted-foreground">🔒 Risknivån är låst av admin. AI kan inte ändra den vid omvärdering.</p>
+              {report.risk_locked ? (
+                <button onClick={handleUnlockRisk} className="text-[11px] text-muted-foreground underline hover:text-foreground">
+                  Lås upp och låt AI bedöma igen
+                </button>
+              ) : (
+                <p className="text-[10px] text-muted-foreground">
+                  Risknivån följer AI:s bedömning. Klicka ovan för att ta över.
+                </p>
               )}
             </div>
           )}
