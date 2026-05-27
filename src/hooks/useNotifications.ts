@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 export interface Notification {
   id: string;
   user_id: string;
-  type: "new_report" | "new_comment";
+  type: "new_report" | "new_comment" | "clarification_request";
   title: string;
   message: string;
   report_id: string | null;
@@ -14,14 +14,12 @@ export interface Notification {
 }
 
 export function useNotifications() {
-  const { user, role, viewAs } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = role === "admin" && viewAs === "admin";
-
   const fetchNotifications = useCallback(async () => {
-    if (!user || !isAdmin) {
+    if (!user) {
       setNotifications([]);
       setLoading(false);
       return;
@@ -41,12 +39,12 @@ export function useNotifications() {
 
     setNotifications((data as Notification[]) ?? []);
     setLoading(false);
-  }, [user, isAdmin]);
+  }, [user]);
 
   useEffect(() => {
     fetchNotifications();
 
-    if (!user || !isAdmin) return;
+    if (!user) return;
 
     const channel = supabase
       .channel("notifications_changes")
@@ -67,7 +65,7 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, user, isAdmin]);
+  }, [fetchNotifications, user]);
 
   const markAsRead = async (id: string) => {
     await supabase.from("notifications").update({ read: true }).eq("id", id);

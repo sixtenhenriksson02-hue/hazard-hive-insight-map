@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
+import { useClarifications } from "@/hooks/useClarifications";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -8,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2 } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2, HelpCircle } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
@@ -32,7 +33,9 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const { lang, t } = useLanguage();
   const isAdmin = viewAs === "admin";
   const { comments, addComment } = useComments(report?.id ?? null);
+  const { messages: clarifications, sendMessage: sendClarification } = useClarifications(report?.id ?? null);
   const [newComment, setNewComment] = useState("");
+  const [newClarification, setNewClarification] = useState("");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", location: "", category: "" });
   const [reassessing, setReassessing] = useState(false);
@@ -338,6 +341,76 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
               )}
             </>
           )}
+
+          {/* Clarification thread (private admin ↔ reporter) */}
+          {(() => {
+            const myId = user?.id;
+            const isReporter = report.reported_by === myId;
+            const lastAdminSenderId = [...clarifications].reverse().find((m) => m.sender_id !== report.reported_by)?.sender_id;
+            const canSend = isAdmin || (isReporter && !!lastAdminSenderId);
+            if (!isAdmin && !isReporter) return null;
+            if (!isAdmin && clarifications.length === 0) return null;
+
+            const handleSend = async () => {
+              if (!newClarification.trim()) return;
+              const recipient = isAdmin ? report.reported_by : lastAdminSenderId;
+              if (!recipient) return;
+              await sendClarification(newClarification, recipient);
+              setNewClarification("");
+            };
+
+            return (
+              <div className="border-t border-border pt-4">
+                <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-1">
+                  <HelpCircle className="h-4 w-4 text-accent" /> Förtydligande (privat)
+                </h3>
+                <p className="text-[11px] text-muted-foreground mb-3">
+                  {isAdmin
+                    ? "Be rapportörens att förtydliga. Endast du och rapportören ser detta."
+                    : "Privat meddelande från admin. Endast du och admin ser detta."}
+                </p>
+                <div className="space-y-2 max-h-48 overflow-y-auto mb-3">
+                  {clarifications.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Inga meddelanden ännu.</p>
+                  )}
+                  {clarifications.map((m) => {
+                    const mine = m.sender_id === myId;
+                    return (
+                      <div
+                        key={m.id}
+                        className={`rounded-md p-3 text-sm ${
+                          mine ? "bg-accent/10 ml-6" : "bg-muted mr-6"
+                        }`}
+                      >
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-0.5">
+                          {mine ? "Du" : m.sender_name}
+                        </p>
+                        <p className="whitespace-pre-wrap">{m.content}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {new Date(m.created_at).toLocaleString("sv-SE")}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {canSend && report.reported_by && (
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder={isAdmin ? "Vad behöver förtydligas?" : "Ditt svar..."}
+                      value={newClarification}
+                      onChange={(e) => setNewClarification(e.target.value)}
+                      rows={2}
+                      className="text-sm"
+                    />
+                    <Button onClick={handleSend} size="icon" className="bg-accent text-accent-foreground shrink-0 self-end">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
 
           {/* Comments */}
           <div className="border-t border-border pt-4">
