@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
+import { useClarifications } from "@/hooks/useClarifications";
 import { CATEGORIES_I18N } from "@/lib/translations";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -8,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2 } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2, HelpCircle } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
@@ -32,7 +33,9 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const { lang, t } = useLanguage();
   const isAdmin = viewAs === "admin";
   const { comments, addComment } = useComments(report?.id ?? null);
+  const { messages: clarifications, sendMessage: sendClarification } = useClarifications(report?.id ?? null);
   const [newComment, setNewComment] = useState("");
+  const [newClarification, setNewClarification] = useState("");
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ title: "", description: "", location: "", category: "" });
   const [reassessing, setReassessing] = useState(false);
