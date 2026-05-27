@@ -243,7 +243,7 @@ export function useReports() {
     }
   };
 
-  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation" | "risk_locked">>) => {
+  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation" | "risk_locked" | "due_date">>) => {
     const finalUpdates: any = { ...updates };
     if (updates.status === "resolved") {
       finalUpdates.resolved_at = new Date().toISOString();
