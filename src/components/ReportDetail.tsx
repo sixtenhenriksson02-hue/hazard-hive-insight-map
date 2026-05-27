@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2, HelpCircle } from "lucide-react";
+import { MapPin, Calendar, User, MessageSquare, Pencil, Send, Building2, AlertTriangle, Bot, RefreshCw, CheckCircle2, Languages, Loader2, HelpCircle, CalendarClock, X } from "lucide-react";
 
 interface ReportDetailProps {
   report: RiskReport | null;
@@ -275,6 +275,80 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
               )}
             </div>
           )}
+
+          {/* Deadline / Tidsfrist */}
+          {(() => {
+            const isOpen = report.status !== "resolved";
+            const due = report.due_date ? new Date(report.due_date) : null;
+            const now = new Date();
+            const overdue = !!due && isOpen && due.getTime() < now.getTime();
+            const dueSoon = !!due && isOpen && !overdue && (due.getTime() - now.getTime()) < 1000 * 60 * 60 * 24 * 2;
+
+            const containerClass = overdue
+              ? "rounded-lg border-2 border-destructive bg-destructive/10 p-4 space-y-2 animate-pulse-soft"
+              : dueSoon
+                ? "rounded-lg border-2 border-risk-medium/60 bg-risk-medium/5 p-4 space-y-2"
+                : "rounded-lg border border-border bg-card p-4 space-y-2";
+
+            if (!isAdmin && !due) return null;
+
+            return (
+              <div className={containerClass}>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                    <CalendarClock className={`h-4 w-4 ${overdue ? "text-destructive" : "text-accent"}`} />
+                    Tidsfrist för åtgärd
+                  </h4>
+                  {overdue && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-destructive text-destructive-foreground uppercase tracking-wide">
+                      🔥 Försenad — prio
+                    </span>
+                  )}
+                  {dueSoon && !overdue && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-risk-medium/20 text-risk-medium uppercase tracking-wide">
+                      Snart deadline
+                    </span>
+                  )}
+                </div>
+
+                {due && (
+                  <p className={`text-xs ${overdue ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                    Ska vara löst senast: {due.toLocaleString("sv-SE", { dateStyle: "medium", timeStyle: "short" })}
+                  </p>
+                )}
+
+                {isAdmin && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Input
+                      type="datetime-local"
+                      className="h-8 text-xs"
+                      value={due ? new Date(due.getTime() - due.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        onUpdate(report.id, { due_date: val ? new Date(val).toISOString() : null });
+                      }}
+                    />
+                    {due && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => onUpdate(report.id, { due_date: null })}
+                        title="Ta bort tidsfrist"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {!due && isAdmin && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Sätt en deadline — om risken inte är löst i tid markeras hela rutan röd som prio.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {editing ? (
             <div className="space-y-3">

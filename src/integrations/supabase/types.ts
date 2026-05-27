@@ -310,6 +310,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          due_date: string | null
           id: string
           image_url: string | null
           injury_type: string | null
@@ -340,6 +341,7 @@ export type Database = {
           category: string
           created_at?: string
           description: string
+          due_date?: string | null
           id?: string
           image_url?: string | null
           injury_type?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          due_date?: string | null
           id?: string
           image_url?: string | null
           injury_type?: string | null
