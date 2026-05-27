@@ -39,7 +39,7 @@ export function useNotifications() {
 
     setNotifications((data as Notification[]) ?? []);
     setLoading(false);
-  }, [user, isAdmin]);
+  }, [user]);
 
   useEffect(() => {
     fetchNotifications();
