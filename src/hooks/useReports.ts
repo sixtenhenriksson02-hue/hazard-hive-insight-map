@@ -38,6 +38,7 @@ export interface RiskReport {
   site_plan_id?: string | null;
   plan_x?: number | null;
   plan_y?: number | null;
+  due_date?: string | null;
 }
 
 export interface ReportComment {
