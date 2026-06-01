@@ -25,6 +25,12 @@ export default function ProjectRules() {
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { deadlineDays, setDeadlineDays } = useProjectDeadline();
+  const [deadlineInput, setDeadlineInput] = useState<string>("");
+
+  useEffect(() => {
+    setDeadlineInput(deadlineDays != null ? String(deadlineDays) : "");
+  }, [deadlineDays]);
 
   const [rules, setRules] = useState<ProjectRule[]>([]);
   const [loading, setLoading] = useState(false);
