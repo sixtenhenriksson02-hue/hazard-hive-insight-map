@@ -155,6 +155,7 @@ const Index = () => {
                   isAdmin={isAdmin}
                   onUpdateStatus={isAdmin ? handleUpdateStatus : undefined}
                   onSelect={(report) => setSelectedReportId(report.id)}
+                  deadlineDays={deadlineDays}
                 />
               )}
             </>
