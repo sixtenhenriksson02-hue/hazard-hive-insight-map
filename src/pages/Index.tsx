@@ -181,6 +181,7 @@ const Index = () => {
         onClose={() => setSelectedReportId(null)}
         onUpdate={updateReport}
         onReassess={reassessReport}
+        deadlineDays={deadlineDays}
       />
 
       <ProjectManager open={showProjects} onClose={() => setShowProjects(false)} />
