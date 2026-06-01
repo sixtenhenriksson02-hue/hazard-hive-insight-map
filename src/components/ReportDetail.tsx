@@ -17,6 +17,7 @@ interface ReportDetailProps {
   onClose: () => void;
   onUpdate: (id: string, updates: any) => void;
   onReassess?: (id: string) => Promise<void>;
+  deadlineDays?: number | null;
 }
 
 const riskBadgeClass: Record<string, string> = {
