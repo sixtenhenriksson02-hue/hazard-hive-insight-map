@@ -36,6 +36,7 @@ const Index = () => {
   const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
   const { viewAs, role, activeProjectId } = useAuth();
   const { t } = useLanguage();
+  const { deadlineDays } = useProjectDeadline();
   const isAdmin = viewAs === "admin";
 
   const [showForm, setShowForm] = useState(false);
