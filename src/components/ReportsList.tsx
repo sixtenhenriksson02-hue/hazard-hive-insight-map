@@ -33,7 +33,8 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
   return (
     <div className="space-y-1.5">
       {reports.map((report, i) => {
-        const overdue = isOverdue(report);
+        const overdue = isReportOverdue(report.created_at, report.status, deadlineDays);
+        const due = computeDueDate(report.created_at, deadlineDays);
         return (
           <div
             key={report.id}
