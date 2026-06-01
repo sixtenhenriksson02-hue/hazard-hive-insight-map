@@ -246,6 +246,7 @@ export type Database = {
           archived: boolean
           created_at: string
           created_by: string
+          default_deadline_days: number | null
           id: string
           invite_code: string
           name: string
@@ -254,6 +255,7 @@ export type Database = {
           archived?: boolean
           created_at?: string
           created_by: string
+          default_deadline_days?: number | null
           id?: string
           invite_code?: string
           name: string
@@ -262,6 +264,7 @@ export type Database = {
           archived?: boolean
           created_at?: string
           created_by?: string
+          default_deadline_days?: number | null
           id?: string
           invite_code?: string
           name?: string
