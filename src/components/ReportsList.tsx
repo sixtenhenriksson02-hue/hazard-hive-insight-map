@@ -69,10 +69,10 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                   {report.description}
                 </span>
               )}
-              {report.due_date && report.status !== "resolved" && (
+              {isAdmin && due && report.status !== "resolved" && (
                 <span className={`text-[10px] block mt-0.5 ${overdue ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
                   {overdue ? "Försenad sedan " : "Deadline: "}
-                  {new Date(report.due_date).toLocaleDateString("sv-SE")}
+                  {due.toLocaleDateString("sv-SE")}
                 </span>
               )}
             </div>
