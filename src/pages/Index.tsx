@@ -9,6 +9,7 @@ import WorkerProjectManager from "@/components/WorkerProjectManager";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useProjectDeadline } from "@/hooks/useProjectDeadline";
 import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
