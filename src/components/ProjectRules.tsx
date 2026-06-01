@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { Plus, Pencil, Trash2, BookOpen, ChevronDown, ChevronUp, Upload, FileText, ExternalLink } from "lucide-react";
+import { useProjectDeadline } from "@/hooks/useProjectDeadline";
+import { Plus, Pencil, Trash2, BookOpen, ChevronDown, ChevronUp, Upload, FileText, ExternalLink, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,12 @@ export default function ProjectRules() {
   const { t } = useLanguage();
   const isAdmin = viewAs === "admin";
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { deadlineDays, setDeadlineDays } = useProjectDeadline();
+  const [deadlineInput, setDeadlineInput] = useState<string>("");
+
+  useEffect(() => {
+    setDeadlineInput(deadlineDays != null ? String(deadlineDays) : "");
+  }, [deadlineDays]);
 
   const [rules, setRules] = useState<ProjectRule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -151,6 +158,66 @@ export default function ProjectRules() {
           </Button>
         )}
       </div>
+
+      {/* Standard-deadline (admin only) */}
+      {isAdmin && (
+        <div className="border border-border rounded-xl p-4 bg-card space-y-3">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-accent" />
+            <h4 className="text-sm font-semibold text-foreground">Standard-deadline för risker</h4>
+            <span className="text-[10px] uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">Endast admin</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Antal dagar efter att en risk rapporterats som den ska vara åtgärdad. Risker som inte är lösta i tid markeras röda som prio. Gäller alla risker i projektet.
+          </p>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              max={365}
+              placeholder="t.ex. 7"
+              value={deadlineInput}
+              onChange={(e) => setDeadlineInput(e.target.value)}
+              className="w-32 h-9"
+            />
+            <span className="text-xs text-muted-foreground">dagar</span>
+            <Button
+              size="sm"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              onClick={() => {
+                const n = parseInt(deadlineInput, 10);
+                if (!deadlineInput.trim()) {
+                  setDeadlineDays(null);
+                } else if (!isNaN(n) && n > 0 && n <= 365) {
+                  setDeadlineDays(n);
+                } else {
+                  toast.error("Ange ett tal mellan 1 och 365.");
+                }
+              }}
+            >
+              Spara
+            </Button>
+            {deadlineDays != null && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setDeadlineInput("");
+                  setDeadlineDays(null);
+                }}
+              >
+                Ta bort
+              </Button>
+            )}
+          </div>
+          {deadlineDays != null && (
+            <p className="text-[11px] text-muted-foreground">
+              Aktiv: <span className="font-medium text-foreground">{deadlineDays} dagar</span> efter rapportdatum.
+            </p>
+          )}
+        </div>
+      )}
+
 
       {/* Add/Edit form */}
       {showForm && isAdmin && (

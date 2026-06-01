@@ -9,6 +9,7 @@ import WorkerProjectManager from "@/components/WorkerProjectManager";
 import { useReports, RiskReport, ReportStatus, SortOption } from "@/hooks/useReports";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useProjectDeadline } from "@/hooks/useProjectDeadline";
 import { Plus, List, Grid3X3, BarChart3, FolderPlus, MapPin, FileText, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -35,6 +36,7 @@ const Index = () => {
   const { reports, loading, addReport, updateReport, reassessReport, sortReports } = useReports();
   const { viewAs, role, activeProjectId } = useAuth();
   const { t } = useLanguage();
+  const { deadlineDays } = useProjectDeadline();
   const isAdmin = viewAs === "admin";
 
   const [showForm, setShowForm] = useState(false);
@@ -153,6 +155,7 @@ const Index = () => {
                   isAdmin={isAdmin}
                   onUpdateStatus={isAdmin ? handleUpdateStatus : undefined}
                   onSelect={(report) => setSelectedReportId(report.id)}
+                  deadlineDays={deadlineDays}
                 />
               )}
             </>
@@ -178,6 +181,7 @@ const Index = () => {
         onClose={() => setSelectedReportId(null)}
         onUpdate={updateReport}
         onReassess={reassessReport}
+        deadlineDays={deadlineDays}
       />
 
       <ProjectManager open={showProjects} onClose={() => setShowProjects(false)} />

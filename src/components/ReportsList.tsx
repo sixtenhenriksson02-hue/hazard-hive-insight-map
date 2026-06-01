@@ -1,12 +1,14 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ChevronRight, Flame } from "lucide-react";
+import { computeDueDate, isReportOverdue } from "@/hooks/useProjectDeadline";
 
 interface ReportsListProps {
   reports: RiskReport[];
   isAdmin: boolean;
   onUpdateStatus?: (id: string, status: ReportStatus) => void;
   onSelect: (report: RiskReport) => void;
+  deadlineDays?: number | null;
 }
 const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
@@ -17,10 +19,7 @@ const riskColor: Record<string, string> = {
   critical: "bg-risk-critical",
 };
 
-const isOverdue = (r: RiskReport) =>
-  !!r.due_date && r.status !== "resolved" && new Date(r.due_date).getTime() < Date.now();
-
-export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect }: ReportsListProps) {
+export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect, deadlineDays }: ReportsListProps) {
   const { t } = useLanguage();
 
   if (reports.length === 0) {
@@ -34,7 +33,8 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
   return (
     <div className="space-y-1.5">
       {reports.map((report, i) => {
-        const overdue = isOverdue(report);
+        const overdue = isReportOverdue(report.created_at, report.status, deadlineDays);
+        const due = computeDueDate(report.created_at, deadlineDays);
         return (
           <div
             key={report.id}
@@ -69,10 +69,10 @@ export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect
                   {report.description}
                 </span>
               )}
-              {report.due_date && report.status !== "resolved" && (
+              {isAdmin && due && report.status !== "resolved" && (
                 <span className={`text-[10px] block mt-0.5 ${overdue ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
                   {overdue ? "Försenad sedan " : "Deadline: "}
-                  {new Date(report.due_date).toLocaleDateString("sv-SE")}
+                  {due.toLocaleDateString("sv-SE")}
                 </span>
               )}
             </div>
