@@ -1,12 +1,14 @@
 import { RiskReport, ReportStatus } from "@/hooks/useReports";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ChevronRight, Flame } from "lucide-react";
+import { computeDueDate, isReportOverdue } from "@/hooks/useProjectDeadline";
 
 interface ReportsListProps {
   reports: RiskReport[];
   isAdmin: boolean;
   onUpdateStatus?: (id: string, status: ReportStatus) => void;
   onSelect: (report: RiskReport) => void;
+  deadlineDays?: number | null;
 }
 const capitalize = (s: string) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
@@ -17,10 +19,7 @@ const riskColor: Record<string, string> = {
   critical: "bg-risk-critical",
 };
 
-const isOverdue = (r: RiskReport) =>
-  !!r.due_date && r.status !== "resolved" && new Date(r.due_date).getTime() < Date.now();
-
-export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect }: ReportsListProps) {
+export default function ReportsList({ reports, isAdmin, onUpdateStatus, onSelect, deadlineDays }: ReportsListProps) {
   const { t } = useLanguage();
 
   if (reports.length === 0) {
