@@ -29,7 +29,7 @@ const riskBadgeClass: Record<string, string> = {
 
 const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
 
-export default function ReportDetail({ report, open, onClose, onUpdate, onReassess }: ReportDetailProps) {
+export default function ReportDetail({ report, open, onClose, onUpdate, onReassess, deadlineDays }: ReportDetailProps) {
   const { viewAs, user } = useAuth();
   const { lang, t } = useLanguage();
   const isAdmin = viewAs === "admin";
