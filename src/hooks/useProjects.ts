@@ -27,7 +27,12 @@ export function useProjects() {
 
   useEffect(() => {
     fetchProjects();
+    const handler = () => fetchProjects();
+    window.addEventListener("lovable:projects-changed", handler);
+    return () => window.removeEventListener("lovable:projects-changed", handler);
   }, [fetchProjects]);
+
+  const notifyChange = () => window.dispatchEvent(new Event("lovable:projects-changed"));
 
   const createProject = async (name: string, userId: string) => {
     const { error } = await supabase.from("projects").insert({ name, created_by: userId });
@@ -36,6 +41,7 @@ export function useProjects() {
       return false;
     }
     await fetchProjects();
+    notifyChange();
     return true;
   };
 
