@@ -31,6 +31,15 @@ export default function AppLayout({ children, onManageProjects, onJoinProject, o
     ? projects.filter(p => !(p as any).archived)
     : userProjects.map(up => ({ id: up.project_id, name: up.project_name }));
 
+  // Auto-switch if active project was archived/removed
+  useEffect(() => {
+    if (!activeProjectId) return;
+    if (availableProjects.length === 0) return;
+    if (!availableProjects.some(p => p.id === activeProjectId)) {
+      setActiveProjectId(availableProjects[0].id);
+    }
+  }, [activeProjectId, availableProjects, setActiveProjectId]);
+
   // Close user menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
