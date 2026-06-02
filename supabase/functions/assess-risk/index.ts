@@ -5,6 +5,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Deterministisk riskmatris (sannolikhet 1-5 × konsekvens 1-5)
+function matrixToLevel(prob: number, cons: number): { level: string; severity: number } {
+  const p = Math.max(1, Math.min(5, Math.round(prob)));
+  const c = Math.max(1, Math.min(5, Math.round(cons)));
+  const score = p * c;
+  let level = "low";
+  if (c >= 5) level = "critical";              // Livsfara/permanent skada → alltid minst critical
+  else if (score >= 15 || c === 4) level = "high";
+  else if (score >= 8) level = "medium";
+  else if (score >= 4) level = "medium";
+  else level = "low";
+  // Override: hög konsekvens väger tyngre
+  if (c === 4 && p >= 3) level = "critical";
+  return { level, severity: c };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -16,104 +32,123 @@ serve(async (req) => {
 
     const hasComments = comments && comments.length > 0;
     const commentsText = hasComments
-      ? `\nKommentarer på rapporten:\n${comments.map((c: string) => `- ${c}`).join("\n")}`
+      ? `\nKOMMENTARSHISTORIK (kronologiskt):\n${comments.map((c: string, i: number) => `${i + 1}. ${c}`).join("\n")}`
       : "";
 
     const isImprovement = report_type === "improvement";
 
     const prompt = isImprovement
-      ? `Du är en erfaren arbetsmiljöingenjör. En medarbetare har lämnat ett förbättringsförslag för arbetsplatsen.
+      ? `Du är en erfaren arbetsmiljöingenjör. En medarbetare har lämnat ett förbättringsförslag.
 
 FÖRSLAG:
 - Beskrivning: ${description}
 - Kategori: ${category}
-- Byggnad/Projekt: ${building || "Ej angivet"}
-- Specifik plats: ${specific_location || "Ej angivet"}
+- Plats: ${building || "Ej angivet"} / ${specific_location || "Ej angivet"}
 
 INSTRUKTIONER:
-1. Ge en kort, tydlig titel (max 8 ord) som sammanfattar förslaget
-2. Förklara varför detta är ett bra förslag och vilka risker det kan förebygga (3-5 meningar)
-3. Ge 2-4 konkreta steg för att implementera förslaget, sorterade efter prioritet, utan prefix eller numrering`
-      : `Du är en certifierad arbetsmiljöingenjör (SAM/AFS) med 25+ års erfarenhet inom svensk bygg- och anläggningsbransch.
+1. Kort, tydlig titel (max 8 ord).
+2. 3-5 meningar: varför förslaget är värdefullt och vilka risker det förebygger.
+3. 2-4 konkreta implementeringssteg, viktigaste först, utan numrering eller prefix.`
+      : `Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS, 25+ års byggerfarenhet). Du gör KONSEKVENTA, MOTIVERADE bedömningar enligt en formell riskmatris. Du hittar inte på fakta — om information saknas, skriv det.
 
-RAPPORT ATT BEDÖMA:
+RAPPORT:
 - Typ: ${report_type === "injury" ? "SKADERAPPORT (inträffad olycka)" : "RISKOBSERVATION (potentiell risk)"}
 - Beskrivning: ${description}
 - Kategori: ${category}
-- Byggnad/Projekt: ${building || "Ej angivet"}
-- Specifik plats: ${specific_location || "Ej angivet"}
+- Plats: ${building || "Ej angivet"} / ${specific_location || "Ej angivet"}
 ${report_type === "injury" ? `- Skadad kroppsdel: ${body_part || "Ej angivet"}
 - Skadetyp: ${injury_type || "Ej angivet"}
 - Sjukvård krävdes: ${medical_care_required ? "Ja" : "Nej"}
 - Frånvaro: ${absence_required ? `Ja, ${absence_days || 0} dagar` : "Nej"}` : ""}
 ${commentsText}
 
-RISKNIVÅER (var noggrann och konsekvent):
-• critical – Livsfara, fallrisk >2m, ras/kollaps, elolycka >230V, akutsjukvård, risk för permanent skada
-• high – Allvarlig skaderisk, bristande skyddsutrustning, upprepade incidenter, frånvaro >3 dagar, risk för frakturer/stickskador
-• medium – Lättare skaderisk, brister i ordning/skyltning, 1-3 dagars frånvaro, halkrisker, ergonomiska brister
-• low – Minimal skaderisk, enkelt åtgärdat, ingen frånvaro, mindre ordningsbrister
+═══════════════════════════════════════════
+RISKMATRIS — använd denna systematiskt:
 
-ALLVARLIGHETSGRAD (1-5): 1=Obetydlig, 2=Lindrig, 3=Måttlig, 4=Allvarlig, 5=Livsfara/permanent skada
+SANNOLIKHET (1-5) — hur troligt att händelsen inträffar/upprepas:
+1 = Mycket osannolik (enstaka teoretisk risk, kräver flera samtidiga fel)
+2 = Osannolik (kan ske men sällsynt, < 1 gång/år på arbetsplatsen)
+3 = Möjlig (kan ske enstaka gång under projektet)
+4 = Sannolik (sker regelbundet om inget åtgärdas, månadsvis)
+5 = Mycket sannolik (sker ofta/dagligen, eller har redan inträffat upprepade gånger)
 
-VIKTIGA BEDÖMNINGSREGLER:
-- Skaderapporter med sjukvård = minst "high"
-- Skaderapporter med frånvaro >3 dagar = "critical" eller "high"
-- Fallrisker från höjd >2m = alltid "critical"
-- El-relaterade risker >230V = alltid "critical"
-- Bristande fallskydd/skyddsräcken = minst "high"
-- Klämrisker vid tunga maskiner = minst "high"
+KONSEKVENS (1-5) — värsta rimliga utfall om händelsen sker:
+1 = Obetydlig (ingen skada eller försumbar)
+2 = Lindrig (första hjälpen, ingen frånvaro)
+3 = Måttlig (sjukvård, 1-3 dagars frånvaro, läker fullt)
+4 = Allvarlig (fraktur, > 3 dagars frånvaro, risk för bestående men)
+5 = Katastrofal (livshotande, permanent invaliditet, dödsfall)
 
-${hasComments ? `KOMMENTARSBEDÖMNING:
-- Om kommentarer bekräftar att risken är åtgärdad ("fixat", "reparerat", "bytt ut") → sänk till "low", should_resolve=true
-- Om temporär åtgärd → sänk ett steg, should_resolve=false
-- "Vi tittar på det" räknas INTE som åtgärdat` : ""}
+ABSOLUTA REGLER (override matrisen):
+• Fall från höjd > 2 m utan fullgott fallskydd → konsekvens ≥ 4
+• Spänning > 230 V utan brytare/jordfelsbrytare → konsekvens ≥ 4
+• Ras-/kollapsrisk i schakt, ställning eller bjälklag → konsekvens = 5
+• Klämrisk vid lyftkran/maskin med kroppsdel i riskzon → konsekvens ≥ 4
+• Skaderapport där sjukvård krävts → konsekvens ≥ 3
+• Skaderapport med frånvaro > 3 dagar → konsekvens ≥ 4
+• Dödsfall eller livshotande skada → konsekvens = 5, sannolikhet = 5
 
-INSTRUKTIONER:
-1. Ge en kort, tydlig titel (max 8 ord) som sammanfattar risken/händelsen
-2. Förklara specifikt vad risken är och varför du valt den risknivån (3-5 meningar). Referera till AFS-föreskrifter vid allvarliga risker.
-3. Ge 2-4 konkreta åtgärder som en platschef kan genomföra direkt, sorterade efter prioritet, utan prefix eller numrering`;
+KATEGORIVÄGLEDNING:
+• Fallskydd, ställning, takarbete → titta särskilt på höjd och fallskyddsåtgärder
+• El → spänning, jordning, kabelskick, IP-klass
+• Brand → brännbart material, heta arbeten, utrymning, släckutrustning
+• Kemikalier → SDB, ventilation, PPE, exponeringstid
+• Maskiner/lyft → CE, certifierad förare, last, klämzoner
+• Ergonomi → upprepning, tunga lyft (> 25 kg), arbetsställning
+
+${hasComments ? `KOMMENTARSBEDÖMNING (viktigt):
+• Endast kommentarer som tydligt anger ÅTGÄRDAD ("fixat", "bytt ut", "monterat skydd", "avspärrat") sänker nivån.
+• Vaga utsagor ("vi tittar på det", "ska kollas") räknas EJ som åtgärd.
+• Om sista kommentaren bekräftar permanent åtgärd → should_resolve=true och sänk till "low".
+• Tillfälliga åtgärder ("avspärrat tills i morgon") → sänk ETT steg men should_resolve=false.
+` : ""}
+ARBETSFLÖDE (gör i denna ordning):
+1. Identifiera vad risken/händelsen konkret är (en mening, internt).
+2. Sätt sannolikhet 1-5 enligt definitionerna ovan.
+3. Sätt konsekvens 1-5 enligt definitionerna + absoluta regler.
+4. Skriv en titel på max 8 ord som är specifik (inkludera plats om angiven).
+5. Skriv förklaringen: vad risken är, varför du satte just dessa siffror, AFS-referens vid allvarliga risker (t.ex. AFS 1981:14 Skydd mot skada genom fall, AFS 2014:26 Berg- och gruvarbete, AFS 2020:1 Arbetsplatsens utformning).
+6. Föreslå 2-4 åtgärder en platschef kan göra DIRECT idag. Sortera viktigast först. Inga prefix, ingen numrering.`;
 
     const toolProperties: Record<string, unknown> = {
       generated_title: {
         type: "string",
-        description: isImprovement
-          ? "En kort, tydlig titel på max 8 ord som sammanfattar förbättringsförslaget"
-          : "En kort, tydlig titel på max 8 ord som sammanfattar risken eller händelsen. Exempelvis: 'Lös kabel vid byggställning plan 3'",
+        description: "Kort, specifik titel (max 8 ord). Inkludera plats om angiven. Exempel: 'Lös kabel vid byggställning plan 3'.",
       },
-      risk_level: {
-        type: "string",
-        enum: isImprovement ? ["low"] : ["low", "medium", "high", "critical"],
-        description: isImprovement ? "Alltid 'low' för förbättringsförslag" : "Bedömd risknivå baserad på bedömningsreglerna ovan",
+      probability: {
+        type: "number",
+        description: isImprovement ? "Alltid 1 för förbättringsförslag." : "Sannolikhet 1-5 enligt definitionerna i prompten. Var konsekvent.",
+      },
+      consequence: {
+        type: "number",
+        description: isImprovement ? "Alltid 1 för förbättringsförslag." : "Konsekvens 1-5 enligt definitionerna + absoluta regler.",
       },
       explanation: {
         type: "string",
         description: isImprovement
-          ? "Förklaring på svenska (3-5 meningar) som beskriver varför förslaget är värdefullt och vilka risker det kan förebygga"
-          : "Förklaring på svenska (3-5 meningar) som identifierar risken, motiverar nivån med hänvisning till AFS-krav, och beskriver potentiella konsekvenser",
-      },
-      severity_rating: {
-        type: "number",
-        description: isImprovement ? "Alltid 1 för förbättringsförslag" : "Allvarlighetsgrad 1-5 baserad på konsekvensanalys",
+          ? "3-5 meningar: varför förslaget är värdefullt och vilka risker det förebygger."
+          : "3-5 meningar: vad risken är, motivering av sannolikhet/konsekvens, AFS-referens vid allvarlig risk, potentiella konsekvenser. Var konkret och referera till detaljer i rapporten.",
       },
       suggested_actions: {
         type: "array",
         items: { type: "string" },
-        description: isImprovement
-          ? "2-4 konkreta steg för att implementera förslaget. Skriv direkt utan prefix eller numrering."
-          : "2-4 konkreta åtgärder på svenska som en platschef kan genomföra omedelbart. Skriv bara åtgärden direkt utan prefix, numrering eller prioritetsmarkeringar. Sortera med viktigaste först.",
+        description: "2-4 konkreta åtgärder, viktigast först. Inga prefix, ingen numrering, inga prioritetsmarkeringar. Varje åtgärd ska vara genomförbar av platschef idag.",
       },
     };
 
-    const required = ["generated_title", "risk_level", "explanation", "severity_rating", "suggested_actions"];
+    const required = ["generated_title", "probability", "consequence", "explanation", "suggested_actions"];
 
     if (hasComments) {
       toolProperties.should_resolve = {
         type: "boolean",
-        description: "true ENDAST om kommentarer tydligt bekräftar att risken är helt eliminerad.",
+        description: "true ENDAST om senaste kommentar tydligt bekräftar permanent åtgärd. Vaga utsagor → false.",
       };
       required.push("should_resolve");
     }
+
+    const systemMsg = isImprovement
+      ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag konstruktivt. Svara ALLTID via assess_risk-verktyget."
+      : "Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS). Gör formella, konsekventa riskmatrisbedömningar. Hitta inte på fakta. Svara ALLTID via assess_risk-verktyget.";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -122,9 +157,9 @@ INSTRUKTIONER:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: [
-          { role: "system", content: isImprovement ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag och ge konstruktiv feedback. Svara ALLTID med assess_risk-verktyget." : "Du är Sveriges mest erfarne arbetsmiljöingenjör med djup kunskap om AFS-standarder och svensk byggindustri. Gör konsekventa, motiverade riskbedömningar. Var särskilt uppmärksam på allvarliga risker som fall från höjd, el, klämrisker och bristande skyddsutrustning. Referera till specifika detaljer i rapporten. Svara ALLTID med assess_risk-verktyget." },
+          { role: "system", content: systemMsg },
           { role: "user", content: prompt },
         ],
         tools: [
@@ -132,7 +167,7 @@ INSTRUKTIONER:
             type: "function",
             function: {
               name: "assess_risk",
-              description: "Strukturerad riskbedömning av arbetsplatsrapporten",
+              description: "Strukturerad riskbedömning enligt riskmatris",
               parameters: {
                 type: "object",
                 properties: toolProperties,
@@ -143,6 +178,7 @@ INSTRUKTIONER:
           },
         ],
         tool_choice: { type: "function", function: { name: "assess_risk" } },
+        reasoning: { effort: "medium" },
       }),
     });
 
@@ -171,7 +207,33 @@ INSTRUKTIONER:
       throw new Error("No tool call in response");
     }
 
-    const assessment = JSON.parse(toolCall.function.arguments);
+    const raw = JSON.parse(toolCall.function.arguments);
+
+    // Härled risk_level + severity deterministiskt från matrisen
+    let risk_level: string;
+    let severity_rating: number;
+    if (isImprovement) {
+      risk_level = "low";
+      severity_rating = 1;
+    } else {
+      const { level, severity } = matrixToLevel(
+        Number(raw.probability) || 3,
+        Number(raw.consequence) || 3,
+      );
+      risk_level = level;
+      severity_rating = severity;
+    }
+
+    const assessment = {
+      generated_title: raw.generated_title,
+      risk_level,
+      severity_rating,
+      probability: Number(raw.probability) || null,
+      consequence: Number(raw.consequence) || null,
+      explanation: raw.explanation,
+      suggested_actions: raw.suggested_actions ?? [],
+      ...(hasComments ? { should_resolve: !!raw.should_resolve } : {}),
+    };
 
     return new Response(JSON.stringify(assessment), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
