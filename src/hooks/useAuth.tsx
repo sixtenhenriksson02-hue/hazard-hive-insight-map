@@ -178,11 +178,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    const projectsChanged = () => { if (user) loadUserProjects(user.id); };
+    window.addEventListener("lovable:projects-changed", projectsChanged);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener("lovable:projects-changed", projectsChanged);
     };
-  }, []);
+  }, [user, loadUserProjects]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
