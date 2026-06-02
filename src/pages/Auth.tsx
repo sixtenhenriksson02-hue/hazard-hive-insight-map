@@ -175,13 +175,13 @@ export default function Auth() {
             )}
 
             <div>
-              <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
+              <label htmlFor="auth-email" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
+              <Input id="auth-email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.password")}</label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              <label htmlFor="auth-password" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.password")}</label>
+              <Input id="auth-password" name="password" type="password" autoComplete={isLogin ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
             </div>
 
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
