@@ -94,6 +94,7 @@ export function useProjects() {
       return false;
     }
     await fetchProjects();
+    notifyChange();
     return true;
   };
 
