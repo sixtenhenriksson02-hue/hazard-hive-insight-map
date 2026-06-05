@@ -150,24 +150,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let currentUserId: string | null = null;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      if (u) {
-        loadUserData(u).finally(() => mounted && setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
-    });
-
+    // Set up listener FIRST (Supabase best practice)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       const u = session?.user ?? null;
       setUser(u);
+      currentUserId = u?.id ?? null;
       if (u) {
-        loadUserData(u);
+        // Defer to avoid deadlock inside the callback
+        setTimeout(() => { if (mounted) loadUserData(u); }, 0);
       } else {
         setRole("worker");
         setDisplayName("");
@@ -178,7 +171,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    const projectsChanged = () => { if (user) loadUserProjects(user.id); };
+    // Then check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      const u = session?.user ?? null;
+      setUser(u);
+      currentUserId = u?.id ?? null;
+      if (u) {
+        loadUserData(u).finally(() => mounted && setIsLoading(false));
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    const projectsChanged = () => { if (currentUserId) loadUserProjects(currentUserId); };
     window.addEventListener("lovable:projects-changed", projectsChanged);
 
     return () => {
@@ -186,7 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       window.removeEventListener("lovable:projects-changed", projectsChanged);
     };
-  }, [user, loadUserProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const signOut = async () => {
     await supabase.auth.signOut();
