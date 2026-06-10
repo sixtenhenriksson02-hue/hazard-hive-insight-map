@@ -275,7 +275,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
                 </Button>
               </div>
 
-              <ProseReportView report={report} projectName={projectName} periodLabel={periodLabel} lang={lang} />
+              <ProseReportView report={report} projectName={projectName} periodLabel={periodLabel} lang={reportLang} />
             </div>
           )}
         </DialogContent>
