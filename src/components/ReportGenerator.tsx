@@ -173,7 +173,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
       project_id: activeProjectId,
       project_name: projectName,
       content: report as any,
-      language: lang,
+      language: reportLang,
       created_by: user.id,
     });
 
