@@ -146,7 +146,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           project_name: projectName,
           period_label: periodLabel,
           report_type: reportType,
-          language: lang,
+          language: reportLang,
         },
       });
 
