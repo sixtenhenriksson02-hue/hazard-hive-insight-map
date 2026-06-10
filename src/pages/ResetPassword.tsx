@@ -15,18 +15,31 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [isRecovery, setIsRecovery] = useState(false);
+  const [checkingRecovery, setCheckingRecovery] = useState(true);
 
   useEffect(() => {
-    // Check for recovery event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
+    const hash = window.location.hash;
+    const hasRecoveryParams = hash.includes("type=recovery") || hash.includes("access_token=") || hash.includes("refresh_token=");
+
+    if (hasRecoveryParams) {
+      setIsRecovery(true);
+      setCheckingRecovery(false);
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (!!session?.user && window.location.pathname === "/reset-password")) {
         setIsRecovery(true);
+        setCheckingRecovery(false);
       }
     });
-    // Also check hash
-    if (window.location.hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (hasRecoveryParams || session?.user) {
+        setIsRecovery(true);
+      }
+      setCheckingRecovery(false);
+    });
+
     return () => subscription.unsubscribe();
   }, []);
 
@@ -51,10 +64,29 @@ export default function ResetPassword() {
     }
   };
 
-  if (!isRecovery) {
+  if (checkingRecovery) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <p className="text-muted-foreground">{t("common.loading")}</p>
+      </div>
+    );
+  }
+
+  if (!isRecovery) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 space-y-4">
+          <div className="text-center space-y-2">
+            <Shield className="h-12 w-12 text-accent mx-auto" />
+            <h1 className="text-xl font-bold text-foreground">{t("auth.resetPassword")}</h1>
+            <p className="text-sm text-muted-foreground">
+              Länken är ogiltig eller har gått ut. Be om en ny återställningslänk och försök igen.
+            </p>
+          </div>
+          <Button type="button" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth") }>
+            {t("auth.backToLogin")}
+          </Button>
+        </div>
       </div>
     );
   }

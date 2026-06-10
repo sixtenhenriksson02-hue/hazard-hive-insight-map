@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import type { Session, User } from "@supabase/supabase-js";
 
 type AppRole = "admin" | "worker";
 
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [viewAs, setViewAs] = useState<AppRole>("admin");
   const [userProjects, setUserProjects] = useState<UserProject[]>([]);
   const [activeProjectId, setActiveProjectIdState] = useState<string | null>(null);
+  const currentUserIdRef = useRef<string | null>(null);
 
   const setActiveProjectId = useCallback((id: string | null) => {
     setActiveProjectIdState(id);
@@ -104,16 +105,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loadUserProjects, activeProjectId]);
 
-  const loadUserData = async (u: User) => {
+  const clearUserState = useCallback(() => {
+    setRole("worker");
+    setDisplayName("");
+    setProjectId(null);
+    setProjectName(null);
+    setUserProjects([]);
+    setActiveProjectIdState(null);
+  }, []);
+
+  const loadUserData = useCallback(async (u: User) => {
     try {
       const [{ data: roles }, { data: profile }] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", u.id),
-        supabase.from("profiles").select("display_name, project_id").eq("user_id", u.id).single(),
+        supabase.from("profiles").select("display_name, project_id").eq("user_id", u.id).maybeSingle(),
       ]);
+
       const userRole = (roles?.[0]?.role as AppRole) ?? "worker";
       setRole(userRole);
       setViewAs(userRole);
-      setDisplayName(profile?.display_name ?? "Anonym");
+      setDisplayName(profile?.display_name ?? u.user_metadata?.display_name ?? "Anonym");
 
       const pid = profile?.project_id ?? u.user_metadata?.project_id ?? null;
       setProjectId(pid);
@@ -146,45 +157,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error("Error loading user data:", e);
     }
-  };
+  }, [loadUserProjects]);
 
   useEffect(() => {
     let mounted = true;
-    let currentUserId: string | null = null;
 
-    // Set up listener FIRST (Supabase best practice)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      currentUserId = u?.id ?? null;
-      if (u) {
-        // Defer to avoid deadlock inside the callback
-        setTimeout(() => { if (mounted) loadUserData(u); }, 0);
-      } else {
-        setRole("worker");
-        setDisplayName("");
-        setProjectId(null);
-        setProjectName(null);
-        setUserProjects([]);
-        setActiveProjectIdState(null);
+    const applySession = (session: Session | null, showLoader = false) => {
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
+      currentUserIdRef.current = nextUser?.id ?? null;
+
+      if (!nextUser) {
+        clearUserState();
+        setIsLoading(false);
+        return;
       }
-    });
 
-    // Then check for existing session
+      if (showLoader) {
+        setIsLoading(true);
+      }
+
+      void loadUserData(nextUser).finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
-      const u = session?.user ?? null;
-      setUser(u);
-      currentUserId = u?.id ?? null;
-      if (u) {
-        loadUserData(u).finally(() => mounted && setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
+      applySession(session, true);
     });
 
-    const projectsChanged = () => { if (currentUserId) loadUserProjects(currentUserId); };
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setTimeout(() => {
+        if (!mounted) return;
+        applySession(session, false);
+      }, 0);
+    });
+
+    const projectsChanged = () => {
+      if (currentUserIdRef.current) {
+        void loadUserProjects(currentUserIdRef.current);
+      }
+    };
     window.addEventListener("lovable:projects-changed", projectsChanged);
 
     return () => {
@@ -192,8 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       window.removeEventListener("lovable:projects-changed", projectsChanged);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearUserState, loadUserData, loadUserProjects]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
