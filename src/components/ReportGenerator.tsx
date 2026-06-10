@@ -70,7 +70,7 @@ function ProseReportView({ report, projectName, periodLabel, lang }: {
 // PDF download now uses the shared formal template from pdfTemplate.ts
 
 export default function ReportGenerator({ reports }: ReportGeneratorProps) {
-  const { lang, t } = useLanguage();
+  const { lang: uiLang, t } = useLanguage();
   const { activeProjectId, user } = useAuth();
   const { projects } = useProjects();
   const { toast } = useToast();
@@ -79,6 +79,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
   const [saving, setSaving] = useState(false);
   const [report, setReport] = useState<ReportData | null>(null);
   const [reportType, setReportType] = useState<ReportType>("monthly");
+  const [reportLang, setReportLang] = useState<"sv" | "en">("sv");
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
