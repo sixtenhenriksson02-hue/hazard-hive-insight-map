@@ -250,6 +250,21 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
               ))}
             </select>
 
+            <div className="flex items-center gap-1 text-xs">
+              <button
+                onClick={() => { setReportLang("sv"); setReport(null); }}
+                className={`px-2 py-1 rounded border transition-colors ${reportLang === "sv" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-accent"}`}
+              >
+                SV
+              </button>
+              <button
+                onClick={() => { setReportLang("en"); setReport(null); }}
+                className={`px-2 py-1 rounded border transition-colors ${reportLang === "en" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-accent"}`}
+              >
+                EN
+              </button>
+            </div>
+
             <Button onClick={generateReport} disabled={loading} className="bg-accent text-accent-foreground hover:bg-accent/90">
               {loading ? (
                 <span className="flex items-center gap-2">
