@@ -70,7 +70,7 @@ function ProseReportView({ report, projectName, periodLabel, lang }: {
 // PDF download now uses the shared formal template from pdfTemplate.ts
 
 export default function ReportGenerator({ reports }: ReportGeneratorProps) {
-  const { lang, t } = useLanguage();
+  const { lang: uiLang, t } = useLanguage();
   const { activeProjectId, user } = useAuth();
   const { projects } = useProjects();
   const { toast } = useToast();
@@ -79,6 +79,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
   const [saving, setSaving] = useState(false);
   const [report, setReport] = useState<ReportData | null>(null);
   const [reportType, setReportType] = useState<ReportType>("monthly");
+  const [reportLang, setReportLang] = useState<"sv" | "en">("sv");
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -94,7 +95,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
       return `Q${q} ${year}`;
     }
     const date = new Date(year, month - 1);
-    return date.toLocaleDateString(lang === "en" ? "en-US" : "sv-SE", { year: "numeric", month: "long" });
+    return date.toLocaleDateString(reportLang === "en" ? "en-US" : "sv-SE", { year: "numeric", month: "long" });
   };
 
   const getFilteredReports = () => {
@@ -145,7 +146,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           project_name: projectName,
           period_label: periodLabel,
           report_type: reportType,
-          language: lang,
+          language: reportLang,
         },
       });
 
@@ -172,7 +173,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
       project_id: activeProjectId,
       project_name: projectName,
       content: report as any,
-      language: lang,
+      language: reportLang,
       created_by: user.id,
     });
 
@@ -249,6 +250,21 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
               ))}
             </select>
 
+            <div className="flex items-center gap-1 text-xs">
+              <button
+                onClick={() => { setReportLang("sv"); setReport(null); }}
+                className={`px-2 py-1 rounded border transition-colors ${reportLang === "sv" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-accent"}`}
+              >
+                SV
+              </button>
+              <button
+                onClick={() => { setReportLang("en"); setReport(null); }}
+                className={`px-2 py-1 rounded border transition-colors ${reportLang === "en" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:border-accent"}`}
+              >
+                EN
+              </button>
+            </div>
+
             <Button onClick={generateReport} disabled={loading} className="bg-accent text-accent-foreground hover:bg-accent/90">
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -264,7 +280,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
           {report && (
             <div className="animate-fade-in">
               <div className="flex justify-end gap-2 mb-4">
-                <Button onClick={() => generateFormalPDF(report, `${projectName} — ${periodLabel}`, lang, projectName, periodLabel, reportType)} variant="outline" size="sm">
+                <Button onClick={() => generateFormalPDF(report, `${projectName} — ${periodLabel}`, reportLang, projectName, periodLabel, reportType)} variant="outline" size="sm">
                   <Download className="h-4 w-4 mr-1.5" />
                   {t("reportGen.downloadPdf")}
                 </Button>
@@ -274,7 +290,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
                 </Button>
               </div>
 
-              <ProseReportView report={report} projectName={projectName} periodLabel={periodLabel} lang={lang} />
+              <ProseReportView report={report} projectName={projectName} periodLabel={periodLabel} lang={reportLang} />
             </div>
           )}
         </DialogContent>
