@@ -95,7 +95,7 @@ export default function ReportGenerator({ reports }: ReportGeneratorProps) {
       return `Q${q} ${year}`;
     }
     const date = new Date(year, month - 1);
-    return date.toLocaleDateString(lang === "en" ? "en-US" : "sv-SE", { year: "numeric", month: "long" });
+    return date.toLocaleDateString(reportLang === "en" ? "en-US" : "sv-SE", { year: "numeric", month: "long" });
   };
 
   const getFilteredReports = () => {
