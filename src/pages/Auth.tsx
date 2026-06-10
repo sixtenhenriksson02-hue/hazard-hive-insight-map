@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useProjects, Project } from "@/hooks/useProjects";
+import { useProjects } from "@/hooks/useProjects";
+
+const LAST_EMAIL_KEY = "lovable:last-login-email";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,6 +22,13 @@ export default function Auth() {
   const { toast } = useToast();
   const { lang, setLang, t } = useLanguage();
   const { projects, loading: loadingProjects } = useProjects();
+
+  useEffect(() => {
+    const savedEmail = window.localStorage.getItem(LAST_EMAIL_KEY);
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   useEffect(() => {
     if (projects.length > 0 && !selectedProject) {
@@ -71,6 +80,7 @@ export default function Auth() {
       if (isLogin) {
         const { error } = await withRetry(() => supabase.auth.signInWithPassword({ email, password }));
         if (error) throw error;
+        window.localStorage.setItem(LAST_EMAIL_KEY, email.trim());
       } else {
         const { error } = await withRetry(() => supabase.auth.signUp({
           email,
@@ -80,6 +90,7 @@ export default function Auth() {
           },
         }));
         if (error) throw error;
+        window.localStorage.setItem(LAST_EMAIL_KEY, email.trim());
         toast({ title: t("auth.accountCreated"), description: t("auth.loggedIn") });
       }
     } catch (err: any) {
@@ -176,7 +187,7 @@ export default function Auth() {
 
             <div>
               <label htmlFor="auth-email" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
-              <Input id="auth-email" name="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
+              <Input id="auth-email" name="email" type="email" autoComplete={isLogin ? "username" : "email"} autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
             </div>
 
             <div>
