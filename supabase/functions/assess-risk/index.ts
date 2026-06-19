@@ -11,14 +11,35 @@ function matrixToLevel(prob: number, cons: number): { level: string; severity: n
   const c = Math.max(1, Math.min(5, Math.round(cons)));
   const score = p * c;
   let level = "low";
-  if (c >= 5) level = "critical";              // Livsfara/permanent skada → alltid minst critical
+  if (c >= 5) level = "critical";
+  else if (c === 4 && p >= 3) level = "critical";
   else if (score >= 15 || c === 4) level = "high";
   else if (score >= 8) level = "medium";
   else if (score >= 4) level = "medium";
   else level = "low";
-  // Override: hög konsekvens väger tyngre
-  if (c === 4 && p >= 3) level = "critical";
   return { level, severity: c };
+}
+
+// Säkerhetsgolv baserat på nyckelord — höjer aldrig sänker bedömningen
+function safetyFloor(text: string, reportType: string): { minProb: number; minCons: number } {
+  const t = (text || "").toLowerCase();
+  let minProb = 1;
+  let minCons = 1;
+  const bump = (p: number, c: number) => { minProb = Math.max(minProb, p); minCons = Math.max(minCons, c); };
+
+  if (/\b(fall|föll|ramla|höjd|tak|ställning|stege|takarbete|takkant)\b/.test(t)) bump(2, 4);
+  if (/(fall.*(2|3|4|5|6|7|8|9|10)\s*m|>\s*2\s*m|över\s*två\s*meter)/.test(t)) bump(3, 5);
+  if (/\b(el|spänning|ström|kabel|elskåp|400\s*v|230\s*v|jordfel|elchock|strömförande)\b/.test(t)) bump(2, 4);
+  if (/\b(ras|schakt|kollaps|bjälklag|sättning|jordmassor|grävning)\b/.test(t)) bump(2, 5);
+  if (/\b(kran|lyft|truck|maskin|kläm|klämrisk|hängande last)\b/.test(t)) bump(2, 4);
+  if (/\b(brand|explosion|gas|gasol|svetsning|brännbar)\b/.test(t)) bump(2, 4);
+  if (/\b(asbest|kemikalie|frätande|giftig|lösningsmedel|isocyanat)\b/.test(t)) bump(2, 4);
+
+  if (reportType === "injury") bump(3, 3);
+  if (/\b(sjukhus|ambulans|fraktur|bruten|medvetslös|blödning)\b/.test(t)) bump(3, 4);
+  if (/\b(dödsfall|avliden|livshotande)\b/.test(t)) bump(5, 5);
+
+  return { minProb, minCons };
 }
 
 serve(async (req) => {
