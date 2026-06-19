@@ -11,14 +11,35 @@ function matrixToLevel(prob: number, cons: number): { level: string; severity: n
   const c = Math.max(1, Math.min(5, Math.round(cons)));
   const score = p * c;
   let level = "low";
-  if (c >= 5) level = "critical";              // Livsfara/permanent skada → alltid minst critical
+  if (c >= 5) level = "critical";
+  else if (c === 4 && p >= 3) level = "critical";
   else if (score >= 15 || c === 4) level = "high";
   else if (score >= 8) level = "medium";
   else if (score >= 4) level = "medium";
   else level = "low";
-  // Override: hög konsekvens väger tyngre
-  if (c === 4 && p >= 3) level = "critical";
   return { level, severity: c };
+}
+
+// Säkerhetsgolv baserat på nyckelord — höjer aldrig sänker bedömningen
+function safetyFloor(text: string, reportType: string): { minProb: number; minCons: number } {
+  const t = (text || "").toLowerCase();
+  let minProb = 1;
+  let minCons = 1;
+  const bump = (p: number, c: number) => { minProb = Math.max(minProb, p); minCons = Math.max(minCons, c); };
+
+  if (/\b(fall|föll|ramla|höjd|tak|ställning|stege|takarbete|takkant)\b/.test(t)) bump(2, 4);
+  if (/(fall.*(2|3|4|5|6|7|8|9|10)\s*m|>\s*2\s*m|över\s*två\s*meter)/.test(t)) bump(3, 5);
+  if (/\b(el|spänning|ström|kabel|elskåp|400\s*v|230\s*v|jordfel|elchock|strömförande)\b/.test(t)) bump(2, 4);
+  if (/\b(ras|schakt|kollaps|bjälklag|sättning|jordmassor|grävning)\b/.test(t)) bump(2, 5);
+  if (/\b(kran|lyft|truck|maskin|kläm|klämrisk|hängande last)\b/.test(t)) bump(2, 4);
+  if (/\b(brand|explosion|gas|gasol|svetsning|brännbar)\b/.test(t)) bump(2, 4);
+  if (/\b(asbest|kemikalie|frätande|giftig|lösningsmedel|isocyanat)\b/.test(t)) bump(2, 4);
+
+  if (reportType === "injury") bump(3, 3);
+  if (/\b(sjukhus|ambulans|fraktur|bruten|medvetslös|blödning)\b/.test(t)) bump(3, 4);
+  if (/\b(dödsfall|avliden|livshotande)\b/.test(t)) bump(5, 5);
+
+  return { minProb, minCons };
 }
 
 serve(async (req) => {
@@ -148,7 +169,11 @@ ARBETSFLÖDE (gör i denna ordning):
 
     const systemMsg = isImprovement
       ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag konstruktivt. Svara ALLTID via assess_risk-verktyget."
-      : "Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS). Gör formella, konsekventa riskmatrisbedömningar. Hitta inte på fakta. Svara ALLTID via assess_risk-verktyget.";
+      : `Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS, 25+ års byggerfarenhet).
+
+SÄKERHETSPRINCIP (viktigast): Vid osäkerhet — välj ALLTID den högre nivån. Underskattning kan kosta liv. Hellre en överbedömning som granskas än en missad allvarlig risk.
+
+Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om information saknas — skriv det och anta värsta rimliga scenariot för konsekvens. Svara ALLTID via assess_risk-verktyget.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -209,17 +234,31 @@ ARBETSFLÖDE (gör i denna ordning):
 
     const raw = JSON.parse(toolCall.function.arguments);
 
-    // Härled risk_level + severity deterministiskt från matrisen
+    // Härled risk_level + severity deterministiskt från matrisen + säkerhetsgolv
     let risk_level: string;
     let severity_rating: number;
+    let finalProb = Number(raw.probability) || 3;
+    let finalCons = Number(raw.consequence) || 3;
+
     if (isImprovement) {
       risk_level = "low";
       severity_rating = 1;
+      finalProb = 1;
+      finalCons = 1;
     } else {
-      const { level, severity } = matrixToLevel(
-        Number(raw.probability) || 3,
-        Number(raw.consequence) || 3,
-      );
+      // Tillämpa säkerhetsgolv: AI:n får aldrig underskatta uppenbara faror
+      const combinedText = `${title || ""} ${description || ""} ${specific_location || ""} ${injury_type || ""} ${body_part || ""}`;
+      const floor = safetyFloor(combinedText, report_type);
+      finalProb = Math.max(finalProb, floor.minProb);
+      finalCons = Math.max(finalCons, floor.minCons);
+
+      // Skadekrav-golv
+      if (report_type === "injury") {
+        if (medical_care_required) finalCons = Math.max(finalCons, 3);
+        if (absence_required && (absence_days || 0) > 3) finalCons = Math.max(finalCons, 4);
+      }
+
+      const { level, severity } = matrixToLevel(finalProb, finalCons);
       risk_level = level;
       severity_rating = severity;
     }
@@ -228,10 +267,10 @@ ARBETSFLÖDE (gör i denna ordning):
       generated_title: raw.generated_title,
       risk_level,
       severity_rating,
-      probability: Number(raw.probability) || null,
-      consequence: Number(raw.consequence) || null,
+      probability: finalProb,
+      consequence: finalCons,
       explanation: raw.explanation,
-      suggested_actions: raw.suggested_actions ?? [],
+      suggested_actions: Array.isArray(raw.suggested_actions) ? raw.suggested_actions.slice(0, 6) : [],
       ...(hasComments ? { should_resolve: !!raw.should_resolve } : {}),
     };
 
