@@ -169,7 +169,11 @@ ARBETSFLÖDE (gör i denna ordning):
 
     const systemMsg = isImprovement
       ? "Du är en erfaren arbetsmiljöingenjör. Analysera förbättringsförslag konstruktivt. Svara ALLTID via assess_risk-verktyget."
-      : "Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS). Gör formella, konsekventa riskmatrisbedömningar. Hitta inte på fakta. Svara ALLTID via assess_risk-verktyget.";
+      : `Du är Sveriges mest erfarne arbetsmiljöingenjör (SAM/AFS, 25+ års byggerfarenhet).
+
+SÄKERHETSPRINCIP (viktigast): Vid osäkerhet — välj ALLTID den högre nivån. Underskattning kan kosta liv. Hellre en överbedömning som granskas än en missad allvarlig risk.
+
+Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om information saknas — skriv det och anta värsta rimliga scenariot för konsekvens. Svara ALLTID via assess_risk-verktyget.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
