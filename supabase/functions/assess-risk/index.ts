@@ -230,17 +230,31 @@ ARBETSFLÖDE (gör i denna ordning):
 
     const raw = JSON.parse(toolCall.function.arguments);
 
-    // Härled risk_level + severity deterministiskt från matrisen
+    // Härled risk_level + severity deterministiskt från matrisen + säkerhetsgolv
     let risk_level: string;
     let severity_rating: number;
+    let finalProb = Number(raw.probability) || 3;
+    let finalCons = Number(raw.consequence) || 3;
+
     if (isImprovement) {
       risk_level = "low";
       severity_rating = 1;
+      finalProb = 1;
+      finalCons = 1;
     } else {
-      const { level, severity } = matrixToLevel(
-        Number(raw.probability) || 3,
-        Number(raw.consequence) || 3,
-      );
+      // Tillämpa säkerhetsgolv: AI:n får aldrig underskatta uppenbara faror
+      const combinedText = `${title || ""} ${description || ""} ${specific_location || ""} ${injury_type || ""} ${body_part || ""}`;
+      const floor = safetyFloor(combinedText, report_type);
+      finalProb = Math.max(finalProb, floor.minProb);
+      finalCons = Math.max(finalCons, floor.minCons);
+
+      // Skadekrav-golv
+      if (report_type === "injury") {
+        if (medical_care_required) finalCons = Math.max(finalCons, 3);
+        if (absence_required && (absence_days || 0) > 3) finalCons = Math.max(finalCons, 4);
+      }
+
+      const { level, severity } = matrixToLevel(finalProb, finalCons);
       risk_level = level;
       severity_rating = severity;
     }
@@ -249,10 +263,10 @@ ARBETSFLÖDE (gör i denna ordning):
       generated_title: raw.generated_title,
       risk_level,
       severity_rating,
-      probability: Number(raw.probability) || null,
-      consequence: Number(raw.consequence) || null,
+      probability: finalProb,
+      consequence: finalCons,
       explanation: raw.explanation,
-      suggested_actions: raw.suggested_actions ?? [],
+      suggested_actions: Array.isArray(raw.suggested_actions) ? raw.suggested_actions.slice(0, 6) : [],
       ...(hasComments ? { should_resolve: !!raw.should_resolve } : {}),
     };
 
