@@ -32,6 +32,44 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const AUTH_STORAGE_KEY = /^sb-.+-auth-token$/;
+
+const clearStoredAuthSession = () => {
+  try {
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+      Object.keys(storage)
+        .filter((key) => AUTH_STORAGE_KEY.test(key))
+        .forEach((key) => storage.removeItem(key));
+    });
+  } catch (error) {
+    console.warn("Could not clear stored auth session", error);
+  }
+};
+
+const isInvalidSessionError = (error: unknown) => {
+  const message = String((error as { message?: string } | null)?.message ?? error ?? "").toLowerCase();
+  return (
+    message.includes("refresh token") ||
+    message.includes("invalid jwt") ||
+    message.includes("jwt expired") ||
+    message.includes("session") ||
+    message.includes("not found")
+  );
+};
+
+const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 8000): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("Auth check timed out")), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<AppRole>("worker");
@@ -182,15 +220,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      applySession(session, true);
-    });
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        const { data: { session }, error } = await withTimeout(supabase.auth.getSession());
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!mounted) return;
+
+        if (error) {
+          if (isInvalidSessionError(error)) {
+            clearStoredAuthSession();
+            await supabase.auth.signOut({ scope: "local" });
+          }
+          applySession(null, false);
+          return;
+        }
+
+        if (!session) {
+          applySession(null, false);
+          return;
+        }
+
+        const { data: { user: verifiedUser }, error: userError } = await withTimeout(supabase.auth.getUser());
+
+        if (!mounted) return;
+
+        if (userError || !verifiedUser) {
+          if (isInvalidSessionError(userError)) {
+            clearStoredAuthSession();
+            await supabase.auth.signOut({ scope: "local" });
+          }
+          applySession(null, false);
+          return;
+        }
+
+        applySession({ ...session, user: verifiedUser } as Session, true);
+      } catch (error) {
+        console.error("Auth initialization failed:", error);
+        if (mounted) {
+          if (isInvalidSessionError(error)) clearStoredAuthSession();
+          applySession(null, false);
+        }
+      }
+    };
+
+    void initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       setTimeout(() => {
         if (!mounted) return;
+        if (event === "SIGNED_OUT") {
+          clearStoredAuthSession();
+        }
         applySession(session, false);
       }, 0);
     });
@@ -210,7 +292,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clearUserState, loadUserData, loadUserProjects]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
+    clearStoredAuthSession();
     setUser(null);
   };
 
