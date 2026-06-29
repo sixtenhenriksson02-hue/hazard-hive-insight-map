@@ -800,7 +800,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
               {selectionMode && selectedPoint && (
                 <div
-                  className="absolute w-4 h-4 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
+                  className="absolute w-3 h-3 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
                   style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
                 />
               )}
