@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -9,6 +9,43 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useProjects } from "@/hooks/useProjects";
 
 const LAST_EMAIL_KEY = "lovable:last-login-email";
+const AUTH_STORAGE_KEY = /^sb-.+-auth-token$/;
+
+const clearStoredAuthSession = () => {
+  try {
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+      Object.keys(storage)
+        .filter((key) => AUTH_STORAGE_KEY.test(key))
+        .forEach((key) => storage.removeItem(key));
+    });
+  } catch (error) {
+    console.warn("Could not clear stored auth session", error);
+  }
+};
+
+const isNetworkError = (message: string) => /load failed|failed to fetch|networkerror|timeout/i.test(message);
+
+const getFriendlyAuthError = (raw: string, lang: "sv" | "en") => {
+  if (isNetworkError(raw)) {
+    return lang === "sv"
+      ? "Nätverksfel – kontrollera anslutningen och försök igen."
+      : "Network error – check your connection and try again.";
+  }
+
+  if (/invalid login credentials|invalid_credentials/i.test(raw)) {
+    return lang === "sv"
+      ? "Fel e-post eller lösenord. Klicka på Glömt lösenord om du vill skapa ett nytt."
+      : "Wrong email or password. Use Forgot password to create a new one.";
+  }
+
+  if (/refresh token|session|jwt/i.test(raw)) {
+    return lang === "sv"
+      ? "Din gamla inloggning hade gått ut. Försök logga in igen."
+      : "Your old login had expired. Please log in again.";
+  }
+
+  return raw || (lang === "sv" ? "Något gick fel. Försök igen." : "Something went wrong. Please try again.");
+};
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,6 +59,7 @@ export default function Auth() {
   const { toast } = useToast();
   const { lang, setLang, t } = useLanguage();
   const { projects, loading: loadingProjects } = useProjects();
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archived), [projects]);
 
   useEffect(() => {
     const savedEmail = window.localStorage.getItem(LAST_EMAIL_KEY);
@@ -31,23 +69,35 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0].id);
+    if (activeProjects.length > 0 && !activeProjects.some((p) => p.id === selectedProject)) {
+      setSelectedProject(activeProjects[0].id);
     }
-  }, [projects, selectedProject]);
+  }, [activeProjects, selectedProject]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      toast({ title: "Fel", description: lang === "sv" ? "Skriv in din e-post först." : "Enter your email first.", variant: "destructive" });
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Fel", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      if (!navigator.onLine) {
+        throw new Error(lang === "sv" ? "Ingen internetanslutning. Kontrollera ditt nätverk och försök igen." : "No internet connection. Check your network and try again.");
+      }
+      window.localStorage.setItem(LAST_EMAIL_KEY, cleanEmail);
+      const { error } = await withRetry(() => supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      }));
+      if (error) throw error;
       toast({ title: t("auth.resetSent"), description: t("auth.resetSentDesc") });
       setIsForgot(false);
+    } catch (err: any) {
+      toast({ title: "Fel", description: getFriendlyAuthError(err?.message || String(err), lang), variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,26 +128,28 @@ export default function Auth() {
         throw new Error(lang === "sv" ? "Ingen internetanslutning. Kontrollera ditt nätverk och försök igen." : "No internet connection. Check your network and try again.");
       }
       if (isLogin) {
-        const { error } = await withRetry(() => supabase.auth.signInWithPassword({ email, password }));
+        const cleanEmail = email.trim().toLowerCase();
+        clearStoredAuthSession();
+        await supabase.auth.signOut({ scope: "local" });
+        const { error } = await withRetry(() => supabase.auth.signInWithPassword({ email: cleanEmail, password }));
         if (error) throw error;
-        window.localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        window.localStorage.setItem(LAST_EMAIL_KEY, cleanEmail);
       } else {
+        const cleanEmail = email.trim().toLowerCase();
+        clearStoredAuthSession();
         const { error } = await withRetry(() => supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
             data: { display_name: displayName, role, project_id: selectedProject || null },
           },
         }));
         if (error) throw error;
-        window.localStorage.setItem(LAST_EMAIL_KEY, email.trim());
+        window.localStorage.setItem(LAST_EMAIL_KEY, cleanEmail);
         toast({ title: t("auth.accountCreated"), description: t("auth.loggedIn") });
       }
     } catch (err: any) {
-      const raw = err?.message || "";
-      const friendly = /load failed|failed to fetch|networkerror/i.test(raw)
-        ? (lang === "sv" ? "Nätverksfel – kontrollera anslutningen och försök igen." : "Network error – check your connection and try again.")
-        : raw;
+      const friendly = getFriendlyAuthError(err?.message || String(err), lang);
       toast({ title: "Fel", description: friendly, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -125,8 +177,8 @@ export default function Auth() {
           <form onSubmit={handleForgotPassword} className="rounded-lg border border-border bg-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-card-foreground">{t("auth.forgotPassword")}</h2>
             <div>
-              <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
+              <label htmlFor="forgot-email" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
+              <Input id="forgot-email" name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
             </div>
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               {loading ? t("common.loading") : t("auth.sendResetLink")}
@@ -147,7 +199,7 @@ export default function Auth() {
               <>
                 <div>
                   <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.name")}</label>
-                  <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t("auth.name")} required />
+                  <Input id="signup-name" name="name" autoComplete="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t("auth.name")} required />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.role")}</label>
@@ -168,7 +220,7 @@ export default function Auth() {
                     ))}
                   </div>
                 </div>
-                {projects.length > 0 && (
+                {activeProjects.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.selectProject")}</label>
                     <select
@@ -176,11 +228,16 @@ export default function Auth() {
                       value={selectedProject}
                       onChange={(e) => setSelectedProject(e.target.value)}
                     >
-                      {projects.map((p) => (
+                      {activeProjects.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                   </div>
+                )}
+                {!loadingProjects && activeProjects.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {lang === "sv" ? "Inga aktiva projekt finns just nu. Du kan ändå skapa konto." : "There are no active projects right now. You can still create an account."}
+                  </p>
                 )}
               </>
             )}
