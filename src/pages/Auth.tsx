@@ -177,7 +177,7 @@ export default function Auth() {
           <form onSubmit={handleForgotPassword} className="rounded-lg border border-border bg-card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-card-foreground">{t("auth.forgotPassword")}</h2>
             <div>
-              <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
+              <label htmlFor="forgot-email" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.email")}</label>
               <Input id="forgot-email" name="email" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="din@email.se" required />
             </div>
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
