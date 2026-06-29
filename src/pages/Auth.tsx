@@ -59,6 +59,7 @@ export default function Auth() {
   const { toast } = useToast();
   const { lang, setLang, t } = useLanguage();
   const { projects, loading: loadingProjects } = useProjects();
+  const activeProjects = projects.filter((p) => !p.archived);
 
   useEffect(() => {
     const savedEmail = window.localStorage.getItem(LAST_EMAIL_KEY);
@@ -68,10 +69,10 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0].id);
+    if (activeProjects.length > 0 && !activeProjects.some((p) => p.id === selectedProject)) {
+      setSelectedProject(activeProjects[0].id);
     }
-  }, [projects, selectedProject]);
+  }, [activeProjects, selectedProject]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,7 +220,7 @@ export default function Auth() {
                     ))}
                   </div>
                 </div>
-                {projects.length > 0 && (
+                {activeProjects.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.selectProject")}</label>
                     <select
@@ -227,13 +228,13 @@ export default function Auth() {
                       value={selectedProject}
                       onChange={(e) => setSelectedProject(e.target.value)}
                     >
-                      {projects.filter((p) => !p.archived).map((p) => (
+                      {activeProjects.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                   </div>
                 )}
-                {!loadingProjects && projects.filter((p) => !p.archived).length === 0 && (
+                {!loadingProjects && activeProjects.length === 0 && (
                   <p className="text-xs text-muted-foreground">
                     {lang === "sv" ? "Inga aktiva projekt finns just nu. Du kan ändå skapa konto." : "There are no active projects right now. You can still create an account."}
                   </p>
