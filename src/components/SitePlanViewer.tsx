@@ -748,10 +748,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                       onClick={(e) => { e.stopPropagation(); setExpandedClusterId(cluster.id); }}
                     >
                       <div
-                        className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
+                        className="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
                         style={{ backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888" }}
                       >
-                        <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                        <span className="text-[9px] font-bold text-white leading-none">{cluster.reports.length}</span>
                       </div>
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 whitespace-nowrap bg-card border border-border rounded-md px-2 py-0.5 shadow-lg z-20 text-[10px] text-muted-foreground opacity-0 hover:opacity-100 pointer-events-none">
                         {cluster.reports.length} {t("apd.clusterCount")}
