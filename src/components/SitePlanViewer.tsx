@@ -685,8 +685,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   style={{
                     left: `${zone.x}%`,
                     top: `${zone.y}%`,
-                    width: "50px",
-                    height: "50px",
+                    width: "36px",
+                    height: "36px",
                     transform: "translate(-50%, -50%)",
                     background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
                     border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
