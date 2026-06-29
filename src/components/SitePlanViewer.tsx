@@ -446,7 +446,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         style={{ left: `${marker.plan_x}%`, top: `${marker.plan_y}%` }}
       >
         <div
-          className={`w-5 h-5 rounded-md flex items-center justify-center shadow-md border border-white/80 cursor-pointer transition-transform hover:scale-125 ${getMarkerColor(marker.marker_type)}`}
+          className={`w-4 h-4 rounded-md flex items-center justify-center shadow-md border border-white/80 cursor-pointer transition-transform hover:scale-125 ${getMarkerColor(marker.marker_type)}`}
           onClick={(e) => {
             e.stopPropagation();
             setSelectedSafetyMarker(isSelected ? null : marker);
