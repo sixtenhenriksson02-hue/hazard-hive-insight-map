@@ -249,8 +249,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (isInvalidSessionError(userError)) {
             clearStoredAuthSession();
             await supabase.auth.signOut({ scope: "local" });
+            applySession(null, false);
+          } else {
+            applySession(session, true);
           }
-          applySession(null, false);
           return;
         }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -59,7 +59,7 @@ export default function Auth() {
   const { toast } = useToast();
   const { lang, setLang, t } = useLanguage();
   const { projects, loading: loadingProjects } = useProjects();
-  const activeProjects = projects.filter((p) => !p.archived);
+  const activeProjects = useMemo(() => projects.filter((p) => !p.archived), [projects]);
 
   useEffect(() => {
     const savedEmail = window.localStorage.getItem(LAST_EMAIL_KEY);
