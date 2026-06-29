@@ -650,7 +650,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   return (
                     <div
                       key={cluster.id}
-                      className="absolute w-8 h-8 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
                       style={{
                         left: `${cluster.cx}%`,
                         top: `${cluster.cy}%`,
@@ -658,7 +658,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                       }}
                       title={`${cluster.reports.length} ${t("apd.clusterCount")}`}
                     >
-                      <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                      <span className="text-[9px] font-bold text-white leading-none">{cluster.reports.length}</span>
                     </div>
                   );
                 }
