@@ -157,11 +157,11 @@ export default function ResetPassword() {
         </div>
         <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-card p-6 space-y-4">
           <div>
-            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.newPassword")}</label>
+            <label htmlFor="new-password" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.newPassword")}</label>
             <Input id="new-password" name="new-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
           </div>
           <div>
-            <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.confirmPassword")}</label>
+            <label htmlFor="confirm-password" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.confirmPassword")}</label>
             <Input id="confirm-password" name="confirm-password" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={6} />
           </div>
           <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
