@@ -446,7 +446,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
         style={{ left: `${marker.plan_x}%`, top: `${marker.plan_y}%` }}
       >
         <div
-          className={`w-5 h-5 rounded-md flex items-center justify-center shadow-md border border-white/80 cursor-pointer transition-transform hover:scale-125 ${getMarkerColor(marker.marker_type)}`}
+          className={`w-4 h-4 rounded-md flex items-center justify-center shadow-md border border-white/80 cursor-pointer transition-transform hover:scale-125 ${getMarkerColor(marker.marker_type)}`}
           onClick={(e) => {
             e.stopPropagation();
             setSelectedSafetyMarker(isSelected ? null : marker);
@@ -650,7 +650,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   return (
                     <div
                       key={cluster.id}
-                      className="absolute w-8 h-8 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
                       style={{
                         left: `${cluster.cx}%`,
                         top: `${cluster.cy}%`,
@@ -658,7 +658,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                       }}
                       title={`${cluster.reports.length} ${t("apd.clusterCount")}`}
                     >
-                      <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                      <span className="text-[9px] font-bold text-white leading-none">{cluster.reports.length}</span>
                     </div>
                   );
                 }
@@ -666,7 +666,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                 return (
                   <div
                     key={r.id}
-                    className="absolute w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
+                    className="absolute w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full border border-white shadow-md transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center"
                     style={{
                       left: `${r.plan_x}%`,
                       top: `${r.plan_y}%`,
@@ -674,7 +674,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     }}
                     title={`#${r.originalIndex + 1} ${r.title} (${r.risk_level})`}
                   >
-                    <span className="text-[7px] sm:text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                    <span className="text-[6px] sm:text-[7px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
                   </div>
                 );
               })}
@@ -685,8 +685,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   style={{
                     left: `${zone.x}%`,
                     top: `${zone.y}%`,
-                    width: "50px",
-                    height: "50px",
+                    width: "36px",
+                    height: "36px",
                     transform: "translate(-50%, -50%)",
                     background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}33 0%, transparent 70%)`,
                     border: `2px solid ${riskDotColor[zone.maxRisk]}66`,
@@ -695,7 +695,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
               ))}
               {selectionMode && selectedPoint && (
                 <div
-                  className="absolute w-4 h-4 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
+                  className="absolute w-3 h-3 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
                   style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
                 />
               )}
@@ -721,8 +721,8 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                   style={{
                     left: `${zone.x}%`,
                     top: `${zone.y}%`,
-                    width: "60px",
-                    height: "60px",
+                    width: "42px",
+                    height: "42px",
                     transform: "translate(-50%, -50%)",
                     background: `radial-gradient(circle, ${riskDotColor[zone.maxRisk]}44 0%, transparent 70%)`,
                     border: `2px dashed ${riskDotColor[zone.maxRisk]}88`,
@@ -748,10 +748,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                       onClick={(e) => { e.stopPropagation(); setExpandedClusterId(cluster.id); }}
                     >
                       <div
-                        className="w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
+                        className="w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-125"
                         style={{ backgroundColor: riskDotColor[cluster.maxRisk] ?? "#888" }}
                       >
-                        <span className="text-[10px] font-bold text-white leading-none">{cluster.reports.length}</span>
+                        <span className="text-[9px] font-bold text-white leading-none">{cluster.reports.length}</span>
                       </div>
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 whitespace-nowrap bg-card border border-border rounded-md px-2 py-0.5 shadow-lg z-20 text-[10px] text-muted-foreground opacity-0 hover:opacity-100 pointer-events-none">
                         {cluster.reports.length} {t("apd.clusterCount")}
@@ -770,10 +770,10 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
                     onMouseLeave={() => setHoveredReport(null)}
                   >
                     <div
-                      className="w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full border-2 border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
+                      className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full border border-white shadow-md transition-transform group-hover:scale-150 flex items-center justify-center"
                       style={{ backgroundColor: riskDotColor[r.risk_level] ?? "#888" }}
                     >
-                      <span className="text-[7px] sm:text-[8px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
+                      <span className="text-[6px] sm:text-[7px] font-bold text-white leading-none">{r.originalIndex + 1}</span>
                     </div>
                     {hoveredReport === r.id && (
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 whitespace-nowrap bg-card border border-border rounded-md px-2 py-1 shadow-lg z-20 text-[11px]">
@@ -800,7 +800,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
 
               {selectionMode && selectedPoint && (
                 <div
-                  className="absolute w-4 h-4 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
+                  className="absolute w-3 h-3 rounded-full border-2 border-accent bg-accent/50 transform -translate-x-1/2 -translate-y-1/2 animate-pulse pointer-events-none"
                   style={{ left: `${selectedPoint.x}%`, top: `${selectedPoint.y}%` }}
                 />
               )}
