@@ -92,8 +92,9 @@ export function useProjects(options: UseProjectsOptions = {}) {
     // Find project by invite code
     const { data: projectData, error: findError } = await supabase
       .from("projects")
-      .select("id, name")
+      .select("id, name, archived")
       .eq("invite_code", code.toUpperCase().trim())
+      .or("archived.is.null,archived.eq.false")
       .maybeSingle();
 
     if (findError || !projectData) {
