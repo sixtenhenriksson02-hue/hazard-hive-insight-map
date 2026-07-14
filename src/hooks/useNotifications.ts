@@ -25,20 +25,28 @@ export function useNotifications() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(50);
 
-    if (error) {
+      if (error) {
+        console.error("Error fetching notifications:", error);
+        setNotifications([]);
+        return;
+      }
+
+      setNotifications((data as Notification[]) ?? []);
+    } catch (error) {
       console.error("Error fetching notifications:", error);
-      return;
+      setNotifications([]);
+    } finally {
+      setLoading(false);
     }
-
-    setNotifications((data as Notification[]) ?? []);
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -68,7 +76,8 @@ export function useNotifications() {
   }, [fetchNotifications, user]);
 
   const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
+    if (error) return;
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
@@ -76,11 +85,12 @@ export function useNotifications() {
 
   const markAllAsRead = async () => {
     if (!user) return;
-    await supabase
+    const { error } = await supabase
       .from("notifications")
       .update({ read: true })
       .eq("user_id", user.id)
       .eq("read", false);
+    if (error) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 

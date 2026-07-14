@@ -25,13 +25,24 @@ export function useProjectLocations(projectId: string | null) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
-      .from("project_locations" as any)
-      .select("*")
-      .eq("project_id", projectId)
-      .order("created_at", { ascending: true });
-    if (!error && data) setLocations(data as unknown as ProjectLocation[]);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("project_locations" as any)
+        .select("*")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: true });
+      if (error) {
+        toast({ title: "Kunde inte hämta platser", description: error.message, variant: "destructive" });
+        setLocations([]);
+        return;
+      }
+      setLocations((data as unknown as ProjectLocation[]) ?? []);
+    } catch (error) {
+      toast({ title: "Kunde inte hämta platser", description: "Kontrollera anslutningen och försök igen.", variant: "destructive" });
+      setLocations([]);
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
 
   useEffect(() => { fetch(); }, [fetch]);

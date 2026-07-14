@@ -23,38 +23,45 @@ export function useClarifications(reportId: string | null) {
   const fetchMessages = useCallback(async () => {
     if (!reportId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("clarification_messages")
-      .select("*")
-      .eq("report_id", reportId)
-      .order("created_at", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("clarification_messages")
+        .select("*")
+        .eq("report_id", reportId)
+        .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching clarifications:", error);
-      setLoading(false);
-      return;
-    }
-
-    const list = (data as ClarificationMessage[]) ?? [];
-    const senderIds = [...new Set(list.map((m) => m.sender_id))];
-    if (senderIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", senderIds);
-      const nameMap = new Map(profiles?.map((p) => [p.user_id, p.display_name]) ?? []);
-      list.forEach((m) => (m.sender_name = nameMap.get(m.sender_id) ?? "Användare"));
-    }
-
-    setMessages(list);
-    setLoading(false);
-
-    // Mark unread messages where I am the recipient as read
-    if (user) {
-      const unread = list.filter((m) => m.recipient_id === user.id && !m.read).map((m) => m.id);
-      if (unread.length > 0) {
-        await supabase.from("clarification_messages").update({ read: true }).in("id", unread);
+      if (error) {
+        console.error("Error fetching clarifications:", error);
+        setMessages([]);
+        return;
       }
+
+      const list = (data as ClarificationMessage[]) ?? [];
+      const senderIds = [...new Set(list.map((m) => m.sender_id))];
+      if (senderIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", senderIds);
+        const nameMap = new Map(profiles?.map((p) => [p.user_id, p.display_name]) ?? []);
+        list.forEach((m) => (m.sender_name = nameMap.get(m.sender_id) ?? "Användare"));
+      }
+
+      setMessages(list);
+
+      // Mark unread messages where I am the recipient as read
+      if (user) {
+        const unread = list.filter((m) => m.recipient_id === user.id && !m.read).map((m) => m.id);
+        if (unread.length > 0) {
+          const { error: readError } = await supabase.from("clarification_messages").update({ read: true }).in("id", unread);
+          if (readError) console.error("Error marking clarifications as read:", readError);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching clarifications:", error);
+      setMessages([]);
+    } finally {
+      setLoading(false);
     }
   }, [reportId, user]);
 

@@ -87,50 +87,61 @@ export function useReports() {
   const isAdmin = role === "admin" && viewAs === "admin";
 
   const fetchReports = useCallback(async (projectIdFilter?: string | null) => {
-    let query = supabase
-      .from("risk_reports")
-      .select("*")
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("risk_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (projectIdFilter) {
-      query = query.eq("project_id", projectIdFilter);
-    }
+      if (projectIdFilter) {
+        query = query.eq("project_id", projectIdFilter);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error("Error fetching reports:", error);
-      return;
-    }
+      if (error) {
+        console.error("Error fetching reports:", error);
+        toast({ title: "Kunde inte hämta rapporter", description: error.message, variant: "destructive" });
+        setReports([]);
+        return;
+      }
 
-    // Fetch reporter names
-    const reportsData = (data as RiskReport[]) ?? [];
-    const userIds = [...new Set(reportsData.map(r => r.reported_by).filter(Boolean))] as string[];
-    
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .in("user_id", userIds);
+      // Fetch reporter names
+      const reportsData = (data as RiskReport[]) ?? [];
+      const userIds = [...new Set(reportsData.map(r => r.reported_by).filter(Boolean))] as string[];
       
-      const nameMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
-      reportsData.forEach(r => {
-        if (r.reported_by) {
-          r.reporter_name = nameMap.get(r.reported_by) ?? undefined;
-        }
-      });
-    }
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", userIds);
+        
+        const nameMap = new Map(profiles?.map(p => [p.user_id, p.display_name]) ?? []);
+        reportsData.forEach(r => {
+          if (r.reported_by) {
+            r.reporter_name = nameMap.get(r.reported_by) ?? undefined;
+          }
+        });
+      }
 
-    setReports(reportsData);
-    setLoading(false);
-  }, []);
+      setReports(reportsData);
+    } catch (error: any) {
+      console.error("Error fetching reports:", error);
+      toast({ title: "Kunde inte hämta rapporter", description: "Kontrollera anslutningen och försök igen.", variant: "destructive" });
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     fetchReports(activeProjectId);
 
+    const changeFilter = activeProjectId ? { filter: `project_id=eq.${activeProjectId}` } : {};
     const channel = supabase
-      .channel("risk_reports_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "risk_reports" }, () => {
+      .channel(activeProjectId ? `risk_reports_changes_${activeProjectId}` : "risk_reports_changes_all")
+      .on("postgres_changes", { event: "*", schema: "public", table: "risk_reports", ...changeFilter }, () => {
         fetchReports(activeProjectId);
       })
       .subscribe();

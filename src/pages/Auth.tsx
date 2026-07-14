@@ -58,7 +58,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { lang, setLang, t } = useLanguage();
-  const { projects, loading: loadingProjects } = useProjects();
+  const { projects, loading: loadingProjects } = useProjects({ enabled: !isLogin && !isForgot, showErrorToast: false });
   const activeProjects = useMemo(() => projects.filter((p) => !p.archived), [projects]);
 
   useEffect(() => {
@@ -197,12 +197,12 @@ export default function Auth() {
 
             {!isLogin && (
               <>
-                <div>
-                  <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.name")}</label>
+                  <div>
+                    <label htmlFor="signup-name" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.name")}</label>
                   <Input id="signup-name" name="name" autoComplete="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t("auth.name")} required />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.role")}</label>
+                    <span className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.role")}</span>
                   <div className="flex gap-2">
                     {(["worker", "admin"] as const).map((r) => (
                       <button
@@ -222,8 +222,9 @@ export default function Auth() {
                 </div>
                 {activeProjects.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.selectProject")}</label>
+                    <label htmlFor="signup-project" className="text-sm font-medium text-card-foreground mb-1 block">{t("auth.selectProject")}</label>
                     <select
+                      id="signup-project"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       value={selectedProject}
                       onChange={(e) => setSelectedProject(e.target.value)}
