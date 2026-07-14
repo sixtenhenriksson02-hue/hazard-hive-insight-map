@@ -11,26 +11,69 @@ export interface Project {
   archived?: boolean;
 }
 
-export function useProjects() {
+interface UseProjectsOptions {
+  enabled?: boolean;
+  showErrorToast?: boolean;
+}
+
+export function useProjects(options: UseProjectsOptions = {}) {
+  const { enabled = true, showErrorToast = true } = options;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchProjects = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error) setProjects((data as Project[]) ?? []);
-    setLoading(false);
-  }, []);
+    if (!enabled) {
+      setProjects([]);
+      setLoading(false);
+      return [];
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        if (showErrorToast) {
+          toast({ title: "Kunde inte hämta projekt", description: error.message, variant: "destructive" });
+        }
+        setProjects([]);
+        return [];
+      }
+
+      const nextProjects = (data as Project[]) ?? [];
+      setProjects(nextProjects);
+      return nextProjects;
+    } catch (error: any) {
+      if (showErrorToast) {
+        toast({
+          title: "Kunde inte hämta projekt",
+          description: "Kontrollera anslutningen och försök igen.",
+          variant: "destructive",
+        });
+      }
+      setProjects([]);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [enabled, showErrorToast, toast]);
 
   useEffect(() => {
+    if (!enabled) {
+      setProjects([]);
+      setLoading(false);
+      return;
+    }
+
     fetchProjects();
     const handler = () => fetchProjects();
     window.addEventListener("lovable:projects-changed", handler);
     return () => window.removeEventListener("lovable:projects-changed", handler);
-  }, [fetchProjects]);
+  }, [enabled, fetchProjects]);
 
   const notifyChange = () => window.dispatchEvent(new Event("lovable:projects-changed"));
 
