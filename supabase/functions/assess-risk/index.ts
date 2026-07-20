@@ -288,13 +288,15 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
       severity_rating = severity;
     }
 
+    const resolvedExplanation = "Kommentarerna visar att risken är åtgärdad. Nivån sänks därför till låg, men åtgärden ska fortfarande kontrolleras på plats så att skyddet är permanent och att samma risk inte återkommer.";
+
     const assessment = {
       generated_title: raw.generated_title,
       risk_level,
       severity_rating,
       probability: finalProb,
       consequence: finalCons,
-      explanation: raw.explanation,
+      explanation: aiShouldResolve ? resolvedExplanation : raw.explanation,
       suggested_actions: Array.isArray(raw.suggested_actions) ? raw.suggested_actions.slice(0, 6) : [],
       ...(hasComments ? { should_resolve: aiShouldResolve } : {}),
     };
