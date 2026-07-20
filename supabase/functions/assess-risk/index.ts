@@ -5,6 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type AssessRiskRequest = {
+  title?: string;
+  description?: string;
+  category?: string;
+  report_type?: string;
+  body_part?: string;
+  injury_type?: string;
+  medical_care_required?: boolean;
+  absence_required?: boolean;
+  absence_days?: number;
+  building?: string;
+  specific_location?: string;
+  comments?: string[];
+};
+
 // Deterministisk riskmatris (sannolikhet 1-5 × konsekvens 1-5)
 function matrixToLevel(prob: number, cons: number): { level: string; severity: number } {
   const p = Math.max(1, Math.min(5, Math.round(prob)));
@@ -46,11 +61,11 @@ function safetyFloor(text: string, reportType: string): { minProb: number; minCo
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  let requestBody: Record<string, unknown> = {};
+  let requestBody: AssessRiskRequest = {};
 
   try {
-    requestBody = await req.json();
-    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location, comments } = requestBody as Record<string, any>;
+    requestBody = await req.json() as AssessRiskRequest;
+    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location, comments } = requestBody;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");

@@ -186,7 +186,7 @@ export function useReports() {
       }
 
       setReports(reportsData);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching reports:", error);
       toast({ title: "Kunde inte hämta rapporter", description: "Kontrollera anslutningen och försök igen.", variant: "destructive" });
       setReports([]);

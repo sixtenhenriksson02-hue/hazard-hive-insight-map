@@ -97,7 +97,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
       }
       
     }
-  }, []);
+  }, [t, toast]);
 
   const hasContent = description.trim().length > 0 || specificLocation.trim().length > 0;
 

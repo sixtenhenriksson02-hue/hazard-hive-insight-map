@@ -15,7 +15,7 @@ interface ReportDetailProps {
   report: RiskReport | null;
   open: boolean;
   onClose: () => void;
-  onUpdate: (id: string, updates: any) => void;
+  onUpdate: (id: string, updates: Partial<RiskReport>) => void;
   onReassess?: (id: string) => Promise<void>;
   deadlineDays?: number | null;
 }
