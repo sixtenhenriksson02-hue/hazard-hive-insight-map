@@ -92,7 +92,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
         if (d.step) setStep(d.step);
         toast({ title: t("draft.restored") });
       } catch {}
-      localStorage.removeItem("report-draft");
+      
     }
   }, []);
 
@@ -108,6 +108,8 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
 
   const discardDraft = () => {
     localStorage.removeItem("report-draft");
+    
+    
     setShowDraftDialog(false);
     onClose?.();
   };
@@ -165,11 +167,15 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
   };
 
   const doSubmit = async (finalTitle: string, finalDescription: string) => {
+    if (submitting) return;
     setSubmitting(true);
     const pid = selectedProjectId || activeProjectId || "";
     const building = availableProjects.find(p => p.id === pid)?.name ?? "";
     const capitalizedTitle = finalTitle.charAt(0).toUpperCase() + finalTitle.slice(1);
 
+    
+    
+    localStorage.removeItem("report-draft");
     await onSubmit({
       title: capitalizedTitle,
       description: finalDescription,
@@ -223,7 +229,8 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
 
     // Auto spell-check before submitting
     if (!spellChecked && description.trim()) {
-      setSubmitting(true);
+      if (submitting) return;
+    setSubmitting(true);
       const result = await runSpellCheck(autoTitle, description);
       setSubmitting(false);
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RiskReport, RiskLevel, useComments } from "@/hooks/useReports";
 import { useClarifications } from "@/hooks/useClarifications";
@@ -29,6 +29,7 @@ const riskBadgeClass: Record<string, string> = {
 
 const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
 
+import { useEffect } from "react";
 export default function ReportDetail({ report, open, onClose, onUpdate, onReassess, deadlineDays }: ReportDetailProps) {
   const { viewAs, user } = useAuth();
   const { lang, t } = useLanguage();
@@ -46,6 +47,14 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [showTranslated, setShowTranslated] = useState(false);
+  useEffect(() => {
+    setTranslatedTitle(null);
+    setTranslatedDescription(null);
+    setTranslatedExplanation(null);
+    setTranslatedActions(null);
+    setShowTranslated(false);
+  }, [report?.id]);
+
 
   if (!report) return null;
 
@@ -67,7 +76,10 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
     setEditing(false);
   };
 
+  const [commenting, setCommenting] = useState(false);
   const handleAddComment = async () => {
+    if (commenting) return;
+    setCommenting(true);
     if (!newComment.trim()) return;
     await addComment(newComment.trim());
 
@@ -81,6 +93,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
     }
 
     setNewComment("");
+    setCommenting(false);
   };
 
   const handleOverrideRisk = (newLevel: RiskLevel) => {
