@@ -49,7 +49,7 @@ export default function AdminStats({ reports }: AdminStatsProps) {
     const rr = filtered.filter((r) => r.resolved_at);
     if (rr.length === 0) return 0;
     const totalDays = rr.reduce((sum, r) => {
-      const diff = new Date(r.resolved_at!).getTime() - new Date(r.created_at).getTime();
+      const diff = (r.resolved_at ? new Date(r.resolved_at).getTime() : new Date(r.updated_at).getTime()) - new Date(r.created_at).getTime();
       return sum + diff / (1000 * 60 * 60 * 24);
     }, 0);
     return Math.round(totalDays / rr.length * 10) / 10;

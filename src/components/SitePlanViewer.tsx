@@ -34,6 +34,7 @@ interface SitePlanViewerProps {
   reports: RiskReport[];
   onSelectLocation?: (planId: string, x: number, y: number) => void;
   selectionMode?: boolean;
+  projectId?: string;
 }
 
 const riskDotColor: Record<string, string> = {
@@ -45,8 +46,9 @@ const riskDotColor: Record<string, string> = {
 
 type SafetyPlacingMode = "first_aid" | "fire_extinguisher" | "defibrillator" | null;
 
-export default function SitePlanViewer({ reports, onSelectLocation, selectionMode = false }: SitePlanViewerProps) {
-  const { viewAs, activeProjectId, user } = useAuth();
+export default function SitePlanViewer({ reports, onSelectLocation, selectionMode = false, projectId }: SitePlanViewerProps) {
+  const { viewAs, activeProjectId: globalActiveProjectId, user } = useAuth();
+  const activeProjectId = projectId || globalActiveProjectId;
   const { t } = useLanguage();
   const { toast } = useToast();
   const isAdmin = viewAs === "admin";
@@ -209,7 +211,9 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   const autoCropImage = (file: File): Promise<Blob> => {
     return new Promise((resolve) => {
       const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d")!;
         canvas.width = img.width;
@@ -280,7 +284,7 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
           resolve(blob || file);
         }, "image/png", 0.95);
       };
-      img.src = URL.createObjectURL(file);
+      img.src = objectUrl;
     });
   };
 

@@ -5,6 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type AssessRiskRequest = {
+  title?: string;
+  description?: string;
+  category?: string;
+  report_type?: string;
+  body_part?: string;
+  injury_type?: string;
+  medical_care_required?: boolean;
+  absence_required?: boolean;
+  absence_days?: number;
+  building?: string;
+  specific_location?: string;
+  comments?: string[];
+};
+
 // Deterministisk riskmatris (sannolikhet 1-5 × konsekvens 1-5)
 function matrixToLevel(prob: number, cons: number): { level: string; severity: number } {
   const p = Math.max(1, Math.min(5, Math.round(prob)));
@@ -27,13 +42,14 @@ function safetyFloor(text: string, reportType: string): { minProb: number; minCo
   let minCons = 1;
   const bump = (p: number, c: number) => { minProb = Math.max(minProb, p); minCons = Math.max(minCons, c); };
 
-  if (/\b(fall|föll|ramla|höjd|tak|ställning|stege|takarbete|takkant)\b/.test(t)) bump(2, 4);
-  if (/(fall.*(2|3|4|5|6|7|8|9|10)\s*m|>\s*2\s*m|över\s*två\s*meter)/.test(t)) bump(3, 5);
-  if (/\b(el|spänning|ström|kabel|elskåp|400\s*v|230\s*v|jordfel|elchock|strömförande)\b/.test(t)) bump(2, 4);
-  if (/\b(ras|schakt|kollaps|bjälklag|sättning|jordmassor|grävning)\b/.test(t)) bump(2, 5);
-  if (/\b(kran|lyft|truck|maskin|kläm|klämrisk|hängande last)\b/.test(t)) bump(2, 4);
-  if (/\b(brand|explosion|gas|gasol|svetsning|brännbar)\b/.test(t)) bump(2, 4);
-  if (/\b(asbest|kemikalie|frätande|giftig|lösningsmedel|isocyanat)\b/.test(t)) bump(2, 4);
+  if (/\b(fall|föll|ramla|höjd|tak|ställning|stege|takarbete|takkant|hål|öppning|schaktkant|fallskydd|skyddsräcke|oskyddad|osäkrad)\b/.test(t)) bump(2, 4);
+  if (/(fall|höjd|tak|ställning|stege|schakt|hål|öppning|kant).{0,40}((2|3|4|5|6|7|8|9|10)\s*(m|meter)|>\s*2\s*m|över\s*två\s*meter)/.test(t)) bump(3, 5);
+  if (/\b(el|spänning|ström|kabel|elskåp|400\s*v|230\s*v|jordfel|elchock|strömförande|skarvsladd|provisorisk el|blottad kabel)\b/.test(t)) bump(2, 4);
+  if (/\b(ras|schakt|schaktning|schaktvägg|kollaps|bjälklag|sättning|jordmassor|grävning|underminering)\b/.test(t)) bump(2, 5);
+  if (/\b(kran|lyft|truck|maskin|kläm|klämrisk|hängande last|backande fordon|påkörning|trafik)\b/.test(t)) bump(2, 4);
+  if (/\b(brand|explosion|gas|gasol|svetsning|heta arbeten|brännbar|utrymning|nödutgång|brandväg)\b/.test(t)) bump(2, 4);
+  if (/\b(asbest|kvarts|damm|kemikalie|frätande|giftig|lösningsmedel|isocyanat|sdb)\b/.test(t)) bump(2, 4);
+  if (/\b(buller|vibration|ergonomi|tunga lyft|ensamarbete)\b/.test(t)) bump(2, 3);
 
   if (reportType === "injury") bump(3, 3);
   if (/\b(sjukhus|ambulans|fraktur|bruten|medvetslös|blödning)\b/.test(t)) bump(3, 4);
@@ -45,8 +61,11 @@ function safetyFloor(text: string, reportType: string): { minProb: number; minCo
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  let requestBody: AssessRiskRequest = {};
+
   try {
-    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location, comments } = await req.json();
+    requestBody = await req.json() as AssessRiskRequest;
+    const { title, description, category, report_type, body_part, injury_type, medical_care_required, absence_required, absence_days, building, specific_location, comments } = requestBody;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -128,8 +147,9 @@ ARBETSFLÖDE (gör i denna ordning):
 2. Sätt sannolikhet 1-5 enligt definitionerna ovan.
 3. Sätt konsekvens 1-5 enligt definitionerna + absoluta regler.
 4. Skriv en titel på max 8 ord som är specifik (inkludera plats om angiven).
-5. Skriv förklaringen: vad risken är, varför du satte just dessa siffror, AFS-referens vid allvarliga risker (t.ex. AFS 1981:14 Skydd mot skada genom fall, AFS 2014:26 Berg- och gruvarbete, AFS 2020:1 Arbetsplatsens utformning).
-6. Föreslå 2-4 åtgärder en platschef kan göra DIRECT idag. Sortera viktigast först. Inga prefix, ingen numrering.`;
+5. Skriv förklaringen: vad risken är, varför du satte just dessa siffror, och relevant AFS-koppling vid allvarliga risker. Använd aktuella föreskriftsnamn hellre än osäkra gamla nummer.
+6. Föreslå 2-4 åtgärder en platschef kan göra DIREKT idag. Sortera viktigast först. Inga prefix, ingen numrering.
+7. Om rapporten är otydlig: behåll en försiktig risknivå och skriv exakt vilken komplettering admin bör begära.`;
 
     const toolProperties: Record<string, unknown> = {
       generated_title: {
@@ -182,7 +202,7 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-3.1-pro-preview",
         messages: [
           { role: "system", content: systemMsg },
           { role: "user", content: prompt },
@@ -203,7 +223,6 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
           },
         ],
         tool_choice: { type: "function", function: { name: "assess_risk" } },
-        reasoning: { effort: "medium" },
       }),
     });
 
@@ -232,7 +251,8 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
       throw new Error("No tool call in response");
     }
 
-    const raw = JSON.parse(toolCall.function.arguments);
+    const raw = JSON.parse(toolCall.function.arguments || "{}");
+    const aiShouldResolve = hasComments && raw.should_resolve === true;
 
     // Härled risk_level + severity deterministiskt från matrisen + säkerhetsgolv
     let risk_level: string;
@@ -241,6 +261,11 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
     let finalCons = Number(raw.consequence) || 3;
 
     if (isImprovement) {
+      risk_level = "low";
+      severity_rating = 1;
+      finalProb = 1;
+      finalCons = 1;
+    } else if (aiShouldResolve) {
       risk_level = "low";
       severity_rating = 1;
       finalProb = 1;
@@ -263,15 +288,17 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
       severity_rating = severity;
     }
 
+    const resolvedExplanation = "Kommentarerna visar att risken är åtgärdad. Nivån sänks därför till låg, men åtgärden ska fortfarande kontrolleras på plats så att skyddet är permanent och att samma risk inte återkommer.";
+
     const assessment = {
       generated_title: raw.generated_title,
       risk_level,
       severity_rating,
       probability: finalProb,
       consequence: finalCons,
-      explanation: raw.explanation,
+      explanation: aiShouldResolve ? resolvedExplanation : raw.explanation,
       suggested_actions: Array.isArray(raw.suggested_actions) ? raw.suggested_actions.slice(0, 6) : [],
-      ...(hasComments ? { should_resolve: !!raw.should_resolve } : {}),
+      ...(hasComments ? { should_resolve: aiShouldResolve } : {}),
     };
 
     return new Response(JSON.stringify(assessment), {
@@ -279,10 +306,13 @@ Du gör formella, konsekventa riskmatrisbedömningar. Hitta INTE på fakta. Om i
     });
   } catch (e) {
     console.error("assess-risk error:", e);
+    const fallbackText = `${requestBody.title || ""} ${requestBody.description || ""} ${requestBody.specific_location || ""} ${requestBody.injury_type || ""} ${requestBody.body_part || ""}`;
+    const fallbackFloor = safetyFloor(fallbackText, String(requestBody.report_type || "observation"));
+    const fallbackMatrix = matrixToLevel(Math.max(3, fallbackFloor.minProb), Math.max(3, fallbackFloor.minCons));
     return new Response(JSON.stringify({
-      risk_level: "medium",
-      explanation: "Automatisk bedömning kunde inte genomföras. Standardnivå tilldelad – granska manuellt.",
-      severity_rating: 3,
+      risk_level: fallbackMatrix.level,
+      explanation: "Automatisk bedömning kunde inte genomföras. En försiktig regelbaserad nivå har tilldelats – granska manuellt.",
+      severity_rating: fallbackMatrix.severity,
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
