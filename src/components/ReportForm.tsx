@@ -91,7 +91,10 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
         if (d.specificLocation) setSpecificLocation(d.specificLocation);
         if (d.step) setStep(d.step);
         toast({ title: t("draft.restored") });
-      } catch {}
+      } catch (error) {
+        console.error("Could not restore draft:", error);
+        localStorage.removeItem("report-draft");
+      }
       
     }
   }, []);
@@ -230,7 +233,7 @@ export default function ReportForm({ onSubmit, onClose }: ReportFormProps) {
     // Auto spell-check before submitting
     if (!spellChecked && description.trim()) {
       if (submitting) return;
-    setSubmitting(true);
+      setSubmitting(true);
       const result = await runSpellCheck(autoTitle, description);
       setSubmitting(false);
 

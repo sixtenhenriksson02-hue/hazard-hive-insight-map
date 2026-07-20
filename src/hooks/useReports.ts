@@ -8,6 +8,17 @@ export type ReportStatus = "open" | "in-progress" | "resolved";
 export type ReportType = "observation" | "injury" | "improvement";
 export type SortOption = "newest" | "oldest" | "severity-high" | "severity-low";
 
+interface RiskAssessmentResult {
+  risk_level: RiskLevel;
+  explanation: string;
+  severity_rating: number;
+  probability?: number;
+  consequence?: number;
+  should_resolve?: boolean;
+  suggested_actions?: string[];
+  generated_title?: string;
+}
+
 export interface RiskReport {
   id: string;
   title: string;
@@ -52,6 +63,55 @@ export interface ReportComment {
 
 const RISK_ORDER: Record<RiskLevel, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
+const getFallbackAssessment = (report: {
+  title: string;
+  description: string;
+  category: string;
+  report_type: ReportType;
+  building?: string;
+  specific_location?: string;
+  body_part?: string;
+  injury_type?: string;
+  medical_care_required?: boolean;
+  absence_required?: boolean;
+  absence_days?: number;
+}): RiskAssessmentResult => {
+  const text = `${report.title} ${report.description} ${report.category} ${report.building ?? ""} ${report.specific_location ?? ""} ${report.body_part ?? ""} ${report.injury_type ?? ""}`.toLowerCase();
+  let probability = 3;
+  let consequence = report.report_type === "injury" ? 3 : 2;
+
+  const bump = (p: number, c: number) => {
+    probability = Math.max(probability, p);
+    consequence = Math.max(consequence, c);
+  };
+
+  if (/fall|höjd|tak|ställning|stege|schakt|hål|öppning|oskyddad|fallskydd|skyddsräcke/.test(text)) bump(3, 4);
+  if (/(fall|höjd|tak|ställning|schakt|hål).{0,40}((2|3|4|5|6|7|8|9|10)\s*(m|meter)|över\s*två\s*meter)/.test(text)) bump(3, 5);
+  if (/el|spänning|ström|kabel|elskåp|jordfel|elchock|strömförande|blottad/.test(text)) bump(2, 4);
+  if (/ras|kollaps|bjälklag|jordmassor|grävning|underminering/.test(text)) bump(2, 5);
+  if (/kran|lyft|truck|maskin|kläm|hängande last|backande|påkörning/.test(text)) bump(2, 4);
+  if (/brand|explosion|gas|gasol|svets|heta arbeten|brännbar|utrymning/.test(text)) bump(2, 4);
+  if (/asbest|kvarts|damm|kemikalie|frätande|giftig|isocyanat/.test(text)) bump(2, 4);
+  if (report.medical_care_required) consequence = Math.max(consequence, 3);
+  if (report.absence_required && (report.absence_days ?? 0) > 3) consequence = Math.max(consequence, 4);
+
+  const score = probability * consequence;
+  const risk_level: RiskLevel = consequence >= 5 || score >= 15 ? "critical" : consequence >= 4 || score >= 10 ? "high" : score >= 4 ? "medium" : "low";
+
+  return {
+    risk_level,
+    severity_rating: consequence,
+    probability,
+    consequence,
+    explanation: "AI-bedömningen kunde inte genomföras. Appen har därför satt en försiktig regelbaserad risknivå utifrån rapportens innehåll. Admin bör granska och justera nivån manuellt vid behov.",
+    suggested_actions: [
+      "Säkra platsen direkt om risken fortfarande finns kvar.",
+      "Dokumentera vad som är gjort och vem som ansvarar för nästa steg.",
+      "Begär förtydligande från rapportören om plats eller händelseförlopp saknas.",
+    ],
+  };
+};
+
 async function assessRiskWithAI(report: {
   title: string;
   description: string;
@@ -65,7 +125,7 @@ async function assessRiskWithAI(report: {
   absence_required?: boolean;
   absence_days?: number;
   comments?: string[];
-}): Promise<{ risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[]; generated_title?: string }> {
+}): Promise<RiskAssessmentResult> {
   try {
     const { data, error } = await supabase.functions.invoke("assess-risk", {
       body: report,
@@ -74,7 +134,7 @@ async function assessRiskWithAI(report: {
     return data;
   } catch (e) {
     console.error("AI assessment failed, using fallback:", e);
-    return { risk_level: "medium", explanation: "Automatisk bedömning misslyckades.", severity_rating: 3 };
+    return getFallbackAssessment(report);
   }
 }
 
@@ -183,7 +243,7 @@ export function useReports() {
     }
 
     // AI assessment — skip heavy risk assessment for improvement suggestions
-    let assessment: { risk_level: RiskLevel; explanation: string; severity_rating: number; should_resolve?: boolean; suggested_actions?: string[]; generated_title?: string };
+    let assessment: RiskAssessmentResult;
     if (report.report_type === "improvement") {
       assessment = {
         risk_level: "low",
@@ -199,7 +259,9 @@ export function useReports() {
         if (data?.generated_title) assessment.generated_title = data.generated_title;
         if (data?.explanation) assessment.explanation = data.explanation;
         if (data?.suggested_actions) assessment.suggested_actions = data.suggested_actions;
-      } catch {}
+      } catch (error) {
+        console.error("Improvement AI summary failed:", error);
+      }
     } else {
       assessment = await assessRiskWithAI({
         title: report.title,
@@ -254,8 +316,8 @@ export function useReports() {
     }
   };
 
-  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation" | "risk_locked" | "due_date">>) => {
-    const finalUpdates: any = { ...updates };
+  const updateReport = async (id: string, updates: Partial<Pick<RiskReport, "title" | "description" | "location" | "category" | "status" | "risk_level" | "ai_explanation" | "risk_locked" | "due_date">> & { suggested_actions?: string[]; resolved_at?: string }) => {
+    const finalUpdates: Partial<RiskReport> & { resolved_at?: string; suggested_actions?: string[] } = { ...updates };
     if (updates.status === "resolved") {
       finalUpdates.resolved_at = new Date().toISOString();
     }
@@ -263,7 +325,9 @@ export function useReports() {
     const { error } = await supabase.from("risk_reports").update(finalUpdates).eq("id", id);
     if (error) {
       toast({ title: "Kunde inte uppdatera", description: error.message, variant: "destructive" });
+      return false;
     }
+    return true;
   };
 
   const reassessReport = async (id: string) => {
@@ -289,7 +353,9 @@ export function useReports() {
 
     const comments = commentData?.map(c => c.content) ?? [];
 
-    const assessment = await assessRiskWithAI({
+    let assessment: RiskAssessmentResult;
+    try {
+      assessment = await assessRiskWithAI({
       title: report.title,
       description: report.description,
       category: report.category,
@@ -302,13 +368,18 @@ export function useReports() {
       absence_required: report.absence_required,
       absence_days: report.absence_days,
       comments,
-    });
+      });
+    } catch (error) {
+      console.error("Reassessment failed:", error);
+      toast({ title: "Kunde inte uppdatera AI-bedömningen", description: "Försök igen eller sätt risknivån manuellt.", variant: "destructive" });
+      return;
+    }
 
     const previousLevel = report.risk_level;
     const newLevel = assessment.risk_level as RiskLevel;
     const isLocked = report.risk_locked === true;
 
-    const updates: any = {
+    const updates: Partial<RiskReport> & { suggested_actions?: string[]; resolved_at?: string } = {
       ai_explanation: assessment.explanation,
       suggested_actions: assessment.suggested_actions ?? [],
     };
@@ -324,7 +395,8 @@ export function useReports() {
       updates.resolved_at = new Date().toISOString();
     }
 
-    await updateReport(id, updates);
+    const ok = await updateReport(id, updates);
+    if (!ok) return;
 
     // Clear toast feedback
     const RISK_LABELS: Record<RiskLevel, string> = { low: "Låg", medium: "Medel", high: "Hög", critical: "Kritisk" };
