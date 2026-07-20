@@ -29,7 +29,6 @@ const riskBadgeClass: Record<string, string> = {
 
 const RISK_LEVELS: RiskLevel[] = ["low", "medium", "high", "critical"];
 
-import { useEffect } from "react";
 export default function ReportDetail({ report, open, onClose, onUpdate, onReassess, deadlineDays }: ReportDetailProps) {
   const { viewAs, user } = useAuth();
   const { lang, t } = useLanguage();
@@ -47,6 +46,8 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const [showTranslated, setShowTranslated] = useState(false);
+  const [commenting, setCommenting] = useState(false);
+
   useEffect(() => {
     setTranslatedTitle(null);
     setTranslatedDescription(null);
@@ -76,24 +77,26 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
     setEditing(false);
   };
 
-  const [commenting, setCommenting] = useState(false);
   const handleAddComment = async () => {
     if (commenting) return;
-    setCommenting(true);
     if (!newComment.trim()) return;
-    await addComment(newComment.trim());
+    setCommenting(true);
+    try {
+      await addComment(newComment.trim());
 
-    // Check if comment mentions fixing/resolving - trigger reassessment
-    const fixKeywords = ["åtgärd", "fixad", "fixed", "resolved", "löst", "reparerad", "korrigerad", "repaired", "corrected"];
-    const lowerComment = newComment.toLowerCase();
-    if (fixKeywords.some(k => lowerComment.includes(k)) && onReassess && report.status !== "resolved") {
-      setReassessing(true);
-      await onReassess(report.id);
-      setReassessing(false);
+      // Check if comment mentions fixing/resolving - trigger reassessment
+      const fixKeywords = ["åtgärd", "fixad", "fixed", "resolved", "löst", "reparerad", "korrigerad", "repaired", "corrected"];
+      const lowerComment = newComment.toLowerCase();
+      if (fixKeywords.some(k => lowerComment.includes(k)) && onReassess && report.status !== "resolved") {
+        setReassessing(true);
+        await onReassess(report.id);
+        setReassessing(false);
+      }
+
+      setNewComment("");
+    } finally {
+      setCommenting(false);
     }
-
-    setNewComment("");
-    setCommenting(false);
   };
 
   const handleOverrideRisk = (newLevel: RiskLevel) => {
@@ -234,7 +237,7 @@ export default function ReportDetail({ report, open, onClose, onUpdate, onReasse
                     <span className="shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] mt-0.5">
                       {i + 1}
                     </span>
-                    <span>{action.replace(/^\[PRIO\]\s*/i, "").replace(/^\d+[\.\)]\s*/, "")}</span>
+                    <span>{action.replace(/^\[PRIO\]\s*/i, "").replace(/^\d+[.)]\s*/, "")}</span>
                   </li>
                 ))}
               </ul>
