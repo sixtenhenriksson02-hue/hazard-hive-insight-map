@@ -37,7 +37,7 @@ Return the translations using the tool call.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-3.8-flash",
         messages: [
           { role: "system", content: `You are a professional translator specializing in occupational health and safety. Translate accurately to ${targetLang}.` },
           { role: "user", content: prompt },
