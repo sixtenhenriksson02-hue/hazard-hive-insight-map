@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Shield, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,25 @@ export default function Auth() {
 
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               {loading ? t("common.loading") : isLogin ? t("auth.login") : t("auth.signup")}
+            </Button>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-px flex-1 bg-border" />{lang === "sv" ? "eller" : "or"}<div className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading}
+              onClick={async () => {
+                const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+                if (result.error) {
+                  toast({ title: "Fel", description: getFriendlyAuthError(String((result.error as any)?.message ?? result.error), lang), variant: "destructive" });
+                }
+              }}
+            >
+              {lang === "sv" ? "Logga in med Google" : "Sign in with Google"}
             </Button>
 
             {isLogin && (
