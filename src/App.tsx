@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { lazy, Suspense } from "react";
@@ -10,6 +10,9 @@ import { lazy, Suspense } from "react";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import JoinProject from "./pages/JoinProject";
+import CompleteAccount from "./components/CompleteAccount";
+import { normalizeInviteCode, projectInvitePath } from "@/lib/projectInvite";
 
 // Lazy load heavy pages
 const Index = lazy(() => import("./pages/Index"));
@@ -41,16 +44,19 @@ function LoadingFallback() {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, displayName } = useAuth();
   if (isLoading) return <LoadingFallback />;
   if (!user) return <Navigate to="/auth" replace />;
+  if (!displayName.trim() || displayName === "Anonym") return <CompleteAccount />;
   return <>{children}</>;
 }
 
 function AuthRoute() {
   const { user, isLoading } = useAuth();
+  const [params] = useSearchParams();
+  const invite = normalizeInviteCode(params.get("invite"));
   if (isLoading) return <LoadingFallback />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={invite ? projectInvitePath(invite) : "/"} replace />;
   return <Auth />;
 }
 
@@ -65,6 +71,7 @@ const App = () => (
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
                 <Route path="/auth" element={<AuthRoute />} />
+                <Route path="/join/:code" element={<JoinProject />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

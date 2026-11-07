@@ -5,8 +5,10 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FolderPlus, Calendar, Copy, Check, Archive, RotateCcw } from "lucide-react";
+import { FolderPlus, Calendar, Copy, Check, Archive, RotateCcw, QrCode, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
+import { projectInvitePath } from "@/lib/projectInvite";
 
 interface ProjectManagerProps {
   open: boolean;
@@ -14,7 +16,7 @@ interface ProjectManagerProps {
 }
 
 export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user } = useAuth();
   const { projects, createProject, archiveProject } = useProjects();
   const { toast } = useToast();
@@ -22,6 +24,19 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [qrProjectId, setQrProjectId] = useState<string | null>(null);
+  const qrProject = projects.find(p => p.id === qrProjectId && !p.archived);
+  const L = (sv: string, en: string) => lang === "sv" ? sv : en;
+  const downloadQr = () => {
+    const svg = document.getElementById("project-qr");
+    if (!svg || !qrProject) return;
+    const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${qrProject.name.replace(/[^a-zA-Z0-9åäöÅÄÖ_-]/g, "_")}-QR.svg`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   const handleCreate = async () => {
     if (!name.trim() || !user) return;
@@ -43,7 +58,7 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderPlus className="h-5 w-5" /> {t("project.manage")}
@@ -90,17 +105,30 @@ export default function ProjectManager({ open, onClose }: ProjectManagerProps) {
                     <code className="text-xs font-mono font-bold bg-accent/10 text-accent px-2 py-0.5 rounded">
                       {p.invite_code}
                     </code>
-                    <button
-                      onClick={() => copyCode(p.invite_code!, p.id)}
-                      className="text-muted-foreground hover:text-accent transition-colors"
-                    >
+                    <Button variant="ghost" size="icon" title={t("project.codeCopied")} onClick={() => { if (p.invite_code) copyCode(p.invite_code, p.id); }}>
                       {copiedId === p.id ? <Check className="h-3.5 w-3.5 text-accent" /> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setQrProjectId(qrProjectId === p.id ? null : p.id)}><QrCode />QR</Button>
                   </div>
                 )}
               </div>
             ))}
           </div>
+
+          {qrProject?.invite_code && <section className="border-t border-border pt-4 space-y-3 text-center">
+            <h3 className="font-semibold break-words">{qrProject.name}</h3>
+            <QRCodeSVG id="project-qr" value={`${window.location.origin}${projectInvitePath(qrProject.invite_code)}`} size={224} marginSize={4} level="M" className="mx-auto max-w-full h-auto" />
+            <div className="flex justify-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={downloadQr}><Download />{L("Spara QR-kod", "Save QR code")}</Button>
+              <Button variant="outline" size="sm" onClick={async () => {
+                if (!qrProject.invite_code) return;
+                try {
+                  await navigator.clipboard.writeText(`${window.location.origin}${projectInvitePath(qrProject.invite_code)}`);
+                  toast({ title: L("Projektlänk kopierad", "Project link copied") });
+                } catch { toast({ title: L("Kunde inte kopiera länken", "Could not copy link"), variant: "destructive" }); }
+              }}><Copy />{L("Kopiera länk", "Copy link")}</Button>
+            </div>
+          </section>}
 
           {archivedProjects.length > 0 && (
             <div>

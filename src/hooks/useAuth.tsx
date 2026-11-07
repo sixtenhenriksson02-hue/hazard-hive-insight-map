@@ -28,6 +28,7 @@ interface AuthContextType {
   removeUserProject: (projectId: string) => Promise<void>;
   refreshProjects: () => Promise<void>;
   refreshUserProjects: () => Promise<void>;
+  refreshAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -84,10 +85,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setActiveProjectId = useCallback((id: string | null) => {
     setActiveProjectIdState(id);
+    if (currentUserIdRef.current) {
+      try {
+        const key = `project-selection:${currentUserIdRef.current}`;
+        if (id) localStorage.setItem(key, id);
+        else localStorage.removeItem(key);
+      } catch { /* Restricted storage does not block project selection. */ }
+    }
     // Update project name from userProjects
     if (id) {
       const proj = userProjects.find(p => p.project_id === id);
       setProjectName(proj?.project_name ?? null);
+      if (!proj) {
+        void supabase.from("projects").select("name").eq("id", id).maybeSingle().then(({ data }) => {
+          setActiveProjectIdState(current => {
+            if (current === id) setProjectName(data?.name ?? null);
+            return current;
+          });
+        });
+      }
     } else {
       setProjectName(null);
     }
@@ -173,6 +189,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Load user projects
       const projects = await loadUserProjects(u.id);
+      let savedId: string | null = null;
+      try { savedId = localStorage.getItem(`project-selection:${u.id}`); } catch { /* Optional persistence. */ }
+      if (savedId) {
+        const savedProject = projects.find(p => p.project_id === savedId);
+        if (savedProject) {
+          setActiveProjectIdState(savedId);
+          setProjectName(savedProject.project_name);
+          return;
+        }
+        if (userRole === "admin") {
+          const { data: savedProjectData } = await supabase.from("projects").select("id, name, archived").eq("id", savedId).maybeSingle();
+          if (savedProjectData && !savedProjectData.archived) {
+            setActiveProjectIdState(savedId);
+            setProjectName(savedProjectData.name);
+            return;
+          }
+        }
+      }
 
       // Auto-add initial project if user has profile project but no user_projects entry
       if (pid && projects.length === 0) {
@@ -303,6 +337,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, role, displayName, projectId, projectName, isLoading, viewAs, setViewAs, signOut,
       userProjects, activeProjectId, setActiveProjectId, addUserProject, removeUserProject, refreshProjects, refreshUserProjects: refreshProjects,
+      refreshAccount: async () => { if (user) await loadUserData(user); },
     }}>
       {children}
     </AuthContext.Provider>
