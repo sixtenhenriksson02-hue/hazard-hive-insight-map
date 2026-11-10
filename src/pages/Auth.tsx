@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/hooks/useLanguage";
 import { emailCallbackUrl, normalizeInviteCode } from "@/lib/projectInvite";
+import ProjectQrEntry from "@/components/ProjectQrEntry";
 
 const LAST_EMAIL_KEY = "lovable:last-login-email";
 
@@ -72,6 +73,9 @@ export default function Auth() {
         <h1 className="text-2xl font-bold text-foreground">{t("app.name")}</h1>
         <Button variant="ghost" size="sm" className="mt-2 text-muted-foreground" onClick={() => setLang(lang === "sv" ? "en" : "sv")}><Globe />{lang === "sv" ? "English" : "Svenska"}</Button>
       </header>
+      <ProjectQrEntry />
+      {invite && <p role="status" className="text-sm text-center text-muted-foreground">{L("Projekt valt – logga in för att fortsätta", "Project selected – sign in to continue")}</p>}
+      <div className="flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />{L("eller logga in", "or sign in")}<span className="h-px flex-1 bg-border" /></div>
       <Button type="button" variant="outline" className="google-sign-in w-full h-12" disabled={loading} onClick={async () => {
         setLoading(true);
         setError("");

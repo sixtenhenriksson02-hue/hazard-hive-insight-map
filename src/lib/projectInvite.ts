@@ -9,6 +9,15 @@ export function projectInvitePath(code: string): string {
   return `/join/${normalized}`;
 }
 
+export function inviteFromQr(value: string, origin: string): string | null {
+  try {
+    const url = new URL(value, origin);
+    if (url.origin !== new URL(origin).origin) return null;
+    const match = /^\/join\/([A-Za-z0-9]{6})\/?$/.exec(url.pathname);
+    return match ? normalizeInviteCode(match[1]) : null;
+  } catch { return null; }
+}
+
 export function emailCallbackUrl(origin: string, invite: string | null): string {
   const url = new URL("/auth", origin);
   const code = normalizeInviteCode(invite);
