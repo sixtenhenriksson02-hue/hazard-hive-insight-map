@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Shield, Globe, Mail, CheckCircle2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -71,6 +72,20 @@ export default function Auth() {
         <h1 className="text-2xl font-bold text-foreground">{t("app.name")}</h1>
         <Button variant="ghost" size="sm" className="mt-2 text-muted-foreground" onClick={() => setLang(lang === "sv" ? "en" : "sv")}><Globe />{lang === "sv" ? "English" : "Svenska"}</Button>
       </header>
+      <Button type="button" variant="outline" className="google-sign-in w-full h-12" disabled={loading} onClick={async () => {
+        setLoading(true);
+        setError("");
+        try {
+          const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: emailCallbackUrl(window.location.origin, invite) });
+          if (result.error) throw result.error;
+        } catch {
+          setError(L("Google-inloggningen kunde inte slutföras. Försök igen.", "Google sign-in could not be completed. Try again."));
+        } finally { setLoading(false); }
+      }}>
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="!size-[18px]"><path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+        {L("Fortsätt med Google", "Continue with Google")}
+      </Button>
+      {sent && error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {sent ? <section className="space-y-4 text-center" aria-live="polite">
         <CheckCircle2 className="h-10 w-10 mx-auto text-accent" />
         <h2 className="text-xl font-semibold">{L("Kolla din mejl", "Check your email")}</h2>
