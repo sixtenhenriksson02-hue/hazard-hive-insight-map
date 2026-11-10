@@ -1,73 +1,24 @@
-# Welcome to your Lovable project
+# Risk Aware
 
-## Project info
+Hej, jag vill skapa en webbplats/ app där man kan rapportera risker och förebygga de likt IA appen. man ska kunna lägga in vart olyckan eller risken har skett och vad som inträffade kan även lägga till bild. Med hjälp av beskrivningen vill jag ha en ai modell som bedömer risken utifrån en risk matris. Så denna app är både för att förebygga och ta bort riskerna helt. Ska vara tillgänlig för alla på arbets platsen men kan finnas olika versioner för admin som får lite mer data i rapporterna medans de vanliga arbetarna har tillgång till vart olyckan har skett och vad som händ mer som heads up. Det ska kunna vara många inne samtidgt och den ska klara många rapporter
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This project was built with [Lovable](https://lovable.dev).
 
-## How can I edit this code?
+## Build with Lovable
 
-There are several ways of editing your application.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/cde4ec1f-859d-4d38-bc1f-80f2322c1cda).
 
-**Use Lovable**
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Development
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
