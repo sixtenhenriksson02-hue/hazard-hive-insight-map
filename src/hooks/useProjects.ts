@@ -91,13 +91,10 @@ export function useProjects(options: UseProjectsOptions = {}) {
   const joinByCode = async (code: string, userId: string): Promise<boolean> => {
     // Find project by invite code
     const { data: projectData, error: findError } = await supabase
-      .from("projects")
-      .select("id, name, archived")
-      .eq("invite_code", code.toUpperCase().trim())
-      .or("archived.is.null,archived.eq.false")
+      .rpc("find_project_by_invite", { _code: code })
       .maybeSingle();
 
-    if (findError || !projectData) {
+    if (findError || !projectData || projectData.archived) {
       toast({ title: "Ogiltig kod", description: "Ingen projekt hittades med den koden.", variant: "destructive" });
       return false;
     }

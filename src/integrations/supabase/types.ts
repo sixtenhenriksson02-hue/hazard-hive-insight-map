@@ -552,12 +552,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_project_by_invite: {
+        Args: { _code: string }
+        Returns: {
+          archived: boolean
+          id: string
+          name: string
+        }[]
+      }
       get_display_name: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
     }

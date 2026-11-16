@@ -8,6 +8,13 @@
       "when": 1794035915441,
       "tag": "0000_safe_passwordless_signup_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794812916584,
+      "tag": "0001_scope_project_data_access",
+      "breakpoints": true
     }
   ]
 }

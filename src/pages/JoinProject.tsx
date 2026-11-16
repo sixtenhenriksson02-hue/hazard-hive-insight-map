@@ -28,8 +28,7 @@ export default function JoinProject() {
     const join = async () => {
       setError("");
       try {
-        const { data: project, error: findError } = await supabase.from("projects")
-          .select("id, archived").eq("invite_code", code).maybeSingle();
+        const { data: project, error: findError } = await supabase.rpc("find_project_by_invite", { _code: code }).maybeSingle();
         if (findError) throw new Error(L("Projektet kunde inte hämtas. Försök igen.", "Could not load the project. Try again."));
         if (!project || project.archived) throw new Error(L("Projektlänken är ogiltig eller projektet är arkiverat.", "This link is invalid or the project is archived."));
         const { error: joinError } = await supabase.from("user_projects")
