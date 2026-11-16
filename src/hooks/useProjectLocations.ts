@@ -45,7 +45,15 @@ export function useProjectLocations(projectId: string | null) {
     }
   }, [projectId]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => {
+    fetch();
+    if (!projectId) return;
+    const channel = supabase
+      .channel(`project_locations-${projectId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_locations", filter: `project_id=eq.${projectId}` }, () => { void fetch(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetch, projectId]);
 
   const addLocation = async (input: Omit<ProjectLocation, "id" | "created_at" | "updated_at" | "created_by"> & { created_by: string }) => {
     const { error } = await supabase.from("project_locations" as any).insert(input as any);

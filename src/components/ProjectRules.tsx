@@ -56,7 +56,13 @@ export default function ProjectRules() {
 
   useEffect(() => {
     loadRules();
-  }, [loadRules]);
+    if (!activeProjectId) return;
+    const channel = supabase
+      .channel(`project_rules-${activeProjectId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_rules", filter: `project_id=eq.${activeProjectId}` }, () => { void loadRules(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [loadRules, activeProjectId]);
 
   const uploadFile = async (file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop();
