@@ -221,6 +221,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const defaultPid = pid && projects.some(p => p.project_id === pid) ? pid : projects[0].project_id;
         setActiveProjectIdState(defaultPid);
         setProjectName(projects.find(p => p.project_id === defaultPid)?.project_name ?? null);
+      } else if (!pid && userRole === "admin") {
+        const { data: openProjects } = await supabase.from("projects").select("id, name")
+          .eq("archived", false).order("created_at", { ascending: false });
+        const { data: plans } = await supabase.from("site_plans").select("project_id");
+        const firstProject = openProjects?.find(p => plans?.some(pl => pl.project_id === p.id)) ?? openProjects?.[0];
+        if (firstProject) {
+          setActiveProjectIdState(firstProject.id);
+          setProjectName(firstProject.name);
+        }
       } else if (pid) {
         setActiveProjectIdState(pid);
         const { data: proj } = await supabase.from("projects").select("name").eq("id", pid).single();

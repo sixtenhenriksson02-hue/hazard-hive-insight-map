@@ -199,7 +199,15 @@ export default function SitePlanViewer({ reports, onSelectLocation, selectionMod
   useEffect(() => {
     fetchPlans();
     fetchSafetyMarkers();
-  }, [fetchPlans, fetchSafetyMarkers]);
+    if (!activeProjectId) return;
+    const filter = `project_id=eq.${activeProjectId}`;
+    const channel = supabase
+      .channel(`site-plan-${activeProjectId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_plans", filter }, () => fetchPlans())
+      .on("postgres_changes", { event: "*", schema: "public", table: "safety_markers", filter }, () => fetchSafetyMarkers())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchPlans, fetchSafetyMarkers, activeProjectId]);
 
   useEffect(() => {
     if (plans.length > 0 && !activePlan) {

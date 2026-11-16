@@ -15,6 +15,13 @@
       "when": 1794812916584,
       "tag": "0001_scope_project_data_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794813313830,
+      "tag": "0002_realtime_site_plans",
+      "breakpoints": true
     }
   ]
 }
